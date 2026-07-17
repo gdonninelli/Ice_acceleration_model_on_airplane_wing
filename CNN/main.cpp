@@ -5,7 +5,7 @@
  */
 
 #include "src/layers/DenseLayer.hpp"
-#include "src/layers/LeakyReLULayer.hpp"
+#include "src/layers/ActivationFactory.hpp"
 #include "src/layers/Conv2DLayer.hpp"
 #include "src/layers/FlattenLayer.hpp"
 #include "src/layers/ConcatenateLayer.hpp"
@@ -118,6 +118,29 @@ int main(int argc, char** argv) {
     MPI_Comm_size(MPI_COMM_WORLD, &world_size); // get the total number of processes
 
     try {
+        // Parse command-line options for the activation function.
+        // Usage: cnn_executable [--activation leakyrelu|relu|tanh|sigmoid] [--alpha <value>]
+        std::string activation_name = "leakyrelu"; // default activation
+        float leaky_alpha = 0.05f; // negative slope, used only by leakyrelu
+        for (int i = 1; i < argc; ++i) {
+            const std::string arg = argv[i];
+            if (arg == "--activation" && i + 1 < argc) {
+                activation_name = argv[++i];
+            } else if (arg == "--alpha" && i + 1 < argc) {
+                leaky_alpha = std::stof(argv[++i]);
+            } else {
+                throw std::invalid_argument(
+                    "Unknown or incomplete option '" + arg +
+                    "'. Usage: cnn_executable [--activation leakyrelu|relu|tanh|sigmoid] [--alpha <value>]");
+            }
+        }
+
+        // Validate the activation name early (throws on unknown names) and report the choice.
+        const std::string activation_label = make_activation(activation_name, leaky_alpha)->get_layer_name();
+        if (rank == 0) {
+            std::cout << "Using activation: " << activation_label << std::endl;
+        }
+
         // Load the training and validation datasets from NPZ files.
         NPZDataLoader train_loader("dataset/cnn_dataset_train.npz");
         NPZDataLoader val_loader("dataset/cnn_dataset_test.npz");
@@ -127,12 +150,9 @@ int main(int argc, char** argv) {
         // Instantiate the CNN model, passing the optimizer and lambda value for the loss.
         CNNModel model(optimizer, 0.25f);
 
-        // Define the alpha value for Leaky ReLU activations.
-        const float leaky_alpha = 0.05f;
-        
         // 1. Convolutional layer: 1 input channel, 8 output channels, kernel 5, stride 5, padding 0
         model.add_conv_layer(std::make_shared<Conv2DLayer>(1, 8, 5, 5, 0));
-        model.add_conv_layer(std::make_shared<LeakyReLULayer>(leaky_alpha));
+        model.add_conv_layer(make_activation(activation_name, leaky_alpha));
         model.add_conv_layer(std::make_shared<FlattenLayer>()); // to prepare for dense layers
 
         // 2. Concatenate layer (merges with Re and Angle of Attack)
@@ -146,10 +166,10 @@ int main(int argc, char** argv) {
         
         // 3. Feed forward network: 2 hidden layers of size 128 and 64 while output is 1
         model.add_dense_layer(std::make_shared<DenseLayer>(static_cast<int>(flat_features + 2), 128));
-        model.add_dense_layer(std::make_shared<LeakyReLULayer>(leaky_alpha));
-        
+        model.add_dense_layer(make_activation(activation_name, leaky_alpha));
+
         model.add_dense_layer(std::make_shared<DenseLayer>(128, 64));
-        model.add_dense_layer(std::make_shared<LeakyReLULayer>(leaky_alpha));
+        model.add_dense_layer(make_activation(activation_name, leaky_alpha));
         
         model.add_dense_layer(std::make_shared<DenseLayer>(64, 1));
 

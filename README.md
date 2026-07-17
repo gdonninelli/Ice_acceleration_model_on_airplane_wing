@@ -36,12 +36,16 @@ The pipeline is composed of two main modules:
 │       ├── data/
 │       │   └── NPZDataLoader.cpp / NPZDataLoader.hpp
 │       ├── layers/
+│       │   ├── ActivationLayer.cpp / .hpp
 │       │   ├── ConcatenateLayer.cpp / .hpp
 │       │   ├── Conv2DLayer.cpp / .hpp
 │       │   ├── DenseLayer.cpp / .hpp
 │       │   ├── FlattenLayer.cpp / .hpp
 │       │   ├── Layer.hpp
-│       │   └── LeakyReLULayer.cpp / .hpp
+│       │   ├── LeakyReLULayer.cpp / .hpp
+│       │   ├── ReLULayer.cpp / .hpp
+│       │   ├── SigmoidLayer.cpp / .hpp
+│       │   └── TanhLayer.cpp / .hpp
 │       ├── model/
 │       │   └── CNNModel.cpp / CNNModel.hpp
 │       └── optimizers/
@@ -95,7 +99,7 @@ The CNN model is a custom C++ Convolutional Neural Network framework built from 
 The architecture consists of:
 
 - **2D Convolution** (1→8 channels, kernel 5x5, stride 5)
-- **LeakyReLU** activation
+- **LeakyReLU** activation (ReLU, Tanh and Sigmoid are also available via the shared `ActivationLayer` base class)
 - **Flatten** layer
 - **Concatenate** layer (merging conv features with AoA and Re scalars)
 - **Dense** layers (256 → 128 → 64 → 1)
@@ -137,7 +141,16 @@ From the repository root:
 mpirun -n 4 ./CNN/cnn_executable
 ```
 
-Training parameters (epochs, batch size, learning rate) can be configured in `CNN/main.cpp`.
+The activation function can be selected from the command line (default: `leakyrelu`):
+
+```bash
+mpirun -n 4 ./CNN/cnn_executable --activation tanh
+mpirun -n 4 ./CNN/cnn_executable --activation leakyrelu --alpha 0.1
+```
+
+Valid activations are `leakyrelu`, `relu`, `tanh` and `sigmoid`; `--alpha` sets the negative slope and only affects `leakyrelu`.
+
+Other training parameters (epochs, batch size, learning rate) can be configured in `CNN/main.cpp`.
 
 ### Output
 
