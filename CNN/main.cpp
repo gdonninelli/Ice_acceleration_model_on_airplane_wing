@@ -14,6 +14,7 @@
 #include "src/core/Loss.hpp"
 #include "src/data/NPZDataLoader.hpp"
 #include "src/core/Tensor.hpp"
+#include <cmath>
 #include <iostream>
 #include <memory>
 #include <string>
@@ -133,6 +134,10 @@ int main(int argc, char** argv) {
                     "Unknown or incomplete option '" + arg +
                     "'. Usage: cnn_executable [--activation leakyrelu|relu|tanh|sigmoid] [--alpha <value>]");
             }
+        }
+
+        if (!std::isfinite(leaky_alpha) || leaky_alpha < 0.0f) {
+            throw std::invalid_argument("--alpha must be a finite, non-negative number.");
         }
 
         // Validate the activation name early (throws on unknown names) and report the choice.
