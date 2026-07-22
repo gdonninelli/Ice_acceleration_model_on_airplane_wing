@@ -8,9 +8,17 @@
 #include <algorithm>
 #include <stdexcept>
 
-ConcatenateLayer::ConcatenateLayer()
-    : _batch_size_cache(0), _features_first_cache(0), _features_second_cache(0) {
-    _layer_name = "ConcatenateLayer";
+ConcatenateLayer::ConcatenateLayer(size_t expected_second_features)
+    : _batch_size_cache(0),
+      _features_first_cache(0),
+      _features_second_cache(0),
+      _expected_second_features(expected_second_features) {
+    if (_expected_second_features == 0) {
+        throw std::invalid_argument(
+            "ConcatenateLayer expected feature count must be positive.");
+    }
+    _layer_name = "ConcatenateLayer(features=" +
+                  std::to_string(_expected_second_features) + ")";
 }
 
 std::shared_ptr<Tensor> ConcatenateLayer::forward(const std::vector<std::shared_ptr<Tensor>>& inputs) {
@@ -30,8 +38,9 @@ std::shared_ptr<Tensor> ConcatenateLayer::forward(const std::vector<std::shared_
         throw std::invalid_argument("ConcatenateLayer requires matching batch sizes.");
     }
 
-    if (shape_b[1] != 2) {
-        throw std::invalid_argument("ConcatenateLayer expects metadata tensor with exactly 2 features (AoA, Re).");
+    if (shape_b[1] != _expected_second_features) {
+        throw std::invalid_argument(
+            "ConcatenateLayer metadata feature count does not match the model blueprint.");
     }
 
     // Store dimensions in cache for use in backward pass
@@ -115,18 +124,4 @@ std::vector<std::shared_ptr<Tensor>> ConcatenateLayer::backward(std::shared_ptr<
     }
 
     return {grad_first, grad_second};
-}
-
-void ConcatenateLayer::update_weights(std::shared_ptr<Optimizer> optimizer) {
-    // No weights to update in the ConcatenateLayer.
-}
-
-std::pair<float*, float*> ConcatenateLayer::get_weights_and_grads() {
-    // No weights in ConcatenateLayer, return null pointers.
-    return {nullptr, nullptr};
-}
-
-std::pair<float*, float*> ConcatenateLayer::get_biases_and_grads() {
-    // No biases in ConcatenateLayer, return null pointers.
-    return {nullptr, nullptr};
 }

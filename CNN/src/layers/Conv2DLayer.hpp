@@ -8,7 +8,7 @@
 #define CONV2DLAYER_HPP
 
 #include "Layer.hpp"
-#include "optimizers/Optimizer.hpp"
+#include <cstdint>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -31,6 +31,7 @@ class Conv2DLayer : public Layer {
 
     // Cache the input tensor from the forward pass to use in the backward pass for gradient computation.
     std::shared_ptr<Tensor> _input_cache; // shape: [batch, in_channels, height, width]
+    std::vector<size_t> _output_shape_cache;
 
     public:
     /**
@@ -45,7 +46,8 @@ class Conv2DLayer : public Layer {
                 int out_channels,
                 int kernel_size,
                 int stride = 1,
-                int padding = 0);
+                int padding = 0,
+                uint64_t seed = 1);
 
     /**
      * @brief Performs the forward pass through the Conv2D layer.
@@ -61,23 +63,7 @@ class Conv2DLayer : public Layer {
      */
     std::vector<std::shared_ptr<Tensor>> backward(std::shared_ptr<Tensor> grad_output) override;
 
-    /**
-     * @brief Updates the weights of the layer using the provided optimizer.
-     * @param optimizer A shared pointer to the optimizer used for updating the weights.
-     */
-    void update_weights(std::shared_ptr<Optimizer> optimizer) override;
-
-    /**
-     * @brief Gets the weights and their gradients.
-     * @return A pair of pointers to the weights and gradients arrays.
-     */
-    std::pair<float*, float*> get_weights_and_grads() override;
-
-    /**
-     * @brief Gets the biases and their gradients.
-     * @return A pair of pointers to the biases and gradients arrays.
-     */
-    std::pair<float*, float*> get_biases_and_grads() override;
+    std::vector<LayerParameter> parameters() const override;
 
     /**
      * @brief Get the weights tensor of the layer.

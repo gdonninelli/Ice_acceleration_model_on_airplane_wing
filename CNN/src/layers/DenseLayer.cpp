@@ -9,8 +9,11 @@
 #include <random>
 #include <stdexcept>
 
-DenseLayer::DenseLayer(int input_features, int output_features)
+DenseLayer::DenseLayer(int input_features, int output_features, uint64_t seed)
     : _input_features(input_features), _output_features(output_features) {
+    if (_input_features <= 0 || _output_features <= 0) {
+      throw std::invalid_argument("DenseLayer feature counts must be positive.");
+    }
     _layer_name = "DenseLayer( " + std::to_string(input_features) + "," + std::to_string(output_features) + " )";
 
     // Define the shape of the weights and biases tensors.
@@ -20,7 +23,7 @@ DenseLayer::DenseLayer(int input_features, int output_features)
 
     // Weights initialization using Xavier/Glorot uniform initialization.
     float limit = std::sqrt(6.0f / (input_features + output_features));
-    std::default_random_engine generator(1); // for reproducibility
+    std::mt19937_64 generator(seed);
     std::uniform_real_distribution<float> distribution(-limit, limit);
 
     // Initialize weights iterating through the data array of the weights tensor.
@@ -38,13 +41,17 @@ DenseLayer::DenseLayer(int input_features, int output_features)
 
 std::shared_ptr<Tensor>
 DenseLayer::forward(const std::vector<std::shared_ptr<Tensor>> &inputs) {
-    if (inputs.size() != 1) {
-        throw std::invalid_argument("DenseLayer expects exactly one input tensor.");
+    _input_cache.reset();
+    _output_shape_cache.clear();
+    if (inputs.size() != 1 || !inputs[0]) {
+        throw std::invalid_argument("DenseLayer expects exactly one non-null input tensor.");
     }
 
-    // Cache the input tensor for use in the backward pass.
-    _input_cache = inputs[0];
-    const std::vector<size_t> &input_shape = _input_cache->get_shape();
+    const std::shared_ptr<Tensor>& input = inputs[0];
+    const std::vector<size_t> input_shape = input->get_shape();
+    if (input_shape.empty()) {
+        throw std::invalid_argument("DenseLayer input shape must not be empty.");
+    }
     
     // Check if the last dimension of the input matches the expected number of input features.
     if (input_shape.back() != (size_t)_input_features) {
@@ -63,7 +70,7 @@ DenseLayer::forward(const std::vector<std::shared_ptr<Tensor>> &inputs) {
     auto output = std::make_shared<Tensor>(out_shape);
 
     // Data pointer for input, weights, biases and output tensors.
-    float *x_ptr = _input_cache->get_data(); // shape: [batch_size, input_features]
+    float *x_ptr = input->get_data(); // shape: [batch_size, input_features]
     float *w_ptr = _weights->get_data(); // shape: [output_features, input_features]
     float *b_ptr = _biases->get_data(); // shape: [output_features]
     float *y_ptr = output->get_data(); // shape: [batch_size, output_features]
@@ -82,11 +89,20 @@ DenseLayer::forward(const std::vector<std::shared_ptr<Tensor>> &inputs) {
         }
     }
 
+    _input_cache = input;
+    _output_shape_cache = std::move(out_shape);
     return output;
 }
 
 std::vector<std::shared_ptr<Tensor>>
 DenseLayer::backward(std::shared_ptr<Tensor> grad_output) {
+
+  if (!grad_output || !_input_cache || _output_shape_cache.empty()) {
+    throw std::invalid_argument("DenseLayer backward requires a prior forward pass and non-null gradient.");
+  }
+  if (grad_output->get_shape() != _output_shape_cache) {
+    throw std::invalid_argument("DenseLayer backward gradient shape mismatch.");
+  }
 
   // Calculate batch size from the shape of grad_output.
   const std::vector<size_t> &grad_shape = grad_output->get_shape();
@@ -151,22 +167,8 @@ DenseLayer::backward(std::shared_ptr<Tensor> grad_output) {
   return {grad_input};
 }
 
-void DenseLayer::update_weights(std::shared_ptr<Optimizer> optimizer) {
-  if (optimizer) {
-    // Update weights and biases using the optimizer's apply_gradients method
-    optimizer->apply_gradients(_weights->get_data(), _weights->get_grad(), _weights->size());
-    optimizer->apply_gradients(_biases->get_data(), _biases->get_grad(), _biases->size());
-  }
-}
-
-std::pair<float *, float *> DenseLayer::get_weights_and_grads() {
-  // Direct access to the weights data and gradients for optimization purposes
-  return {_weights->get_data(), _weights->get_grad()};
-}
-
-std::pair<float *, float *> DenseLayer::get_biases_and_grads() {
-  // Direct access to the biases data and gradients for optimization purposes
-  return {_biases->get_data(), _biases->get_grad()};
+std::vector<LayerParameter> DenseLayer::parameters() const {
+  return {{"weights", _weights}, {"biases", _biases}};
 }
 
 // Additional helper methods to retrieve the weights tensors.

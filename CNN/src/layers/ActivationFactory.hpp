@@ -21,9 +21,9 @@
  *
  * @param name The activation name (case-insensitive): "leakyrelu", "relu", "tanh" or "sigmoid".
  * @param alpha The negative slope, used only by "leakyrelu" (ignored by the others).
- * @return A shared pointer to the newly created activation layer.
+ * @return An owning pointer to the newly created activation layer.
  * @throws std::invalid_argument if the name does not match any known activation.
  */
-std::shared_ptr<ActivationLayer> make_activation(const std::string &name, float alpha = 0.05f);
+std::unique_ptr<ActivationLayer> make_activation(const std::string &name, float alpha = 0.05f);
 
 #endif // ACTIVATIONFACTORY_HPP

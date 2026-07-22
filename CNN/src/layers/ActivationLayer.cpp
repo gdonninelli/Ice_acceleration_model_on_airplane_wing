@@ -9,8 +9,8 @@
 #include <stdexcept>
 
 std::shared_ptr<Tensor> ActivationLayer::forward(const std::vector<std::shared_ptr<Tensor>> &inputs) {
-    if (inputs.size() != 1) {
-        throw std::invalid_argument(_layer_name + " expects exactly one input tensor.");
+    if (inputs.size() != 1 || !inputs[0]) {
+        throw std::invalid_argument(_layer_name + " expects exactly one non-null input tensor.");
     }
 
     // Cache the input tensor for use in the backward pass.
@@ -33,6 +33,12 @@ std::shared_ptr<Tensor> ActivationLayer::forward(const std::vector<std::shared_p
 
 std::vector<std::shared_ptr<Tensor>> ActivationLayer::backward(std::shared_ptr<Tensor> grad_output) {
 
+    if (!grad_output || !_input_cache ||
+        grad_output->get_shape() != _input_cache->get_shape()) {
+        throw std::invalid_argument(
+            _layer_name + " backward requires a matching gradient and prior forward pass.");
+    }
+
     // Initialize the input gradient tensor with the same shape as the cached input.
     auto grad_input = std::make_shared<Tensor>(_input_cache->get_shape()); // shape: [batch_size, features]
 
@@ -46,18 +52,4 @@ std::vector<std::shared_ptr<Tensor>> ActivationLayer::backward(std::shared_ptr<T
     }
 
     return {grad_input};
-}
-
-void ActivationLayer::update_weights(std::shared_ptr<Optimizer> optimizer) {
-    // No weights to update in activation layers
-}
-
-std::pair<float*,float*> ActivationLayer::get_weights_and_grads() {
-    // No weights in activation layers, return null pointers
-    return {nullptr, nullptr};
-}
-
-std::pair<float*,float*> ActivationLayer::get_biases_and_grads() {
-    // No biases in activation layers, return null pointers
-    return {nullptr, nullptr};
 }

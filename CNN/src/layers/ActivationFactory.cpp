@@ -13,23 +13,23 @@
 #include <cctype>
 #include <stdexcept>
 
-std::shared_ptr<ActivationLayer> make_activation(const std::string &name, float alpha) {
+std::unique_ptr<ActivationLayer> make_activation(const std::string &name, float alpha) {
     // Normalize the name to lowercase so the lookup is case-insensitive.
     std::string key = name;
     std::transform(key.begin(), key.end(), key.begin(),
                    [](unsigned char c) { return static_cast<char>(std::tolower(c)); });
 
     if (key == "leakyrelu") {
-        return std::make_shared<LeakyReLULayer>(alpha);
+        return std::make_unique<LeakyReLULayer>(alpha);
     }
     if (key == "relu") {
-        return std::make_shared<ReLULayer>();
+        return std::make_unique<ReLULayer>();
     }
     if (key == "tanh") {
-        return std::make_shared<TanhLayer>();
+        return std::make_unique<TanhLayer>();
     }
     if (key == "sigmoid") {
-        return std::make_shared<SigmoidLayer>();
+        return std::make_unique<SigmoidLayer>();
     }
 
     throw std::invalid_argument("Unknown activation '" + name +

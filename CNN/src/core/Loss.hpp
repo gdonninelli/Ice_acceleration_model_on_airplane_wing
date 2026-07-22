@@ -26,7 +26,9 @@ namespace Loss {
 float simm_forward(const std::shared_ptr<Tensor> &preds,
                    const std::shared_ptr<Tensor> &targets,
                    const std::shared_ptr<Tensor> &alphas, 
-                   float lambda_val);
+                   float lambda_val,
+                   float target_mean = 0.0f,
+                   float target_std = 1.0f);
 
 /**
  * @brief Computes the backward pass of the SIMM loss function with respect to the predictions.
@@ -39,7 +41,17 @@ float simm_forward(const std::shared_ptr<Tensor> &preds,
 std::shared_ptr<Tensor> simm_backward(const std::shared_ptr<Tensor> &preds,
                                       const std::shared_ptr<Tensor> &targets,
                                       const std::shared_ptr<Tensor> &alphas,
-                                      float lambda_val);
+                                      float lambda_val,
+                                      float target_mean = 0.0f,
+                                      float target_std = 1.0f);
+
+/**
+ * Computes MSE after converting standardized predictions and targets back to
+ * the physical lift-coefficient scale.
+ */
+float physical_mse(const std::shared_ptr<Tensor>& preds,
+                   const std::shared_ptr<Tensor>& targets,
+                   float target_std);
 
 } // namespace Loss
 

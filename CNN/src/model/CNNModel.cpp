@@ -1,455 +1,314 @@
-/**
- * @file CNNModel.cpp
- * @brief Implementation file for the CNNModel class.
- * Implements the methods for the CNNModel class, responsible for implementing the overall structure and functionality of the CNN.
- */
-
 #include "CNNModel.hpp"
 #include "layers/ConcatenateLayer.hpp"
-#include "layers/Conv2DLayer.hpp"
-#include "layers/DenseLayer.hpp"
-#include "core/Loss.hpp"
-#include <fstream>
 #include <algorithm>
+#include <cmath>
+#include <cstring>
+#include <fstream>
 #include <limits>
-#include <mpi.h>
 #include <stdexcept>
-
+#include <unordered_set>
 
 namespace {
-    /**
-    * @brief Writes a Tensor's data and metadata to an output stream in binary format.
-    * @param out The output file stream to write to.
-    * @param tensor A shared pointer to the Tensor to write.
-    */
-    void write_tensor_data(std::ofstream& out, const std::shared_ptr<Tensor>& tensor) {
-        const bool has_tensor = static_cast<bool>(tensor);
-        out.write(reinterpret_cast<const char*>(&has_tensor), sizeof(has_tensor));
-    
-        if (!has_tensor) {
-            return;
-        }
+constexpr char kWeightMagic[] = "CNNWGT2";
 
-        // Write the tensor's shape and data
-        const std::vector<size_t> shape = tensor->get_shape();
-        const size_t rank = shape.size(); // number of dimensions
-        out.write(reinterpret_cast<const char*>(&rank), sizeof(rank)); // write the rank of the tensor
-        out.write(reinterpret_cast<const char*>(shape.data()), sizeof(size_t) * rank); // write the shape dimensions
+bool mpi_ready() {
+    int initialized = 0;
+    int finalized = 0;
+    MPI_Initialized(&initialized);
+    if (initialized) {
+        MPI_Finalized(&finalized);
+    }
+    return initialized != 0 && finalized == 0;
+}
 
-        // Serialize the tensor data as raw floats
-        const size_t n = tensor->size();
-        out.write(reinterpret_cast<const char*>(&n), sizeof(n)); // write the total count
-        out.write(reinterpret_cast<const char*>(tensor->get_data()), sizeof(float) * n); // write the raw data
+int checked_mpi_count(size_t count) {
+    if (count > static_cast<size_t>(std::numeric_limits<int>::max())) {
+        throw std::runtime_error("MPI buffer exceeds the supported element count.");
+    }
+    return static_cast<int>(count);
+}
+
+void write_exact(std::ofstream& output, const void* data, size_t bytes) {
+    output.write(static_cast<const char*>(data), static_cast<std::streamsize>(bytes));
+    if (!output) {
+        throw std::runtime_error("Failed to write model weights.");
+    }
+}
+
+void read_exact(std::ifstream& input, void* data, size_t bytes) {
+    input.read(static_cast<char*>(data), static_cast<std::streamsize>(bytes));
+    if (!input) {
+        throw std::runtime_error("Failed to read model weights.");
+    }
+}
+
+void write_string(std::ofstream& output, const std::string& value) {
+    const size_t size = value.size();
+    write_exact(output, &size, sizeof(size));
+    if (size > 0) {
+        write_exact(output, value.data(), size);
+    }
+}
+
+std::string read_string(std::ifstream& input) {
+    size_t size = 0;
+    read_exact(input, &size, sizeof(size));
+    std::string value(size, '\0');
+    if (size > 0) {
+        read_exact(input, value.data(), size);
+    }
+    return value;
+}
+
+void write_tensor(std::ofstream& output, const Tensor& tensor) {
+    const auto shape = tensor.get_shape();
+    const size_t rank = shape.size();
+    write_exact(output, &rank, sizeof(rank));
+    if (rank > 0) {
+        write_exact(output, shape.data(), rank * sizeof(size_t));
+    }
+    const size_t count = tensor.size();
+    write_exact(output, &count, sizeof(count));
+    if (count > 0) {
+        write_exact(output, tensor.get_data(), count * sizeof(float));
+    }
+}
+
+void read_tensor(std::ifstream& input, Tensor& tensor) {
+    size_t rank = 0;
+    read_exact(input, &rank, sizeof(rank));
+    std::vector<size_t> shape(rank);
+    if (rank > 0) {
+        read_exact(input, shape.data(), rank * sizeof(size_t));
     }
 
-    /**
-     * @brief Writes a layer's parameters to an output stream.
-     * @param out The output file stream to write to.
-     * @param layer A shared pointer to the layer whose parameters to write.
-     */
-    void write_layer_params(std::ofstream& out, const std::shared_ptr<Layer>& layer) {
-        // Get layer name and serialize its size and content
-        const std::string layer_name = layer->get_layer_name();
-        const size_t name_len = layer_name.size();
-        out.write(reinterpret_cast<const char*>(&name_len), sizeof(name_len));
-        out.write(layer_name.c_str(), static_cast<std::streamsize>(name_len));
-
-        // Pointers to the weights and biases tensors (if they exist)
-        std::shared_ptr<Tensor> weights;
-        std::shared_ptr<Tensor> biases;
-
-        // Use dynamic_pointer_cast to check the layer type and get the corresponding weights and biases tensors
-        if (auto conv = std::dynamic_pointer_cast<Conv2DLayer>(layer)) {
-            weights = conv->get_weights_tensor();
-            biases = conv->get_biases_tensor();
-        } else if (auto dense = std::dynamic_pointer_cast<DenseLayer>(layer)) {
-            weights = dense->get_weights_tensor();
-            biases = dense->get_biases_tensor();
-        }
-
-        // Write the serialized weight and bias tensors
-        write_tensor_data(out, weights);
-        write_tensor_data(out, biases);
+    size_t count = 0;
+    read_exact(input, &count, sizeof(count));
+    if (shape != tensor.get_shape() || count != tensor.size()) {
+        throw std::runtime_error("Parameter shape mismatch while importing weights.");
     }
-
-    /**
-     * @brief Helper struct to temporarily store tensor data read from a file.
-     */
-    struct TensorPayload {
-        bool present = false; // flag indicating if this tensor was present in the file
-        std::vector<size_t> shape;
-        std::vector<float> data;
-    };
-
-    /**
-     * @brief Reads a specific number of bytes from an input stream into a destination buffer.
-     * 
-     * @param in The input file stream
-     * @param dest A pointer to the destination buffer.
-     * @param bytes The number of bytes to read
-     */
-    void read_exact(std::ifstream& in, void* dest, size_t bytes) {
-        in.read(reinterpret_cast<char*>(dest), static_cast<std::streamsize>(bytes));
-        if (!in) {
-            throw std::runtime_error("Failed to read from weights file.");
-        }
+    if (count > 0) {
+        read_exact(input, tensor.get_data(), count * sizeof(float));
     }
-
-    /**
-     * @brief Reads a Tensor's data and metadata from an input stream.
-     * @param in The input file stream.
-     * @return A TensorPayload struct containing the deserialized tensor data.
-     */
-    TensorPayload read_tensor_payload(std::ifstream& in) {
-        bool has_tensor = false;
-        // Read the presence flag for the tensor
-        read_exact(in, &has_tensor, sizeof(has_tensor));
-        if (!has_tensor) {
-            return {};
-        }
-
-        // Read the tensor rank (number of dimensions).
-        size_t rank = 0;
-        read_exact(in, &rank, sizeof(rank));
-
-        // Read the shape of the tensor (size of each dimension).
-        std::vector<size_t> shape(rank);
-        if (rank > 0) {
-            read_exact(in, shape.data(), sizeof(size_t) * rank);
-        }
-
-        // Read the total number of elements in the tensor.
-        size_t count = 0;
-        read_exact(in, &count, sizeof(count));
-
-        // Validate the count against the shape
-        const size_t expected = Tensor::calculate_size(shape);
-        if (expected != count) {
-            throw std::runtime_error("Tensor element count mismatch while importing weights.");
-        }
-
-        // Read the tensor data buffer.
-        std::vector<float> data(count);
-        if (count > 0) {
-            read_exact(in, data.data(), sizeof(float) * count);
-        }
-
-        // Populate and return the payload.
-        TensorPayload payload;
-        payload.present = true;
-        // Use move for efficiency
-        payload.shape = std::move(shape);
-        payload.data = std::move(data);
-        return payload;
-    }
-
-    /**
-     * @brief Assigns deserialized tensor data to a target Tensor object.
-     * @param payload The TensorPayload containing the data to assign.
-     * @param tensor A shared pointer to the target Tensor object.
-     */
-    void assign_tensor_data(const TensorPayload& payload,
-                            const std::shared_ptr<Tensor>& tensor) {
-        
-        if (!payload.present) {
-            throw std::runtime_error("Missing tensor in weights file.");
-        }
-        
-        if (!tensor) {
-            throw std::runtime_error("Target tensor is null.");
-        }
-
-        if (tensor->get_shape() != payload.shape) {
-            throw std::runtime_error("Shape mismatch while importing weights.");
-        }
-    
-        if (tensor->size() != payload.data.size()) {
-            throw std::runtime_error("Element count mismatch while importing weights.");
-        }
-
-        // Copy the data from the payload into the tensor's data buffer.
-        std::copy(payload.data.begin(), payload.data.end(), tensor->get_data());
-        // Reset gradients after loading weights, as they are not loaded from file.
-        tensor->zero_grad();
-    }
-
-
-    /**
-     * @brief Checks if the MPI environment has been initialized.
-     * @return True if MPI is initialized, otherwise false.
-     */
-    bool mpi_ready() {
-        int initialized = 0;
-        MPI_Initialized(&initialized);
-        return initialized != 0;
-    }
-
-    /**
-     * @brief Gets the total number of MPI processes in the world communicator.
-     * @return The number of processes. Returns 1 if MPI is not initialized.
-     */
-    int mpi_world_size() {
-        int world_size = 1; // number of processors active
-        MPI_Comm_size(MPI_COMM_WORLD, &world_size);
-        return world_size;
-    }
-
-    /**
-     * @brief Converts a size_t count to an int for MPI calls, with a check to prevent overflow.
-     * @param count The size_t count to check.
-     * @return The count as an int if it fits, otherwise throws an exception.
-     */
-    int checked_mpi_count(size_t count) {
-        if (count > static_cast<size_t>(std::numeric_limits<int>::max())) {
-            throw std::runtime_error("MPI buffer too large for int-based count.");
-        }
-        return static_cast<int>(count);
-    }
-
-    /**
-     * @brief Performs an in-place Allreduce operation to average gradients across MPI processes.
-     * @param grad Pointer to the gradient buffer to be averaged.
-     * @param count Number of elements in the buffer.
-     * @param world_size Total number of MPI processes.
-     */
-    void allreduce_average(float* grad, size_t count, int world_size) {
-        if (!grad || count == 0 || world_size <= 1) {
-            return;
-        }
-        const int mpi_count = checked_mpi_count(count);
-        
-        // Perform MPI_Allreduce to sum gradients in-place
-        MPI_Allreduce(MPI_IN_PLACE, grad, mpi_count, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD); // sum in place
-        
-        // Average the summed gradients by dividing by the world size.
-        const float inv_world = 1.0f / static_cast<float>(world_size);
-        for (size_t i = 0; i < count; ++i) {
-            grad[i] *= inv_world;
-        }
-    }
-
-    /**
-     * @brief Broadcasts a buffer of data from a root process to all other processes.
-     * @param data Pointer to the data buffer to broadcast.
-     * @param count Number of elements in the buffer.
-     * @param root_rank Number of the process that will send the data.
-     */
-    void broadcast_buffer(float* data, size_t count, int root_rank) {
-        if (!data || count == 0) {
-            return;
-        }
-        const int mpi_count = checked_mpi_count(count);
-        // Broadcast data from the root rank to all processes
-        MPI_Bcast(data, mpi_count, MPI_FLOAT, root_rank, MPI_COMM_WORLD);
-    }
+    tensor.zero_grad();
+}
 } // namespace
 
-CNNModel::CNNModel(std::shared_ptr<Optimizer> optimizer_ptr, float lambda_val)
-    : optimizer(optimizer_ptr), _lambda_val(lambda_val) {
-    if (!optimizer) {
+CNNModel::CNNModel(std::unique_ptr<Optimizer> optimizer,
+                   MPI_Comm communicator,
+                   float gradient_clip)
+    : _optimizer(std::move(optimizer)),
+      _communicator(communicator),
+      _gradient_clip(gradient_clip) {
+    if (!_optimizer) {
         throw std::invalid_argument("CNNModel requires a non-null optimizer.");
     }
-    // Initialize the concatenate layer by default, but it can be replaced or cleared later.
-    concatenate_layer = std::make_shared<ConcatenateLayer>();
+    if (!std::isfinite(_gradient_clip) || _gradient_clip < 0.0f) {
+        throw std::invalid_argument("Gradient clip must be finite and non-negative.");
+    }
 }
 
-void CNNModel::add_conv_layer(std::shared_ptr<Layer> layer) {
+void CNNModel::add_conv_layer(std::unique_ptr<Layer> layer) {
     if (!layer) {
-        throw std::invalid_argument("add_conv_layer received null layer.");
+        throw std::invalid_argument("add_conv_layer received a null layer.");
     }
-    // Add the layer to the end of the convolutional blocks vector
-    conv_blocks.push_back(layer);
+    _feature_layers.push_back(std::move(layer));
+    _parameters_dirty = true;
 }
 
-void CNNModel::add_dense_layer(std::shared_ptr<Layer> layer) {
+void CNNModel::add_dense_layer(std::unique_ptr<Layer> layer) {
     if (!layer) {
-        throw std::invalid_argument("add_dense_layer received null layer.");
+        throw std::invalid_argument("add_dense_layer received a null layer.");
     }
-    // Add the layer to the end of the dense blocks vector
-    dense_blocks.push_back(layer);
+    _head_layers.push_back(std::move(layer));
+    _parameters_dirty = true;
 }
 
-void CNNModel::set_concatenate_layer(std::shared_ptr<Layer> layer) {
+void CNNModel::set_concatenate_layer(std::unique_ptr<Layer> layer) {
     if (!layer) {
-        throw std::invalid_argument("set_concatenate_layer received null layer.");
+        throw std::invalid_argument("set_concatenate_layer received a null layer.");
     }
-    // Assign the new concatenate layer
-    concatenate_layer = layer;
+    _concatenate_layer = std::move(layer);
+    _parameters_dirty = true;
 }
 
 void CNNModel::clear_concatenate_layer() {
-    // Release the shared pointer, making the concatenate layer null
-    concatenate_layer.reset();
+    _concatenate_layer.reset();
+    _parameters_dirty = true;
 }
 
 std::shared_ptr<Tensor> CNNModel::forward(std::shared_ptr<Tensor> sdf_input,
-                                          std::shared_ptr<Tensor> scalar_input) {
+                                         std::shared_ptr<Tensor> scalar_input) {
     if (!sdf_input) {
-        throw std::invalid_argument("CNNModel forward received null input.");
+        throw std::invalid_argument("CNNModel forward received a null SDF tensor.");
     }
 
-    // Start with the primary input
-    auto x = sdf_input;
-    // Pass through convolutional blocks
-    for (const auto& layer : conv_blocks) {
-        x = layer->forward({x}); // conv layers expect a single input tensor
+    auto output = std::move(sdf_input);
+    for (const auto& layer : _feature_layers) {
+        output = layer->forward({output});
     }
 
-    // If a concatenate layer is set, concatenate the output of the conv blocks with the scalar input
-    if (concatenate_layer) {
+    if (_concatenate_layer) {
         if (!scalar_input) {
-            throw std::invalid_argument("CNNModel forward received null scalar_input.");
+            throw std::invalid_argument("CNNModel forward received a null scalar tensor.");
         }
-        x = concatenate_layer->forward({x, scalar_input}); // concatenate layer expects two inputs
+        output = _concatenate_layer->forward({output, scalar_input});
     }
 
-    // Pass through dense blocks
-    for (const auto& layer : dense_blocks) {
-        x = layer->forward({x}); // dense layers expect a single input tensor
+    for (const auto& layer : _head_layers) {
+        output = layer->forward({output});
     }
-
-    return x;
+    return output;
 }
 
 void CNNModel::backward(std::shared_ptr<Tensor> loss_grad) {
     if (!loss_grad) {
-        throw std::invalid_argument("CNNModel backward received null loss_grad.");
+        throw std::invalid_argument("CNNModel backward received a null gradient.");
     }
 
-    // Start backpropagation from the end of the network
-    auto grad = loss_grad;
-
-    // Backpropagate through dense blocks in reverse order
-    for (auto it = dense_blocks.rbegin(); it != dense_blocks.rend(); ++it) {
-        grad = (*it)->backward(grad)[0]; // expect only one input gradient for dense layers
-    }
-
-    // If a concatenate layer is present, backpropagate through it
-    if (concatenate_layer) {
-        const auto split_grads = concatenate_layer->backward(grad);
-        if (split_grads.empty()) {
-            throw std::runtime_error("CNNModel concatenate backward returned empty gradients.");
+    auto gradient = std::move(loss_grad);
+    for (auto iterator = _head_layers.rbegin(); iterator != _head_layers.rend(); ++iterator) {
+        auto gradients = (*iterator)->backward(gradient);
+        if (gradients.size() != 1 || !gradients[0]) {
+            throw std::runtime_error("Head layer must return one non-null input gradient.");
         }
-        // The first gradient corresponds to the output of the conv blocks
-        // The second corresponds to the scalar input
-        grad = split_grads[0]; // we need only this to continue backprop through conv blocks
+        gradient = std::move(gradients[0]);
     }
 
-    // Backpropagate through convolutional blocks in reverse order
-    for (auto it = conv_blocks.rbegin(); it != conv_blocks.rend(); ++it) {
-        grad = (*it)->backward(grad)[0];
+    if (_concatenate_layer) {
+        auto gradients = _concatenate_layer->backward(gradient);
+        if (gradients.size() != 2 || !gradients[0]) {
+            throw std::runtime_error("Concatenate layer must return two input gradients.");
+        }
+        gradient = std::move(gradients[0]);
+    }
+
+    for (auto iterator = _feature_layers.rbegin(); iterator != _feature_layers.rend(); ++iterator) {
+        auto gradients = (*iterator)->backward(gradient);
+        if (gradients.size() != 1 || !gradients[0]) {
+            throw std::runtime_error("Feature layer must return one non-null input gradient.");
+        }
+        gradient = std::move(gradients[0]);
     }
 }
 
-void CNNModel::update() {
-    // Apply gradient clipping and weight updates to a single layer's parameters
-    auto clip_layer = [](const std::shared_ptr<Layer>& layer) {
-        auto clip_tensor = [](const std::shared_ptr<Tensor>& t) {
-            
-            if (t) { // if the tensor is null, there's nothing to clip.
-                float* grad = t->get_grad();
-                size_t size = t->size();
-                // Clip each element of the gradient to be within [-1, 1]
-                for (size_t i = 0; i < size; ++i) {
-                    if (grad[i] > 1.0f) grad[i] = 1.0f;
-                    else if (grad[i] < -1.0f) grad[i] = -1.0f;
-                }
+std::vector<Layer*> CNNModel::ordered_layers() {
+    std::vector<Layer*> layers;
+    layers.reserve(_feature_layers.size() + _head_layers.size() +
+                   (_concatenate_layer ? 1 : 0));
+    for (const auto& layer : _feature_layers) {
+        layers.push_back(layer.get());
+    }
+    if (_concatenate_layer) {
+        layers.push_back(_concatenate_layer.get());
+    }
+    for (const auto& layer : _head_layers) {
+        layers.push_back(layer.get());
+    }
+    return layers;
+}
+
+std::vector<const Layer*> CNNModel::ordered_layers() const {
+    std::vector<const Layer*> layers;
+    layers.reserve(_feature_layers.size() + _head_layers.size() +
+                   (_concatenate_layer ? 1 : 0));
+    for (const auto& layer : _feature_layers) {
+        layers.push_back(layer.get());
+    }
+    if (_concatenate_layer) {
+        layers.push_back(_concatenate_layer.get());
+    }
+    for (const auto& layer : _head_layers) {
+        layers.push_back(layer.get());
+    }
+    return layers;
+}
+
+const std::vector<LayerParameter>& CNNModel::parameters() const {
+    if (!_parameters_dirty) {
+        return _parameter_cache;
+    }
+
+    std::vector<LayerParameter> output;
+    std::unordered_set<const Tensor*> identities;
+    for (const auto& layer : ordered_layers()) {
+        auto layer_parameters = layer->parameters();
+        for (auto& parameter : layer_parameters) {
+            if (!parameter.tensor) {
+                throw std::runtime_error("Layer exposed a null parameter tensor.");
             }
-        };
-
-        // If the layer is a Conv2DLayer or DenseLayer, clip its weights and biases gradients
-        if (auto conv = std::dynamic_pointer_cast<Conv2DLayer>(layer)) {
-            clip_tensor(conv->get_weights_tensor());
-            clip_tensor(conv->get_biases_tensor());
-        } else if (auto dense = std::dynamic_pointer_cast<DenseLayer>(layer)) {
-            clip_tensor(dense->get_weights_tensor());
-            clip_tensor(dense->get_biases_tensor());
+            if (!identities.insert(parameter.tensor.get()).second) {
+                throw std::runtime_error(
+                    "The same parameter tensor was exposed more than once.");
+            }
+            output.push_back(std::move(parameter));
         }
-    };
-
-    for (auto& layer : conv_blocks) { // iterate over convolutional layers
-        clip_layer(layer);
-        layer->update_weights(optimizer);
     }
-
-    if (concatenate_layer) { // if a concatenate layer is set, update its weights as well
-        clip_layer(concatenate_layer);
-        concatenate_layer->update_weights(optimizer);
-    }
-
-    for (auto& layer : dense_blocks) { // iterate over dense layers
-        clip_layer(layer);
-        layer->update_weights(optimizer);
-    }
+    _parameter_cache = std::move(output);
+    _parameters_dirty = false;
+    return _parameter_cache;
 }
 
 void CNNModel::zero_grad() {
-    // Helper lambda to zero gradients for a single layer's parameters
-    auto zero_layer = [](const std::shared_ptr<Layer>& layer) {
-        if (auto conv = std::dynamic_pointer_cast<Conv2DLayer>(layer)) {
-            if (auto w = conv->get_weights_tensor()) w->zero_grad();
-            if (auto b = conv->get_biases_tensor()) b->zero_grad();
-        } else if (auto dense = std::dynamic_pointer_cast<DenseLayer>(layer)) {
-            if (auto w = dense->get_weights_tensor()) w->zero_grad();
-            if (auto b = dense->get_biases_tensor()) b->zero_grad();
+    for (const auto& parameter : parameters()) {
+        if (parameter.tensor) {
+            parameter.tensor->zero_grad();
         }
-    };
-
-    for (const auto& layer : conv_blocks) { // iterate over convolutional layers
-        zero_layer(layer);
-    }
-
-    for (const auto& layer : dense_blocks) { // iterate over dense layers
-        zero_layer(layer);
     }
 }
 
-void CNNModel::synchronize_gradients() {
-    // Check if MPI is ready and if there's more than one process
+void CNNModel::synchronize_gradients(size_t local_sample_count) {
     if (!mpi_ready()) {
         return;
     }
 
-    // Get the total number of processes in the MPI world communicator
-    const int world_size = mpi_world_size();
+    int world_size = 1;
+    MPI_Comm_size(_communicator, &world_size);
     if (world_size <= 1) {
         return;
     }
 
-    // Helper lambda to synchronize gradients for a single layer's parameters
-    auto sync_layer = [&](const std::shared_ptr<Layer>& layer) {
-        
-        // Check if the layer is a Conv2DLayer or DenseLayer and perform allreduce on its weights and biases gradients
-        if (auto conv = std::dynamic_pointer_cast<Conv2DLayer>(layer)) {
-            auto weights = conv->get_weights_tensor();
-            auto biases = conv->get_biases_tensor();
-            if (weights) {
-                allreduce_average(weights->get_grad(), weights->size(), world_size);
-            }
-            if (biases) {
-                allreduce_average(biases->get_grad(), biases->size(), world_size);
-            }
-            return;
-        }
-
-        if (auto dense = std::dynamic_pointer_cast<DenseLayer>(layer)) {
-            auto weights = dense->get_weights_tensor();
-            auto biases = dense->get_biases_tensor();
-            if (weights) {
-                allreduce_average(weights->get_grad(), weights->size(), world_size);
-            }
-            if (biases) {
-                allreduce_average(biases->get_grad(), biases->size(), world_size);
-            }
-        }
-    };
-
-    for (const auto& layer : conv_blocks) { // iterate over convolutional layers
-        sync_layer(layer);
+    const unsigned long long local_count =
+        static_cast<unsigned long long>(local_sample_count);
+    unsigned long long global_count = 0;
+    MPI_Allreduce(&local_count, &global_count, 1, MPI_UNSIGNED_LONG_LONG,
+                  MPI_SUM, _communicator);
+    if (global_count == 0) {
+        throw std::runtime_error("Cannot synchronize gradients for an empty global batch.");
     }
 
-    for (const auto& layer : dense_blocks) { // iterate over dense layers
-        sync_layer(layer);
+    for (const auto& parameter : parameters()) {
+        if (!parameter.tensor || parameter.tensor->size() == 0) {
+            continue;
+        }
+        float* gradient = parameter.tensor->get_grad();
+        for (size_t i = 0; i < parameter.tensor->size(); ++i) {
+            gradient[i] *= static_cast<float>(local_sample_count);
+        }
+        MPI_Allreduce(MPI_IN_PLACE, gradient,
+                      checked_mpi_count(parameter.tensor->size()), MPI_FLOAT,
+                      MPI_SUM, _communicator);
+        const float inverse_count = 1.0f / static_cast<float>(global_count);
+        for (size_t i = 0; i < parameter.tensor->size(); ++i) {
+            gradient[i] *= inverse_count;
+        }
+    }
+}
+
+void CNNModel::update() {
+    for (const auto& parameter : parameters()) {
+        if (!parameter.tensor) {
+            continue;
+        }
+        float* gradient = parameter.tensor->get_grad();
+        if (_gradient_clip > 0.0f) {
+            for (size_t i = 0; i < parameter.tensor->size(); ++i) {
+                gradient[i] = std::clamp(
+                    gradient[i], -_gradient_clip, _gradient_clip);
+            }
+        }
+        _optimizer->apply_gradients(parameter.tensor->get_data(), gradient,
+                                    parameter.tensor->size());
     }
 }
 
@@ -457,188 +316,95 @@ void CNNModel::broadcast_initial_weights(int root_rank) {
     if (!mpi_ready()) {
         return;
     }
-
-    // Get the total number of processes in the MPI world communicator
-    const int world_size = mpi_world_size();
+    int world_size = 1;
+    MPI_Comm_size(_communicator, &world_size);
+    if (root_rank < 0 || root_rank >= world_size) {
+        throw std::invalid_argument("Broadcast root rank is out of range.");
+    }
     if (world_size <= 1) {
         return;
     }
-    
-    if (root_rank < 0 || root_rank >= world_size) {
-        throw std::invalid_argument("broadcast_initial_weights root_rank is out of range.");
-    }
 
-    // Helper lambda to broadcast initial weights for a single layer
-    auto broadcast_layer = [&](const std::shared_ptr<Layer>& layer) {
-
-        // Check if the layer is a Conv2DLayer or DenseLayer and broadcast its weights and biases from the root process to all other processes
-        if (auto conv = std::dynamic_pointer_cast<Conv2DLayer>(layer)) {
-            auto weights = conv->get_weights_tensor();
-            auto biases = conv->get_biases_tensor();
-            if (weights) {
-                broadcast_buffer(weights->get_data(), weights->size(), root_rank);
-            }
-            if (biases) {
-                broadcast_buffer(biases->get_data(), biases->size(), root_rank);
-            }
-            return;
+    for (const auto& parameter : parameters()) {
+        if (parameter.tensor && parameter.tensor->size() > 0) {
+            MPI_Bcast(parameter.tensor->get_data(),
+                      checked_mpi_count(parameter.tensor->size()), MPI_FLOAT,
+                      root_rank, _communicator);
         }
-
-        if (auto dense = std::dynamic_pointer_cast<DenseLayer>(layer)) {
-            auto weights = dense->get_weights_tensor();
-            auto biases = dense->get_biases_tensor();
-            if (weights) {
-                broadcast_buffer(weights->get_data(), weights->size(), root_rank);
-            }
-            if (biases) {
-                broadcast_buffer(biases->get_data(), biases->size(), root_rank);
-            }
-        }
-    };
-
-    for (const auto& layer : conv_blocks) { // iterate over convolutional layers
-        broadcast_layer(layer);
     }
-    for (const auto& layer : dense_blocks) { // iterate over dense layers
-        broadcast_layer(layer);
-    }
-}
-
-float CNNModel::train_step(std::shared_ptr<Tensor> sdf_batch,
-                           std::shared_ptr<Tensor> scalar_batch,
-                           std::shared_ptr<Tensor> target_batch) {
-    if (!sdf_batch || !scalar_batch || !target_batch) {
-        throw std::invalid_argument("CNNModel train_step received null batch tensor.");
-    }
-
-    // Get model predictions
-    auto preds = forward(sdf_batch, scalar_batch);
-
-    // Since the SIMM loss requires the alpha values (AoA) from the scalar input, we need to extract them before computing the loss.
-    const std::vector<size_t> scalar_shape = scalar_batch->get_shape();
-    if (scalar_shape.size() != 2 || scalar_shape[1] < 1) {
-        throw std::invalid_argument("scalar_batch must be 2D with at least one feature (AoA in column 0).");
-    }
-
-    // Create a tensor for the alpha values (AoA) with the same batch size as the scalar input
-    const size_t batch_size = scalar_shape[0];
-    auto alphas = std::make_shared<Tensor>(std::vector<size_t>{batch_size, 1});
-
-    // Extract the alpha values (AoA) from the first column of the scalar input and store them in the alphas tensor
-    float* scalar_ptr = scalar_batch->get_data();
-    float* alpha_ptr = alphas->get_data();
-    const size_t scalar_features = scalar_shape[1];
-
-    for (size_t n = 0; n < batch_size; ++n) {
-        // Copy the first feature for each batch sample
-        alpha_ptr[n] = scalar_ptr[n * scalar_features + 0];
-    }
-
-    // Compute the SIMM loss using predictions, targets, and extracted alphas
-    const float loss = Loss::simm_forward(preds, target_batch, alphas, _lambda_val);
-    // Calculate the gradient of the loss with respect to the predictions
-    auto loss_grad = Loss::simm_backward(preds, target_batch, alphas, _lambda_val);
-    // Zero all learnable parameter gradients before accumulating new ones in the backward pass
-    zero_grad();
-    // Propagate this gradient back through the network
-    backward(loss_grad);
-    
-    synchronize_gradients();
-    update();
-    
-    return loss;
 }
 
 std::shared_ptr<Tensor> CNNModel::predict(std::shared_ptr<Tensor> sdf_input,
-                                          std::shared_ptr<Tensor> scalar_input) {
-    return forward(sdf_input, scalar_input);
+                                         std::shared_ptr<Tensor> scalar_input) {
+    return forward(std::move(sdf_input), std::move(scalar_input));
 }
 
 void CNNModel::export_weights(const std::string& filepath) const {
-    // Open the file in binary mode for writing
-    std::ofstream out(filepath, std::ios::binary);
-    if (!out.is_open()) {
-        throw std::runtime_error("Failed to open export file: " + filepath);
+    parameters();
+    std::ofstream output(filepath, std::ios::binary);
+    if (!output) {
+        throw std::runtime_error("Failed to open weights file for export: " + filepath);
     }
 
-    // Determine the total number of layers that have parameters to export (conv + concatenate + dense)
-    const size_t total_layers = conv_blocks.size() + (concatenate_layer ? 1 : 0) + dense_blocks.size();
-    // Write the total layer count first
-    out.write(reinterpret_cast<const char*>(&total_layers), sizeof(total_layers));
-
-    for (const auto& layer : conv_blocks) { // iterate over convolutional layers
-        write_layer_params(out, layer);
-    }
-
-    if (concatenate_layer) { // include concatenate layer if it exists
-        write_layer_params(out, concatenate_layer);
-    }
-
-    for (const auto& layer : dense_blocks) { // iterate over dense layers
-        write_layer_params(out, layer);
+    write_exact(output, kWeightMagic, sizeof(kWeightMagic));
+    const auto layers = ordered_layers();
+    const size_t layer_count = layers.size();
+    write_exact(output, &layer_count, sizeof(layer_count));
+    for (const auto& layer : layers) {
+        write_string(output, layer->get_layer_name());
+        const auto layer_parameters = layer->parameters();
+        const size_t parameter_count = layer_parameters.size();
+        write_exact(output, &parameter_count, sizeof(parameter_count));
+        for (const auto& parameter : layer_parameters) {
+            if (!parameter.tensor) {
+                throw std::runtime_error("Layer exposed a null parameter tensor.");
+            }
+            write_string(output, parameter.name);
+            write_tensor(output, *parameter.tensor);
+        }
     }
 }
 
 void CNNModel::import_weights(const std::string& filepath) {
-    // Open the file in binary mode for reading
-    std::ifstream in(filepath, std::ios::binary);
-    if (!in.is_open()) {
-        throw std::runtime_error("Failed to open weights file: " + filepath);
+    parameters();
+    std::ifstream input(filepath, std::ios::binary);
+    if (!input) {
+        throw std::runtime_error("Failed to open weights file for import: " + filepath);
     }
 
-    // Read the total number of layers (conv + concatenate + dense)
-    size_t total_layers = 0;
-    read_exact(in, &total_layers, sizeof(total_layers));
-
-    // Reconstruct the ordered list of layers as they were exported
-    std::vector<std::shared_ptr<Layer>> ordered_layers;
-    ordered_layers.reserve(conv_blocks.size() + (concatenate_layer ? 1 : 0) + dense_blocks.size());
-    
-    for (const auto& layer : conv_blocks) { // iterate over convolutional layers
-        ordered_layers.push_back(layer);
+    char magic[sizeof(kWeightMagic)]{};
+    read_exact(input, magic, sizeof(magic));
+    if (std::memcmp(magic, kWeightMagic, sizeof(magic)) != 0) {
+        throw std::runtime_error("Unsupported model weights format.");
     }
 
-    if (concatenate_layer) { // include concatenate layer if it exists
-        ordered_layers.push_back(concatenate_layer);
-    }
-
-    for (const auto& layer : dense_blocks) { // iterate over dense layers
-        ordered_layers.push_back(layer);
-    }
-
-    if (total_layers != ordered_layers.size()) {
+    size_t layer_count = 0;
+    read_exact(input, &layer_count, sizeof(layer_count));
+    const auto layers = ordered_layers();
+    if (layer_count != layers.size()) {
         throw std::runtime_error("Layer count mismatch while importing weights.");
     }
 
-    // Process each layer sequentially as read from the file
-    for (const auto& layer : ordered_layers) {
-        // Read layer name length and name
-        size_t name_len = 0;
-        read_exact(in, &name_len, sizeof(name_len));
-
-        std::string layer_name(name_len, '\0'); // create string of correct size
-        
-        if (name_len > 0) {
-            // Read the layer name from the file
-            read_exact(in, &layer_name[0], name_len);
+    for (const auto& layer : layers) {
+        const std::string layer_name = read_string(input);
+        if (layer_name != layer->get_layer_name()) {
+            throw std::runtime_error("Layer mismatch while importing weights: expected " +
+                                     layer->get_layer_name() + ", got " + layer_name);
         }
 
-        const std::string expected_name = layer->get_layer_name();
-        if (layer_name != expected_name) {
-            throw std::runtime_error("Layer name mismatch: expected " + expected_name + ", got " + layer_name);
+        size_t parameter_count = 0;
+        read_exact(input, &parameter_count, sizeof(parameter_count));
+        const auto layer_parameters = layer->parameters();
+        if (parameter_count != layer_parameters.size()) {
+            throw std::runtime_error("Parameter count mismatch while importing weights.");
         }
 
-        // Read the serialized weights and biases tensors for this layer
-        TensorPayload weights_payload = read_tensor_payload(in);
-        TensorPayload biases_payload = read_tensor_payload(in);
-
-        // Assign the loaded data to the layer's parameters
-        if (auto conv = std::dynamic_pointer_cast<Conv2DLayer>(layer)) {
-            assign_tensor_data(weights_payload, conv->get_weights_tensor());
-            assign_tensor_data(biases_payload, conv->get_biases_tensor());
-        } else if (auto dense = std::dynamic_pointer_cast<DenseLayer>(layer)) {
-            assign_tensor_data(weights_payload, dense->get_weights_tensor());
-            assign_tensor_data(biases_payload, dense->get_biases_tensor());
+        for (const auto& parameter : layer_parameters) {
+            const std::string parameter_name = read_string(input);
+            if (parameter_name != parameter.name || !parameter.tensor) {
+                throw std::runtime_error("Parameter mismatch while importing weights.");
+            }
+            read_tensor(input, *parameter.tensor);
         }
     }
 }

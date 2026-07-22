@@ -13,17 +13,20 @@ AdamOptimizer::AdamOptimizer(float learning_rate,
       _epsilon(epsilon),
       _weight_decay(weight_decay) {
     // Hyperparameter validation
-    if (_learning_rate <= 0.0f) {
-        throw std::invalid_argument("Adam learning_rate must be positive.");
+    if (!std::isfinite(_learning_rate) || _learning_rate <= 0.0f) {
+        throw std::invalid_argument("Adam learning_rate must be finite and positive.");
     }
-    if (_beta1 < 0.0f || _beta1 >= 1.0f) {
-        throw std::invalid_argument("Adam beta1 must be in [0, 1).");
+    if (!std::isfinite(_beta1) || _beta1 < 0.0f || _beta1 >= 1.0f) {
+        throw std::invalid_argument("Adam beta1 must be finite and in [0, 1).");
     }
-    if (_beta2 < 0.0f || _beta2 >= 1.0f) {
-        throw std::invalid_argument("Adam beta2 must be in [0, 1).");
+    if (!std::isfinite(_beta2) || _beta2 < 0.0f || _beta2 >= 1.0f) {
+        throw std::invalid_argument("Adam beta2 must be finite and in [0, 1).");
     }
-    if (_epsilon <= 0.0f) {
-        throw std::invalid_argument("Adam epsilon must be positive.");
+    if (!std::isfinite(_epsilon) || _epsilon <= 0.0f) {
+        throw std::invalid_argument("Adam epsilon must be finite and positive.");
+    }
+    if (!std::isfinite(_weight_decay) || _weight_decay < 0.0f) {
+        throw std::invalid_argument("Adam weight_decay must be finite and non-negative.");
     }
 }
 

@@ -40,12 +40,14 @@ public:
    * @return A pointer to the `float` data array.
    */
   float *get_data() { return _data.data(); }
+  const float *get_data() const { return _data.data(); }
 
   /**
    * @brief Gets a pointer to the beginning of the gradient array.
    * @return A pointer to the `float` gradient array.
    */
   float *get_grad() { return _grad.data(); }
+  const float *get_grad() const { return _grad.data(); }
 
   /**
    * @brief Resets all gradient values in the tensor to zero.
