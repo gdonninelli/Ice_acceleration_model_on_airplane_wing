@@ -8,7 +8,6 @@
 #define FLATTENLAYER_HPP
 
 #include "Layer.hpp"
-#include "optimizers/Optimizer.hpp"
 #include <memory>
 #include <vector>
 
@@ -41,23 +40,6 @@ class FlattenLayer : public Layer {
      */
     std::vector<std::shared_ptr<Tensor>> backward(std::shared_ptr<Tensor> grad_output) override;
 
-    /**
-     * @brief No-operation method for weight updates.
-     * Since the Flatten layer has no learnable parameters, this method does nothing.
-     * It is implemented to satisfy the interface requirements of the Layer base class.
-     * @param optimizer The optimizer to use for weight updates (not used in this layer).
-     */
-    void update_weights(std::shared_ptr<Optimizer> optimizer) override;
-
-    /** @brief Gets the weights and their gradients.
-     * @return Since the Flatten layer has no learnable parameters, this method returns a pair of null pointers.
-     */
-    std::pair<float*, float*> get_weights_and_grads() override;
-
-    /** @brief Gets the biases and their gradients.
-     * @return Since the Flatten layer has no learnable parameters, this method returns a pair of null pointers.
-     */
-    std::pair<float*, float*> get_biases_and_grads() override;
 };
 
 #endif // FLATTENLAYER_HPP

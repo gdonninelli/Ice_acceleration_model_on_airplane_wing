@@ -8,12 +8,9 @@
 #define DENSELAYER_HPP
 
 #include "Layer.hpp"
-#include "optimizers/Optimizer.hpp"
-#include <memory> // TODO check if we need this include
+#include <cstdint>
+#include <memory>
 #include <vector>
-// TODO: check if we need these includes
-// #include <utility>
-// #include <string>
 
 /** 
  * @class DenseLayer
@@ -31,6 +28,7 @@ class DenseLayer : public Layer {
 
     // Cache the input tensor from the forward pass to use in the backward pass for gradient computation.
     std::shared_ptr<Tensor> _input_cache;
+    std::vector<size_t> _output_shape_cache;
 
     public:
     /** 
@@ -38,7 +36,7 @@ class DenseLayer : public Layer {
      * @param input_features The number of input features.
      * @param output_features The number of output features.
     */
-    DenseLayer(int input_features, int output_features);
+    DenseLayer(int input_features, int output_features, uint64_t seed = 1);
 
     /** 
      * @brief Performs the forward pass through the DenseLayer.
@@ -55,23 +53,7 @@ class DenseLayer : public Layer {
      */
     std::vector<std::shared_ptr<Tensor>> backward(std::shared_ptr<Tensor> grad_output) override;
 
-    /** 
-     * @brief Updates the weights of the layer using the provided optimizer.
-     * @param optimizer A shared pointer to the optimizer.
-     */
-    void update_weights(std::shared_ptr<Optimizer> optimizer) override;
-    
-    /** 
-     * @brief Retrieves pointers to the layer's weights and their corresponding gradients.
-     * @return A pair of raw pointers: {weights_data_ptr, weights_grad_ptr}.
-     */
-    std::pair<float*,float*> get_weights_and_grads() override;
-
-    /** 
-     * @brief Retrieves pointers to the layer's biases and their corresponding gradients.
-     * @return A pair of raw pointers: {biases_data_ptr, biases_grad_ptr}.
-     */
-    std::pair<float*,float*> get_biases_and_grads() override;
+    std::vector<LayerParameter> parameters() const override;
 
     /** 
      * @brief Get the weights tensor of the layer.

@@ -80,17 +80,3 @@ std::vector<std::shared_ptr<Tensor>> FlattenLayer::backward(std::shared_ptr<Tens
 
     return {grad_input};
 }
-
-void FlattenLayer::update_weights(std::shared_ptr<Optimizer> optimizer) {
-    // No weights to update in the FlattenLayer.
-}
-
-std::pair<float*, float*> FlattenLayer::get_weights_and_grads() {
-    // No weights in FlattenLayer, return null pointers.
-    return {nullptr, nullptr};
-}
-
-std::pair<float*, float*> FlattenLayer::get_biases_and_grads() {
-    // No biases in FlattenLayer, return null pointers.
-    return {nullptr, nullptr};
-}

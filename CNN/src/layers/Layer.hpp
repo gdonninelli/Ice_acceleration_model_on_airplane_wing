@@ -12,9 +12,12 @@
 #include "core/Tensor.hpp"
 #include <memory>
 #include <string>
+#include <vector>
 
-// Forward declaration of the Optimizer class to avoid circular dependency.
-class Optimizer;
+struct LayerParameter {
+  std::string name;
+  std::shared_ptr<Tensor> tensor;
+};
 
 /**
  * @class Layer
@@ -47,23 +50,10 @@ public:
   virtual std::vector<std::shared_ptr<Tensor>> backward(std::shared_ptr<Tensor> grad_output) = 0; 
 
   /**
-   * @brief Pure virtual method for updating the weights of the layer using the provided optimizer.
-   * @param optimizer A shared pointer to the optimizer used for updating the weights.
+   * @brief Returns every learnable parameter owned by this layer.
+   * Parameter-free layers inherit the empty default implementation.
    */
-  virtual void update_weights(std::shared_ptr<Optimizer> optimizer) = 0;
-
-  /**
-   * @brief Pure virtual method for retrieving pointers to the layer's weights and their corresponding gradients.
-   * In this case, we don't add const since we want to allow modification of the weights and gradients.
-   * @return A std::pair containing (pointer to weights, pointer to weight gradients).
-   */
-  virtual std::pair<float *, float *> get_weights_and_grads() = 0;
-  
-  /**
-   * @brief Pure virtual method for retrieving pointers to the layer's biases and their corresponding gradients.
-   * @return A std::pair containing (pointer to biases, pointer to bias gradients).
-   */
-  virtual std::pair<float *, float *> get_biases_and_grads() = 0;
+  virtual std::vector<LayerParameter> parameters() const { return {}; }
 
   /**
    * @brief Get the name of the layer.

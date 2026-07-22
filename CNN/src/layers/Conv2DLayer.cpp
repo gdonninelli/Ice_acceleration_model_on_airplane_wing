@@ -32,7 +32,8 @@ Conv2DLayer::Conv2DLayer(int in_channels,
                          int out_channels,
                          int kernel_size,
                          int stride,
-                         int padding)
+                         int padding,
+                         uint64_t seed)
     : _in_channels(in_channels),
       _out_channels(out_channels),
       _kernel_size(kernel_size),
@@ -59,7 +60,7 @@ Conv2DLayer::Conv2DLayer(int in_channels,
     const float fan_in = static_cast<float>(_in_channels * _kernel_size * _kernel_size);
     const float fan_out = static_cast<float>(_out_channels * _kernel_size * _kernel_size);
     const float stddev = std::sqrt(2.0f / (fan_in + fan_out));
-    std::default_random_engine generator(1); // for reproducibility
+    std::mt19937_64 generator(seed);
     std::normal_distribution<float> distribution(0.0f, stddev);
 
     // Initialize weights iterating through the data array of the weights tensor.
@@ -113,8 +114,9 @@ std::shared_ptr<Tensor> Conv2DLayer::forward(const std::vector<std::shared_ptr<T
                              static_cast<size_t>(_stride) + 1;
 
     // Create the output tensor with the calculated shape.
-    auto output = std::make_shared<Tensor>(
-        std::vector<size_t>{batch_size, static_cast<size_t>(_out_channels), out_h, out_w});
+    _output_shape_cache =
+        {batch_size, static_cast<size_t>(_out_channels), out_h, out_w};
+    auto output = std::make_shared<Tensor>(_output_shape_cache);
 
     // Data pointers for input, weights, biases, and output.
     float* x_ptr = _input_cache->get_data(); // shape: [batch_size, in_channels, in_h, in_w]
@@ -181,6 +183,9 @@ std::vector<std::shared_ptr<Tensor>> Conv2DLayer::backward(std::shared_ptr<Tenso
 
     if (in_shape.size() != 4 || gd_shape.size() != 4) {
         throw std::invalid_argument("Conv2DLayer backward expects 4D input and grad_output.");
+    }
+    if (gd_shape != _output_shape_cache) {
+        throw std::invalid_argument("Conv2DLayer backward gradient shape mismatch.");
     }
 
     // Extract dimensions from the input shape.
@@ -300,22 +305,8 @@ std::vector<std::shared_ptr<Tensor>> Conv2DLayer::backward(std::shared_ptr<Tenso
     return {grad_input};
 }
 
-void Conv2DLayer::update_weights(std::shared_ptr<Optimizer> optimizer) {
-    if (optimizer) {
-        // Update weights and biases using the optimizer's apply_gradients method
-        optimizer->apply_gradients(_weights->get_data(), _weights->get_grad(), _weights->size());
-        optimizer->apply_gradients(_biases->get_data(), _biases->get_grad(), _biases->size());
-    }
-}
-
-std::pair<float*, float*> Conv2DLayer::get_weights_and_grads() {
-    // Direct access to the weights data and gradients for optimization purposes
-    return {_weights->get_data(), _weights->get_grad()};
-}
-
-std::pair<float*, float*> Conv2DLayer::get_biases_and_grads() {
-    // Direct access to the biases data and gradients for optimization purposes
-    return {_biases->get_data(), _biases->get_grad()};
+std::vector<LayerParameter> Conv2DLayer::parameters() const {
+    return {{"weights", _weights}, {"biases", _biases}};
 }
 
 // Additional helper methods to retrieve the weights tensors.

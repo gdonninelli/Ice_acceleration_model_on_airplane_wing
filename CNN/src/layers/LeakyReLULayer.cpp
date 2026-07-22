@@ -5,10 +5,16 @@
  */
 
 #include "LeakyReLULayer.hpp"
+#include <cmath>
+#include <stdexcept>
 #include <string>
 
 LeakyReLULayer::LeakyReLULayer(float alpha)
     : _alpha(alpha) {
+    if (!std::isfinite(_alpha) || _alpha < 0.0f) {
+        throw std::invalid_argument(
+            "LeakyReLU alpha must be finite and non-negative.");
+    }
     _layer_name = "LeakyReLULayer( " + std::to_string(alpha) + " )";
 }
 
