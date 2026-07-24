@@ -13,3 +13,4 @@ SDF/data/*_alpha_*.dat
 # Git backup and system files
 .git_backup/
 .DS_Store
+TODO_ANALYSIS.md
