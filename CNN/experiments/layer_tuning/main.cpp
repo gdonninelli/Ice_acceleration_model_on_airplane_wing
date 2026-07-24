@@ -106,7 +106,10 @@ int main(int argc, char** argv) {
             {{"conv5x5-dense-128-64", make_blueprint(8, 5, {128, 64})},
              {"conv3x3-dense-128-64", make_blueprint(8, 3, {128, 64})},
              {"conv5x5-dense-256-128", make_blueprint(8, 5, {256, 128})},
-             {"conv5x5-f16-dense-128-64", make_blueprint(16, 5, {128, 64})}},
+             {"conv3x3-dense-256-128", make_blueprint(8, 3, {256, 128})},
+             {"conv5x5-dense-512-256", make_blueprint(8, 5, {512, 256})},
+             {"conv3x3-dense-512-256", make_blueprint(8, 3, {512, 256})},
+             {"conv5x5-dense-64-32", make_blueprint(8, 5, {64, 32})}},
             [](TrialConfig& trial, const ModelBlueprint& model) {
                 trial.model = model;
             });
