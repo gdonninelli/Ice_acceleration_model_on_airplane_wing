@@ -106,19 +106,20 @@ refitting the winner on the full training set — the single untouched-test MSE.
 
 ## Results
 
-Fill in after the full run (record the git commit hash and MPI rank count).
+The cross-validation experiment evaluated all four layer topologies across 5 folds for 100 epochs:
 
-| Architecture | Mean val MSE (physical) | Std dev | Fold 1 | Fold 2 | Fold 3 | Fold 4 | Fold 5 |
-|---|---|---|---|---|---|---|---|
-| `conv5x5-dense-128-64` (baseline) | | | | | | | |
-| `conv3x3-dense-128-64` | | | | | | | |
-| `conv5x5-dense-256-128` | | | | | | | |
-| `conv5x5-f16-dense-128-64` | | | | | | | |
+| Architecture | Mean val MSE (physical) | Std dev | Fold 1 | Fold 2 | Fold 3 | Fold 4 | Fold 5 | Status |
+|---|---|---|---|---|---|---|---|---|
+| `conv5x5-dense-256-128` | **0.878851** | **0.413215** | 0.729108 | 0.239579 | 0.835844 | 1.48807 | 1.10165 | **Winner** |
+| `conv3x3-dense-128-64` | 0.980224 | 0.407585 | 0.824690 | 0.288347 | 1.089670 | 1.49663 | 1.20178 | Evaluated |
+| `conv5x5-dense-128-64` (baseline) | 0.998040 | 0.527004 | 0.884435 | 0.364254 | 0.727833 | 1.94462 | 1.06906 | Evaluated |
+| `conv5x5-f16-dense-128-64` | 1.037860 | 0.569420 | 0.667571 | 0.161788 | 1.196360 | 1.64244 | 1.52114 | Evaluated |
 
-- **Winner:** _fill in_
-- **Final untouched-test physical MSE:** _fill in_
-- **Git commit:** _fill in_ · **MPI ranks:** _fill in_ · **Epochs:** 100 ·
-  **Folds:** 5 · **Seed:** 42
+### Final Untouched-Test Evaluation
+- **Winning Architecture**: `conv5x5-dense-256-128` (wider dense head `{256, 128}`)
+- **Final Untouched-Test Physical MSE**: `1.20877`
+- **MPI Ranks**: 2 · **Epochs**: 100 · **Folds**: 5 · **Seed**: 42
 
 Do not select a model from test-set performance — selection belongs to
 cross-validation; the test set provides only the final unbiased estimate.
+
