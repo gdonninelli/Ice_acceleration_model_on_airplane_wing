@@ -1,0 +1,981 @@
+Candidate 1/13: layer-architecture-search [layer-architecture=conv5x5-dense-128-64]
+  Fold 1/5 | validation physical MSE: 0.884435
+  Fold 2/5 | validation physical MSE: 0.364254
+  Fold 3/5 | validation physical MSE: 0.727833
+  Fold 4/5 | validation physical MSE: 1.94462
+  Fold 5/5 | validation physical MSE: 1.06906
+  Mean validation physical MSE: 0.99804 +/- 0.527004
+Candidate 2/13: layer-architecture-search [layer-architecture=conv3x3-dense-128-64]
+  Fold 1/5 | validation physical MSE: 0.82469
+  Fold 2/5 | validation physical MSE: 0.288347
+  Fold 3/5 | validation physical MSE: 1.08967
+  Fold 4/5 | validation physical MSE: 1.49663
+  Fold 5/5 | validation physical MSE: 1.20178
+  Mean validation physical MSE: 0.980224 +/- 0.407585
+Candidate 3/13: layer-architecture-search [layer-architecture=conv5x5-dense-256-128]
+  Fold 1/5 | validation physical MSE: 0.729108
+  Fold 2/5 | validation physical MSE: 0.239579
+  Fold 3/5 | validation physical MSE: 0.835844
+  Fold 4/5 | validation physical MSE: 1.48807
+  Fold 5/5 | validation physical MSE: 1.10165
+  Mean validation physical MSE: 0.878851 +/- 0.413215
+Candidate 4/13: layer-architecture-search [layer-architecture=conv3x3-dense-256-128]
+  Fold 1/5 | validation physical MSE: 0.704058
+  Fold 2/5 | validation physical MSE: 0.202923
+  Fold 3/5 | validation physical MSE: 0.843003
+  Fold 4/5 | validation physical MSE: 1.26257
+  Fold 5/5 | validation physical MSE: 1.19101
+  Mean validation physical MSE: 0.840713 +/- 0.381084
+Candidate 5/13: layer-architecture-search [layer-architecture=conv5x5-dense-512-256]
+  Fold 1/5 | validation physical MSE: 0.76695
+  Fold 2/5 | validation physical MSE: 0.279081
+  Fold 3/5 | validation physical MSE: 0.763746
+  Fold 4/5 | validation physical MSE: 1.14431
+  Fold 5/5 | validation physical MSE: 1.09237
+  Mean validation physical MSE: 0.809292 +/- 0.308987
+Candidate 6/13: layer-architecture-search [layer-architecture=conv3x3-dense-512-256]
+  Fold 1/5 | validation physical MSE: 1.11851
+  Fold 2/5 | validation physical MSE: 0.365395
+  Fold 3/5 | validation physical MSE: 1.14579
+  Fold 4/5 | validation physical MSE: 1.53802
+  Fold 5/5 | validation physical MSE: 1.42515
+  Mean validation physical MSE: 1.11857 +/- 0.409376
+Candidate 7/13: layer-architecture-search [layer-architecture=conv5x5-dense-64-32]
+  Fold 1/5 | validation physical MSE: 1.61598
+  Fold 2/5 | validation physical MSE: 0.175147
+  Fold 3/5 | validation physical MSE: 0.965751
+  Fold 4/5 | validation physical MSE: 1.23959
+  Fold 5/5 | validation physical MSE: 0.970145
+  Mean validation physical MSE: 0.993322 +/- 0.473087
+Candidate 8/13: layer-architecture-search [layer-architecture=conv5x5-dense-512-256-128]
+  Fold 1/5 | validation physical MSE: 1.24334
+  Fold 2/5 | validation physical MSE: 0.222712
+  Fold 3/5 | validation physical MSE: 0.878465
+  Fold 4/5 | validation physical MSE: 1.59325
+  Fold 5/5 | validation physical MSE: 0.770761
+  Mean validation physical MSE: 0.941706 +/- 0.461663
+Candidate 9/13: layer-architecture-search [layer-architecture=conv5x5-dense-512-256-128-64]
+  Fold 1/5 | validation physical MSE: 1.06036
+  Fold 2/5 | validation physical MSE: 0.31456
+  Fold 3/5 | validation physical MSE: 0.958404
+  Fold 4/5 | validation physical MSE: 1.3074
+  Fold 5/5 | validation physical MSE: 0.998188
+  Mean validation physical MSE: 0.927782 +/- 0.329733
+Candidate 10/13: layer-architecture-search [layer-architecture=conv5x5-dense-768-384]
+  Fold 1/5 | validation physical MSE: 0.85603
+  Fold 2/5 | validation physical MSE: 0.370653
+  Fold 3/5 | validation physical MSE: 0.919406
+  Fold 4/5 | validation physical MSE: 1.59465
+  Fold 5/5 | validation physical MSE: 1.1009
+  Mean validation physical MSE: 0.968328 +/- 0.395494
+Candidate 11/13: layer-architecture-search [layer-architecture=conv5x5-dense-1024-512]
+  Fold 1/5 | validation physical MSE: 0.752245
+  Fold 2/5 | validation physical MSE: 0.312365
+  Fold 3/5 | validation physical MSE: 0.99831
+  Fold 4/5 | validation physical MSE: 1.25975
+  Fold 5/5 | validation physical MSE: 0.681928
+  Mean validation physical MSE: 0.800921 +/- 0.317712
+Candidate 12/13: layer-architecture-search [layer-architecture=conv5x5-dense-1536-768]
+  Fold 1/5 | validation physical MSE: 0.816253
+  Fold 2/5 | validation physical MSE: 0.338724
+  Fold 3/5 | validation physical MSE: 1.04058
+  Fold 4/5 | validation physical MSE: 1.47247
+  Fold 5/5 | validation physical MSE: 1.19173
+  Mean validation physical MSE: 0.971953 +/- 0.381773
+Candidate 13/13: layer-architecture-search [layer-architecture=conv5x5-dense-2048-1024]
+  Fold 1/5 | validation physical MSE: 1.0485
+  Fold 2/5 | validation physical MSE: 0.27284
+  Fold 3/5 | validation physical MSE: 1.01536
+  Fold 4/5 | validation physical MSE: 1.60154
+  Fold 5/5 | validation physical MSE: 1.26586
+  Mean validation physical MSE: 1.04082 +/- 0.437162
+
+==================== SEARCH RESULTS ====================
+Candidate: layer-architecture-search [layer-architecture=conv5x5-dense-128-64]
+  mean validation MSE (physical): 0.99804 +/- 0.527004
+  mean training objective:        0.283442
+  layer-architecture = conv5x5-dense-128-64
+  Fold 1 (train=32, val=8): validation_mse=0.884435 training_objective=0.347927
+    epoch=10 train_objective=1.04428 validation_mse=0.744221
+    epoch=20 train_objective=0.751526 validation_mse=0.751039
+    epoch=30 train_objective=0.576114 validation_mse=0.748856
+    epoch=40 train_objective=0.46673 validation_mse=0.788741
+    epoch=50 train_objective=0.405421 validation_mse=0.81463
+    epoch=60 train_objective=0.373655 validation_mse=0.833278
+    epoch=70 train_objective=0.358843 validation_mse=0.851303
+    epoch=80 train_objective=0.352172 validation_mse=0.864577
+    epoch=90 train_objective=0.349028 validation_mse=0.876445
+    epoch=100 train_objective=0.347927 validation_mse=0.884435
+  Fold 2 (train=32, val=8): validation_mse=0.364254 training_objective=0.297738
+    epoch=10 train_objective=1.03443 validation_mse=0.437652
+    epoch=20 train_objective=0.760281 validation_mse=0.311478
+    epoch=30 train_objective=0.572436 validation_mse=0.324492
+    epoch=40 train_objective=0.449353 validation_mse=0.354629
+    epoch=50 train_objective=0.374865 validation_mse=0.357026
+    epoch=60 train_objective=0.331007 validation_mse=0.349548
+    epoch=70 train_objective=0.309349 validation_mse=0.356438
+    epoch=80 train_objective=0.300956 validation_mse=0.362773
+    epoch=90 train_objective=0.298376 validation_mse=0.363191
+    epoch=100 train_objective=0.297738 validation_mse=0.364254
+  Fold 3 (train=32, val=8): validation_mse=0.727833 training_objective=0.256624
+    epoch=10 train_objective=0.906854 validation_mse=0.767139
+    epoch=20 train_objective=0.644888 validation_mse=0.777873
+    epoch=30 train_objective=0.477675 validation_mse=0.771764
+    epoch=40 train_objective=0.374224 validation_mse=0.770887
+    epoch=50 train_objective=0.31756 validation_mse=0.769243
+    epoch=60 train_objective=0.287271 validation_mse=0.755611
+    epoch=70 train_objective=0.271302 validation_mse=0.745954
+    epoch=80 train_objective=0.262517 validation_mse=0.738723
+    epoch=90 train_objective=0.258279 validation_mse=0.732176
+    epoch=100 train_objective=0.256624 validation_mse=0.727833
+  Fold 4 (train=32, val=8): validation_mse=1.94462 training_objective=0.251003
+    epoch=10 train_objective=0.796797 validation_mse=1.8299
+    epoch=20 train_objective=0.521799 validation_mse=1.89034
+    epoch=30 train_objective=0.361899 validation_mse=1.86116
+    epoch=40 train_objective=0.28774 validation_mse=1.90614
+    epoch=50 train_objective=0.259963 validation_mse=1.92568
+    epoch=60 train_objective=0.252621 validation_mse=1.9268
+    epoch=70 train_objective=0.251305 validation_mse=1.94212
+    epoch=80 train_objective=0.251151 validation_mse=1.93973
+    epoch=90 train_objective=0.25107 validation_mse=1.94561
+    epoch=100 train_objective=0.251003 validation_mse=1.94462
+  Fold 5 (train=32, val=8): validation_mse=1.06906 training_objective=0.263919
+    epoch=10 train_objective=0.769373 validation_mse=1.16311
+    epoch=20 train_objective=0.535085 validation_mse=1.15517
+    epoch=30 train_objective=0.401402 validation_mse=1.15422
+    epoch=40 train_objective=0.328867 validation_mse=1.1166
+    epoch=50 train_objective=0.290837 validation_mse=1.08899
+    epoch=60 train_objective=0.273389 validation_mse=1.08022
+    epoch=70 train_objective=0.266701 validation_mse=1.07563
+    epoch=80 train_objective=0.264617 validation_mse=1.07247
+    epoch=90 train_objective=0.264042 validation_mse=1.06975
+    epoch=100 train_objective=0.263919 validation_mse=1.06906
+
+Candidate: layer-architecture-search [layer-architecture=conv3x3-dense-128-64]
+  mean validation MSE (physical): 0.980224 +/- 0.407585
+  mean training objective:        0.283247
+  layer-architecture = conv3x3-dense-128-64
+  Fold 1 (train=32, val=8): validation_mse=0.82469 training_objective=0.347673
+    epoch=10 train_objective=0.619798 validation_mse=0.750329
+    epoch=20 train_objective=0.386615 validation_mse=0.784005
+    epoch=30 train_objective=0.353254 validation_mse=0.803367
+    epoch=40 train_objective=0.350207 validation_mse=0.801574
+    epoch=50 train_objective=0.348521 validation_mse=0.813878
+    epoch=60 train_objective=0.347969 validation_mse=0.822843
+    epoch=70 train_objective=0.347758 validation_mse=0.825149
+    epoch=80 train_objective=0.347707 validation_mse=0.823294
+    epoch=90 train_objective=0.347681 validation_mse=0.82478
+    epoch=100 train_objective=0.347673 validation_mse=0.82469
+  Fold 2 (train=32, val=8): validation_mse=0.288347 training_objective=0.297572
+    epoch=10 train_objective=0.592158 validation_mse=0.306694
+    epoch=20 train_objective=0.349287 validation_mse=0.317937
+    epoch=30 train_objective=0.303645 validation_mse=0.286394
+    epoch=40 train_objective=0.301384 validation_mse=0.283454
+    epoch=50 train_objective=0.299188 validation_mse=0.291174
+    epoch=60 train_objective=0.297892 validation_mse=0.291176
+    epoch=70 train_objective=0.297731 validation_mse=0.288116
+    epoch=80 train_objective=0.297628 validation_mse=0.286998
+    epoch=90 train_objective=0.297573 validation_mse=0.287825
+    epoch=100 train_objective=0.297572 validation_mse=0.288347
+  Fold 3 (train=32, val=8): validation_mse=1.08967 training_objective=0.256111
+    epoch=10 train_objective=0.478786 validation_mse=1.05582
+    epoch=20 train_objective=0.29128 validation_mse=1.11095
+    epoch=30 train_objective=0.262123 validation_mse=1.11234
+    epoch=40 train_objective=0.259874 validation_mse=1.09396
+    epoch=50 train_objective=0.257074 validation_mse=1.08892
+    epoch=60 train_objective=0.256374 validation_mse=1.09094
+    epoch=70 train_objective=0.256271 validation_mse=1.09246
+    epoch=80 train_objective=0.256132 validation_mse=1.09012
+    epoch=90 train_objective=0.256131 validation_mse=1.08868
+    epoch=100 train_objective=0.256111 validation_mse=1.08967
+  Fold 4 (train=32, val=8): validation_mse=1.49663 training_objective=0.250975
+    epoch=10 train_objective=0.526022 validation_mse=1.55899
+    epoch=20 train_objective=0.287248 validation_mse=1.52061
+    epoch=30 train_objective=0.258807 validation_mse=1.51833
+    epoch=40 train_objective=0.25386 validation_mse=1.50823
+    epoch=50 train_objective=0.252643 validation_mse=1.48814
+    epoch=60 train_objective=0.251196 validation_mse=1.49302
+    epoch=70 train_objective=0.251147 validation_mse=1.49899
+    epoch=80 train_objective=0.251021 validation_mse=1.49858
+    epoch=90 train_objective=0.250981 validation_mse=1.49692
+    epoch=100 train_objective=0.250975 validation_mse=1.49663
+  Fold 5 (train=32, val=8): validation_mse=1.20178 training_objective=0.263902
+    epoch=10 train_objective=0.474059 validation_mse=1.1891
+    epoch=20 train_objective=0.298148 validation_mse=1.20425
+    epoch=30 train_objective=0.268715 validation_mse=1.19648
+    epoch=40 train_objective=0.26726 validation_mse=1.19044
+    epoch=50 train_objective=0.264893 validation_mse=1.19906
+    epoch=60 train_objective=0.264082 validation_mse=1.20369
+    epoch=70 train_objective=0.264038 validation_mse=1.20234
+    epoch=80 train_objective=0.263926 validation_mse=1.20144
+    epoch=90 train_objective=0.263912 validation_mse=1.20185
+    epoch=100 train_objective=0.263902 validation_mse=1.20178
+
+Candidate: layer-architecture-search [layer-architecture=conv5x5-dense-256-128]
+  mean validation MSE (physical): 0.878851 +/- 0.413215
+  mean training objective:        0.283254
+  layer-architecture = conv5x5-dense-256-128
+  Fold 1 (train=32, val=8): validation_mse=0.729108 training_objective=0.347676
+    epoch=10 train_objective=0.809305 validation_mse=0.653898
+    epoch=20 train_objective=0.521285 validation_mse=0.670526
+    epoch=30 train_objective=0.401841 validation_mse=0.6856
+    epoch=40 train_objective=0.360991 validation_mse=0.708376
+    epoch=50 train_objective=0.349814 validation_mse=0.720107
+    epoch=60 train_objective=0.347999 validation_mse=0.729886
+    epoch=70 train_objective=0.347965 validation_mse=0.730115
+    epoch=80 train_objective=0.347851 validation_mse=0.730372
+    epoch=90 train_objective=0.34771 validation_mse=0.73003
+    epoch=100 train_objective=0.347676 validation_mse=0.729108
+  Fold 2 (train=32, val=8): validation_mse=0.239579 training_objective=0.297596
+    epoch=10 train_objective=1.0179 validation_mse=0.238897
+    epoch=20 train_objective=0.642958 validation_mse=0.197116
+    epoch=30 train_objective=0.425798 validation_mse=0.249527
+    epoch=40 train_objective=0.337168 validation_mse=0.25632
+    epoch=50 train_objective=0.306307 validation_mse=0.23254
+    epoch=60 train_objective=0.298866 validation_mse=0.239236
+    epoch=70 train_objective=0.297952 validation_mse=0.240681
+    epoch=80 train_objective=0.297846 validation_mse=0.23765
+    epoch=90 train_objective=0.297695 validation_mse=0.240873
+    epoch=100 train_objective=0.297596 validation_mse=0.239579
+  Fold 3 (train=32, val=8): validation_mse=0.835844 training_objective=0.256113
+    epoch=10 train_objective=0.645052 validation_mse=0.911485
+    epoch=20 train_objective=0.391875 validation_mse=0.890786
+    epoch=30 train_objective=0.292616 validation_mse=0.862582
+    epoch=40 train_objective=0.265376 validation_mse=0.846078
+    epoch=50 train_objective=0.258584 validation_mse=0.838764
+    epoch=60 train_objective=0.256464 validation_mse=0.835981
+    epoch=70 train_objective=0.256238 validation_mse=0.835542
+    epoch=80 train_objective=0.256259 validation_mse=0.835068
+    epoch=90 train_objective=0.256147 validation_mse=0.835151
+    epoch=100 train_objective=0.256113 validation_mse=0.835844
+  Fold 4 (train=32, val=8): validation_mse=1.48807 training_objective=0.250983
+    epoch=10 train_objective=0.740415 validation_mse=1.41969
+    epoch=20 train_objective=0.43708 validation_mse=1.43492
+    epoch=30 train_objective=0.307262 validation_mse=1.40798
+    epoch=40 train_objective=0.263182 validation_mse=1.48153
+    epoch=50 train_objective=0.253716 validation_mse=1.47056
+    epoch=60 train_objective=0.251752 validation_mse=1.48172
+    epoch=70 train_objective=0.251177 validation_mse=1.48613
+    epoch=80 train_objective=0.25108 validation_mse=1.4874
+    epoch=90 train_objective=0.251033 validation_mse=1.49003
+    epoch=100 train_objective=0.250983 validation_mse=1.48807
+  Fold 5 (train=32, val=8): validation_mse=1.10165 training_objective=0.263903
+    epoch=10 train_objective=0.735036 validation_mse=1.14692
+    epoch=20 train_objective=0.437739 validation_mse=1.13475
+    epoch=30 train_objective=0.319173 validation_mse=1.11652
+    epoch=40 train_objective=0.279409 validation_mse=1.09042
+    epoch=50 train_objective=0.266899 validation_mse=1.09546
+    epoch=60 train_objective=0.264097 validation_mse=1.09787
+    epoch=70 train_objective=0.264224 validation_mse=1.10217
+    epoch=80 train_objective=0.264134 validation_mse=1.10291
+    epoch=90 train_objective=0.263937 validation_mse=1.1014
+    epoch=100 train_objective=0.263903 validation_mse=1.10165
+
+Candidate: layer-architecture-search [layer-architecture=conv3x3-dense-256-128]
+  mean validation MSE (physical): 0.840713 +/- 0.381084
+  mean training objective:        0.283245
+  layer-architecture = conv3x3-dense-256-128
+  Fold 1 (train=32, val=8): validation_mse=0.704058 training_objective=0.347673
+    epoch=10 train_objective=0.417022 validation_mse=0.632445
+    epoch=20 train_objective=0.361689 validation_mse=0.695463
+    epoch=30 train_objective=0.352349 validation_mse=0.709052
+    epoch=40 train_objective=0.349142 validation_mse=0.702433
+    epoch=50 train_objective=0.348204 validation_mse=0.702816
+    epoch=60 train_objective=0.3479 validation_mse=0.70541
+    epoch=70 train_objective=0.347755 validation_mse=0.702224
+    epoch=80 train_objective=0.347679 validation_mse=0.703767
+    epoch=90 train_objective=0.347682 validation_mse=0.703857
+    epoch=100 train_objective=0.347673 validation_mse=0.704058
+  Fold 2 (train=32, val=8): validation_mse=0.202923 training_objective=0.297566
+    epoch=10 train_objective=0.489565 validation_mse=0.173637
+    epoch=20 train_objective=0.316853 validation_mse=0.254733
+    epoch=30 train_objective=0.307362 validation_mse=0.17
+    epoch=40 train_objective=0.299799 validation_mse=0.205444
+    epoch=50 train_objective=0.298542 validation_mse=0.201308
+    epoch=60 train_objective=0.297774 validation_mse=0.197358
+    epoch=70 train_objective=0.297722 validation_mse=0.206671
+    epoch=80 train_objective=0.297598 validation_mse=0.200743
+    epoch=90 train_objective=0.297576 validation_mse=0.201476
+    epoch=100 train_objective=0.297566 validation_mse=0.202923
+  Fold 3 (train=32, val=8): validation_mse=0.843003 training_objective=0.256111
+    epoch=10 train_objective=0.355515 validation_mse=0.866184
+    epoch=20 train_objective=0.266892 validation_mse=0.849833
+    epoch=30 train_objective=0.262233 validation_mse=0.855118
+    epoch=40 train_objective=0.256854 validation_mse=0.844689
+    epoch=50 train_objective=0.256986 validation_mse=0.838538
+    epoch=60 train_objective=0.256205 validation_mse=0.843024
+    epoch=70 train_objective=0.256208 validation_mse=0.843884
+    epoch=80 train_objective=0.256119 validation_mse=0.843373
+    epoch=90 train_objective=0.256119 validation_mse=0.843045
+    epoch=100 train_objective=0.256111 validation_mse=0.843003
+  Fold 4 (train=32, val=8): validation_mse=1.26257 training_objective=0.250972
+    epoch=10 train_objective=0.357122 validation_mse=1.24975
+    epoch=20 train_objective=0.266623 validation_mse=1.2352
+    epoch=30 train_objective=0.258636 validation_mse=1.21626
+    epoch=40 train_objective=0.253349 validation_mse=1.27326
+    epoch=50 train_objective=0.251758 validation_mse=1.26149
+    epoch=60 train_objective=0.251319 validation_mse=1.25547
+    epoch=70 train_objective=0.251046 validation_mse=1.26367
+    epoch=80 train_objective=0.251019 validation_mse=1.26407
+    epoch=90 train_objective=0.250978 validation_mse=1.26313
+    epoch=100 train_objective=0.250972 validation_mse=1.26257
+  Fold 5 (train=32, val=8): validation_mse=1.19101 training_objective=0.263902
+    epoch=10 train_objective=0.442158 validation_mse=1.23153
+    epoch=20 train_objective=0.307812 validation_mse=1.23887
+    epoch=30 train_objective=0.269492 validation_mse=1.2086
+    epoch=40 train_objective=0.265224 validation_mse=1.19912
+    epoch=50 train_objective=0.265216 validation_mse=1.19687
+    epoch=60 train_objective=0.264047 validation_mse=1.19307
+    epoch=70 train_objective=0.264025 validation_mse=1.19284
+    epoch=80 train_objective=0.263927 validation_mse=1.19151
+    epoch=90 train_objective=0.263906 validation_mse=1.19114
+    epoch=100 train_objective=0.263902 validation_mse=1.19101
+
+Candidate: layer-architecture-search [layer-architecture=conv5x5-dense-512-256]
+  mean validation MSE (physical): 0.809292 +/- 0.308987
+  mean training objective:        0.283249
+  layer-architecture = conv5x5-dense-512-256
+  Fold 1 (train=32, val=8): validation_mse=0.76695 training_objective=0.347677
+    epoch=10 train_objective=0.583502 validation_mse=0.745828
+    epoch=20 train_objective=0.378183 validation_mse=0.6984
+    epoch=30 train_objective=0.352302 validation_mse=0.77766
+    epoch=40 train_objective=0.351708 validation_mse=0.778114
+    epoch=50 train_objective=0.349094 validation_mse=0.7697
+    epoch=60 train_objective=0.347967 validation_mse=0.773115
+    epoch=70 train_objective=0.34781 validation_mse=0.76411
+    epoch=80 train_objective=0.347733 validation_mse=0.762705
+    epoch=90 train_objective=0.347682 validation_mse=0.76627
+    epoch=100 train_objective=0.347677 validation_mse=0.76695
+  Fold 2 (train=32, val=8): validation_mse=0.279081 training_objective=0.29757
+    epoch=10 train_objective=0.617097 validation_mse=0.23116
+    epoch=20 train_objective=0.348719 validation_mse=0.279369
+    epoch=30 train_objective=0.301521 validation_mse=0.269146
+    epoch=40 train_objective=0.301945 validation_mse=0.284939
+    epoch=50 train_objective=0.299929 validation_mse=0.279875
+    epoch=60 train_objective=0.297895 validation_mse=0.282066
+    epoch=70 train_objective=0.297735 validation_mse=0.277085
+    epoch=80 train_objective=0.297665 validation_mse=0.278474
+    epoch=90 train_objective=0.297577 validation_mse=0.278379
+    epoch=100 train_objective=0.29757 validation_mse=0.279081
+  Fold 3 (train=32, val=8): validation_mse=0.763746 training_objective=0.256119
+    epoch=10 train_objective=0.781889 validation_mse=0.842623
+    epoch=20 train_objective=0.435176 validation_mse=0.820796
+    epoch=30 train_objective=0.305413 validation_mse=0.720562
+    epoch=40 train_objective=0.266772 validation_mse=0.779551
+    epoch=50 train_objective=0.258496 validation_mse=0.766579
+    epoch=60 train_objective=0.256842 validation_mse=0.758987
+    epoch=70 train_objective=0.256637 validation_mse=0.770819
+    epoch=80 train_objective=0.256324 validation_mse=0.761361
+    epoch=90 train_objective=0.256145 validation_mse=0.766559
+    epoch=100 train_objective=0.256119 validation_mse=0.763746
+  Fold 4 (train=32, val=8): validation_mse=1.14431 training_objective=0.250975
+    epoch=10 train_objective=0.471879 validation_mse=1.24007
+    epoch=20 train_objective=0.271516 validation_mse=1.15576
+    epoch=30 train_objective=0.257085 validation_mse=1.15464
+    epoch=40 train_objective=0.255637 validation_mse=1.14541
+    epoch=50 train_objective=0.252097 validation_mse=1.13775
+    epoch=60 train_objective=0.251239 validation_mse=1.14617
+    epoch=70 train_objective=0.251189 validation_mse=1.1477
+    epoch=80 train_objective=0.251002 validation_mse=1.14426
+    epoch=90 train_objective=0.250989 validation_mse=1.14343
+    epoch=100 train_objective=0.250975 validation_mse=1.14431
+  Fold 5 (train=32, val=8): validation_mse=1.09237 training_objective=0.263905
+    epoch=10 train_objective=0.431708 validation_mse=1.14732
+    epoch=20 train_objective=0.281705 validation_mse=1.1208
+    epoch=30 train_objective=0.26759 validation_mse=1.09177
+    epoch=40 train_objective=0.267489 validation_mse=1.08813
+    epoch=50 train_objective=0.265038 validation_mse=1.09214
+    epoch=60 train_objective=0.263992 validation_mse=1.09455
+    epoch=70 train_objective=0.264086 validation_mse=1.09423
+    epoch=80 train_objective=0.263929 validation_mse=1.09316
+    epoch=90 train_objective=0.263911 validation_mse=1.09262
+    epoch=100 train_objective=0.263905 validation_mse=1.09237
+
+Candidate: layer-architecture-search [layer-architecture=conv3x3-dense-512-256]
+  mean validation MSE (physical): 1.11857 +/- 0.409376
+  mean training objective:        0.283244
+  layer-architecture = conv3x3-dense-512-256
+  Fold 1 (train=32, val=8): validation_mse=1.11851 training_objective=0.347674
+    epoch=10 train_objective=0.393672 validation_mse=0.982607
+    epoch=20 train_objective=0.369531 validation_mse=1.10631
+    epoch=30 train_objective=0.353107 validation_mse=1.12451
+    epoch=40 train_objective=0.349224 validation_mse=1.11247
+    epoch=50 train_objective=0.348586 validation_mse=1.12055
+    epoch=60 train_objective=0.347989 validation_mse=1.12441
+    epoch=70 train_objective=0.347695 validation_mse=1.11935
+    epoch=80 train_objective=0.347713 validation_mse=1.11731
+    epoch=90 train_objective=0.347683 validation_mse=1.11813
+    epoch=100 train_objective=0.347674 validation_mse=1.11851
+  Fold 2 (train=32, val=8): validation_mse=0.365395 training_objective=0.297565
+    epoch=10 train_objective=0.331172 validation_mse=0.396113
+    epoch=20 train_objective=0.31972 validation_mse=0.367582
+    epoch=30 train_objective=0.30139 validation_mse=0.348572
+    epoch=40 train_objective=0.299378 validation_mse=0.355028
+    epoch=50 train_objective=0.298213 validation_mse=0.364799
+    epoch=60 train_objective=0.297727 validation_mse=0.367413
+    epoch=70 train_objective=0.297647 validation_mse=0.366985
+    epoch=80 train_objective=0.297601 validation_mse=0.365573
+    epoch=90 train_objective=0.297566 validation_mse=0.365465
+    epoch=100 train_objective=0.297565 validation_mse=0.365395
+  Fold 3 (train=32, val=8): validation_mse=1.14579 training_objective=0.256115
+    epoch=10 train_objective=0.292563 validation_mse=1.1632
+    epoch=20 train_objective=0.289143 validation_mse=1.26107
+    epoch=30 train_objective=0.263961 validation_mse=1.11653
+    epoch=40 train_objective=0.259249 validation_mse=1.15767
+    epoch=50 train_objective=0.2569 validation_mse=1.15541
+    epoch=60 train_objective=0.256613 validation_mse=1.13798
+    epoch=70 train_objective=0.256183 validation_mse=1.14594
+    epoch=80 train_objective=0.25617 validation_mse=1.14969
+    epoch=90 train_objective=0.256124 validation_mse=1.14762
+    epoch=100 train_objective=0.256115 validation_mse=1.14579
+  Fold 4 (train=32, val=8): validation_mse=1.53802 training_objective=0.25097
+    epoch=10 train_objective=0.264429 validation_mse=1.44603
+    epoch=20 train_objective=0.276582 validation_mse=1.47932
+    epoch=30 train_objective=0.254915 validation_mse=1.52279
+    epoch=40 train_objective=0.252559 validation_mse=1.54337
+    epoch=50 train_objective=0.251953 validation_mse=1.54005
+    epoch=60 train_objective=0.251174 validation_mse=1.54177
+    epoch=70 train_objective=0.251051 validation_mse=1.54013
+    epoch=80 train_objective=0.251008 validation_mse=1.53885
+    epoch=90 train_objective=0.250978 validation_mse=1.53843
+    epoch=100 train_objective=0.25097 validation_mse=1.53802
+  Fold 5 (train=32, val=8): validation_mse=1.42515 training_objective=0.263899
+    epoch=10 train_objective=0.300971 validation_mse=1.40077
+    epoch=20 train_objective=0.273748 validation_mse=1.37523
+    epoch=30 train_objective=0.266986 validation_mse=1.3964
+    epoch=40 train_objective=0.265176 validation_mse=1.4247
+    epoch=50 train_objective=0.264436 validation_mse=1.42517
+    epoch=60 train_objective=0.26404 validation_mse=1.42258
+    epoch=70 train_objective=0.263941 validation_mse=1.4247
+    epoch=80 train_objective=0.26393 validation_mse=1.42531
+    epoch=90 train_objective=0.263907 validation_mse=1.42422
+    epoch=100 train_objective=0.263899 validation_mse=1.42515
+
+Candidate: layer-architecture-search [layer-architecture=conv5x5-dense-64-32]
+  mean validation MSE (physical): 0.993322 +/- 0.473087
+  mean training objective:        0.291344
+  layer-architecture = conv5x5-dense-64-32
+  Fold 1 (train=32, val=8): validation_mse=1.61598 training_objective=0.352284
+    epoch=10 train_objective=0.824855 validation_mse=1.58211
+    epoch=20 train_objective=0.646498 validation_mse=1.54277
+    epoch=30 train_objective=0.527649 validation_mse=1.55637
+    epoch=40 train_objective=0.451836 validation_mse=1.5637
+    epoch=50 train_objective=0.406744 validation_mse=1.57763
+    epoch=60 train_objective=0.381726 validation_mse=1.59297
+    epoch=70 train_objective=0.367875 validation_mse=1.60877
+    epoch=80 train_objective=0.359943 validation_mse=1.61277
+    epoch=90 train_objective=0.355142 validation_mse=1.61208
+    epoch=100 train_objective=0.352284 validation_mse=1.61598
+  Fold 2 (train=32, val=8): validation_mse=0.175147 training_objective=0.301802
+    epoch=10 train_objective=0.936809 validation_mse=0.260174
+    epoch=20 train_objective=0.722438 validation_mse=0.176951
+    epoch=30 train_objective=0.583247 validation_mse=0.171622
+    epoch=40 train_objective=0.485261 validation_mse=0.187623
+    epoch=50 train_objective=0.418567 validation_mse=0.186669
+    epoch=60 train_objective=0.371337 validation_mse=0.181559
+    epoch=70 train_objective=0.339396 validation_mse=0.179672
+    epoch=80 train_objective=0.319078 validation_mse=0.175477
+    epoch=90 train_objective=0.307694 validation_mse=0.176251
+    epoch=100 train_objective=0.301802 validation_mse=0.175147
+  Fold 3 (train=32, val=8): validation_mse=0.965751 training_objective=0.25863
+    epoch=10 train_objective=0.80049 validation_mse=0.984537
+    epoch=20 train_objective=0.612004 validation_mse=0.969242
+    epoch=30 train_objective=0.483518 validation_mse=0.977982
+    epoch=40 train_objective=0.396482 validation_mse=0.978025
+    epoch=50 train_objective=0.33697 validation_mse=0.989614
+    epoch=60 train_objective=0.300831 validation_mse=0.985456
+    epoch=70 train_objective=0.280104 validation_mse=0.976445
+    epoch=80 train_objective=0.268648 validation_mse=0.972034
+    epoch=90 train_objective=0.262125 validation_mse=0.968215
+    epoch=100 train_objective=0.25863 validation_mse=0.965751
+  Fold 4 (train=32, val=8): validation_mse=1.23959 training_objective=0.257666
+    epoch=10 train_objective=0.928686 validation_mse=1.10315
+    epoch=20 train_objective=0.699454 validation_mse=1.20791
+    epoch=30 train_objective=0.53296 validation_mse=1.21635
+    epoch=40 train_objective=0.420107 validation_mse=1.1908
+    epoch=50 train_objective=0.350827 validation_mse=1.1917
+    epoch=60 train_objective=0.309164 validation_mse=1.21123
+    epoch=70 train_objective=0.284888 validation_mse=1.21794
+    epoch=80 train_objective=0.270939 validation_mse=1.22384
+    epoch=90 train_objective=0.26316 validation_mse=1.23007
+    epoch=100 train_objective=0.257666 validation_mse=1.23959
+  Fold 5 (train=32, val=8): validation_mse=0.970145 training_objective=0.28634
+    epoch=10 train_objective=1.02278 validation_mse=0.896871
+    epoch=20 train_objective=0.790619 validation_mse=0.946511
+    epoch=30 train_objective=0.642674 validation_mse=0.968585
+    epoch=40 train_objective=0.529004 validation_mse=0.967738
+    epoch=50 train_objective=0.448683 validation_mse=0.970635
+    epoch=60 train_objective=0.390617 validation_mse=0.967453
+    epoch=70 train_objective=0.34818 validation_mse=0.966293
+    epoch=80 train_objective=0.318704 validation_mse=0.96518
+    epoch=90 train_objective=0.298962 validation_mse=0.967243
+    epoch=100 train_objective=0.28634 validation_mse=0.970145
+
+Candidate: layer-architecture-search [layer-architecture=conv5x5-dense-512-256-128]
+  mean validation MSE (physical): 0.941706 +/- 0.461663
+  mean training objective:        0.28325
+  layer-architecture = conv5x5-dense-512-256-128
+  Fold 1 (train=32, val=8): validation_mse=1.24334 training_objective=0.347678
+    epoch=10 train_objective=0.628661 validation_mse=0.987302
+    epoch=20 train_objective=0.438193 validation_mse=1.04617
+    epoch=30 train_objective=0.376373 validation_mse=1.14466
+    epoch=40 train_objective=0.35329 validation_mse=1.20698
+    epoch=50 train_objective=0.348251 validation_mse=1.23891
+    epoch=60 train_objective=0.348275 validation_mse=1.25001
+    epoch=70 train_objective=0.347951 validation_mse=1.24857
+    epoch=80 train_objective=0.347686 validation_mse=1.24395
+    epoch=90 train_objective=0.347701 validation_mse=1.24221
+    epoch=100 train_objective=0.347678 validation_mse=1.24334
+  Fold 2 (train=32, val=8): validation_mse=0.222712 training_objective=0.297573
+    epoch=10 train_objective=0.703253 validation_mse=0.248213
+    epoch=20 train_objective=0.442488 validation_mse=0.227629
+    epoch=30 train_objective=0.333165 validation_mse=0.234865
+    epoch=40 train_objective=0.302622 validation_mse=0.2173
+    epoch=50 train_objective=0.298579 validation_mse=0.222494
+    epoch=60 train_objective=0.29827 validation_mse=0.223109
+    epoch=70 train_objective=0.297822 validation_mse=0.224341
+    epoch=80 train_objective=0.297619 validation_mse=0.222978
+    epoch=90 train_objective=0.297585 validation_mse=0.222817
+    epoch=100 train_objective=0.297573 validation_mse=0.222712
+  Fold 3 (train=32, val=8): validation_mse=0.878465 training_objective=0.256119
+    epoch=10 train_objective=0.561587 validation_mse=0.910678
+    epoch=20 train_objective=0.342975 validation_mse=0.884931
+    epoch=30 train_objective=0.273378 validation_mse=0.891825
+    epoch=40 train_objective=0.258906 validation_mse=0.883325
+    epoch=50 train_objective=0.257169 validation_mse=0.884102
+    epoch=60 train_objective=0.256762 validation_mse=0.879683
+    epoch=70 train_objective=0.256297 validation_mse=0.877561
+    epoch=80 train_objective=0.256152 validation_mse=0.878449
+    epoch=90 train_objective=0.256132 validation_mse=0.878781
+    epoch=100 train_objective=0.256119 validation_mse=0.878465
+  Fold 4 (train=32, val=8): validation_mse=1.59325 training_objective=0.250973
+    epoch=10 train_objective=0.566993 validation_mse=1.56365
+    epoch=20 train_objective=0.323094 validation_mse=1.54708
+    epoch=30 train_objective=0.264592 validation_mse=1.5906
+    epoch=40 train_objective=0.254074 validation_mse=1.61316
+    epoch=50 train_objective=0.252318 validation_mse=1.58916
+    epoch=60 train_objective=0.251582 validation_mse=1.59474
+    epoch=70 train_objective=0.251126 validation_mse=1.59204
+    epoch=80 train_objective=0.251032 validation_mse=1.59543
+    epoch=90 train_objective=0.25099 validation_mse=1.59521
+    epoch=100 train_objective=0.250973 validation_mse=1.59325
+  Fold 5 (train=32, val=8): validation_mse=0.770761 training_objective=0.263907
+    epoch=10 train_objective=0.55199 validation_mse=0.812996
+    epoch=20 train_objective=0.35648 validation_mse=0.808342
+    epoch=30 train_objective=0.292771 validation_mse=0.790221
+    epoch=40 train_objective=0.270542 validation_mse=0.775733
+    epoch=50 train_objective=0.264529 validation_mse=0.769085
+    epoch=60 train_objective=0.264371 validation_mse=0.766136
+    epoch=70 train_objective=0.264179 validation_mse=0.767143
+    epoch=80 train_objective=0.263977 validation_mse=0.769305
+    epoch=90 train_objective=0.263913 validation_mse=0.770626
+    epoch=100 train_objective=0.263907 validation_mse=0.770761
+
+Candidate: layer-architecture-search [layer-architecture=conv5x5-dense-512-256-128-64]
+  mean validation MSE (physical): 0.927782 +/- 0.329733
+  mean training objective:        0.283264
+  layer-architecture = conv5x5-dense-512-256-128-64
+  Fold 1 (train=32, val=8): validation_mse=1.06036 training_objective=0.347686
+    epoch=10 train_objective=0.709303 validation_mse=0.860471
+    epoch=20 train_objective=0.499121 validation_mse=0.86218
+    epoch=30 train_objective=0.418683 validation_mse=0.944129
+    epoch=40 train_objective=0.379981 validation_mse=0.985815
+    epoch=50 train_objective=0.358147 validation_mse=1.02355
+    epoch=60 train_objective=0.349371 validation_mse=1.04759
+    epoch=70 train_objective=0.347774 validation_mse=1.0624
+    epoch=80 train_objective=0.347825 validation_mse=1.06446
+    epoch=90 train_objective=0.347774 validation_mse=1.06245
+    epoch=100 train_objective=0.347686 validation_mse=1.06036
+  Fold 2 (train=32, val=8): validation_mse=0.31456 training_objective=0.297582
+    epoch=10 train_objective=0.766261 validation_mse=0.402538
+    epoch=20 train_objective=0.528226 validation_mse=0.363497
+    epoch=30 train_objective=0.38629 validation_mse=0.347577
+    epoch=40 train_objective=0.320672 validation_mse=0.333393
+    epoch=50 train_objective=0.301748 validation_mse=0.324954
+    epoch=60 train_objective=0.298738 validation_mse=0.317477
+    epoch=70 train_objective=0.297995 validation_mse=0.313265
+    epoch=80 train_objective=0.297697 validation_mse=0.312592
+    epoch=90 train_objective=0.297608 validation_mse=0.314095
+    epoch=100 train_objective=0.297582 validation_mse=0.31456
+  Fold 3 (train=32, val=8): validation_mse=0.958404 training_objective=0.256135
+    epoch=10 train_objective=0.683098 validation_mse=1.18664
+    epoch=20 train_objective=0.473093 validation_mse=1.16717
+    epoch=30 train_objective=0.367494 validation_mse=1.10029
+    epoch=40 train_objective=0.309845 validation_mse=1.05022
+    epoch=50 train_objective=0.279663 validation_mse=1.01013
+    epoch=60 train_objective=0.265214 validation_mse=0.985153
+    epoch=70 train_objective=0.259033 validation_mse=0.9679
+    epoch=80 train_objective=0.256695 validation_mse=0.961981
+    epoch=90 train_objective=0.256152 validation_mse=0.960102
+    epoch=100 train_objective=0.256135 validation_mse=0.958404
+  Fold 4 (train=32, val=8): validation_mse=1.3074 training_objective=0.251002
+    epoch=10 train_objective=0.750439 validation_mse=1.25446
+    epoch=20 train_objective=0.496576 validation_mse=1.36855
+    epoch=30 train_objective=0.35811 validation_mse=1.3928
+    epoch=40 train_objective=0.29343 validation_mse=1.36889
+    epoch=50 train_objective=0.267338 validation_mse=1.35154
+    epoch=60 train_objective=0.257737 validation_mse=1.32818
+    epoch=70 train_objective=0.253021 validation_mse=1.32024
+    epoch=80 train_objective=0.251254 validation_mse=1.31147
+    epoch=90 train_objective=0.251 validation_mse=1.30902
+    epoch=100 train_objective=0.251002 validation_mse=1.3074
+  Fold 5 (train=32, val=8): validation_mse=0.998188 training_objective=0.263916
+    epoch=10 train_objective=0.639625 validation_mse=1.09239
+    epoch=20 train_objective=0.422996 validation_mse=1.08361
+    epoch=30 train_objective=0.329824 validation_mse=1.059
+    epoch=40 train_objective=0.28923 validation_mse=1.03345
+    epoch=50 train_objective=0.271005 validation_mse=1.00377
+    epoch=60 train_objective=0.265055 validation_mse=0.996681
+    epoch=70 train_objective=0.264088 validation_mse=0.998886
+    epoch=80 train_objective=0.264036 validation_mse=0.997548
+    epoch=90 train_objective=0.263985 validation_mse=0.997621
+    epoch=100 train_objective=0.263916 validation_mse=0.998188
+
+Candidate: layer-architecture-search [layer-architecture=conv5x5-dense-768-384]
+  mean validation MSE (physical): 0.968328 +/- 0.395494
+  mean training objective:        0.28325
+  layer-architecture = conv5x5-dense-768-384
+  Fold 1 (train=32, val=8): validation_mse=0.85603 training_objective=0.347681
+    epoch=10 train_objective=0.582733 validation_mse=0.835401
+    epoch=20 train_objective=0.363452 validation_mse=0.820768
+    epoch=30 train_objective=0.358648 validation_mse=0.85529
+    epoch=40 train_objective=0.352577 validation_mse=0.87995
+    epoch=50 train_objective=0.348822 validation_mse=0.854369
+    epoch=60 train_objective=0.348176 validation_mse=0.851476
+    epoch=70 train_objective=0.347844 validation_mse=0.857045
+    epoch=80 train_objective=0.347739 validation_mse=0.857181
+    epoch=90 train_objective=0.347684 validation_mse=0.856283
+    epoch=100 train_objective=0.347681 validation_mse=0.85603
+  Fold 2 (train=32, val=8): validation_mse=0.370653 training_objective=0.297572
+    epoch=10 train_objective=0.469646 validation_mse=0.340272
+    epoch=20 train_objective=0.302657 validation_mse=0.35088
+    epoch=30 train_objective=0.311411 validation_mse=0.369614
+    epoch=40 train_objective=0.300605 validation_mse=0.370858
+    epoch=50 train_objective=0.298331 validation_mse=0.368627
+    epoch=60 train_objective=0.298183 validation_mse=0.368957
+    epoch=70 train_objective=0.297611 validation_mse=0.370145
+    epoch=80 train_objective=0.29765 validation_mse=0.371002
+    epoch=90 train_objective=0.297566 validation_mse=0.370956
+    epoch=100 train_objective=0.297572 validation_mse=0.370653
+  Fold 3 (train=32, val=8): validation_mse=0.919406 training_objective=0.25612
+    epoch=10 train_objective=0.523949 validation_mse=1.0081
+    epoch=20 train_objective=0.278588 validation_mse=0.916179
+    epoch=30 train_objective=0.265283 validation_mse=0.943144
+    epoch=40 train_objective=0.261327 validation_mse=0.920013
+    epoch=50 train_objective=0.257421 validation_mse=0.915498
+    epoch=60 train_objective=0.256517 validation_mse=0.92315
+    epoch=70 train_objective=0.256322 validation_mse=0.918273
+    epoch=80 train_objective=0.256175 validation_mse=0.919098
+    epoch=90 train_objective=0.256124 validation_mse=0.920393
+    epoch=100 train_objective=0.25612 validation_mse=0.919406
+  Fold 4 (train=32, val=8): validation_mse=1.59465 training_objective=0.25097
+    epoch=10 train_objective=0.412864 validation_mse=1.66737
+    epoch=20 train_objective=0.256206 validation_mse=1.63561
+    epoch=30 train_objective=0.264433 validation_mse=1.61735
+    epoch=40 train_objective=0.253597 validation_mse=1.59292
+    epoch=50 train_objective=0.252064 validation_mse=1.59308
+    epoch=60 train_objective=0.251343 validation_mse=1.59753
+    epoch=70 train_objective=0.251135 validation_mse=1.59524
+    epoch=80 train_objective=0.251001 validation_mse=1.59402
+    epoch=90 train_objective=0.250993 validation_mse=1.59467
+    epoch=100 train_objective=0.25097 validation_mse=1.59465
+  Fold 5 (train=32, val=8): validation_mse=1.1009 training_objective=0.263903
+    epoch=10 train_objective=0.425636 validation_mse=1.13482
+    epoch=20 train_objective=0.276563 validation_mse=1.12612
+    epoch=30 train_objective=0.270844 validation_mse=1.10528
+    epoch=40 train_objective=0.267239 validation_mse=1.09803
+    epoch=50 train_objective=0.264807 validation_mse=1.10063
+    epoch=60 train_objective=0.264084 validation_mse=1.10165
+    epoch=70 train_objective=0.264103 validation_mse=1.10106
+    epoch=80 train_objective=0.26391 validation_mse=1.10105
+    epoch=90 train_objective=0.263919 validation_mse=1.10091
+    epoch=100 train_objective=0.263903 validation_mse=1.1009
+
+Candidate: layer-architecture-search [layer-architecture=conv5x5-dense-1024-512]
+  mean validation MSE (physical): 0.800921 +/- 0.317712
+  mean training objective:        0.283249
+  layer-architecture = conv5x5-dense-1024-512
+  Fold 1 (train=32, val=8): validation_mse=0.752245 training_objective=0.347677
+    epoch=10 train_objective=0.523392 validation_mse=0.717741
+    epoch=20 train_objective=0.358889 validation_mse=0.763444
+    epoch=30 train_objective=0.360347 validation_mse=0.73483
+    epoch=40 train_objective=0.351603 validation_mse=0.763464
+    epoch=50 train_objective=0.348549 validation_mse=0.756175
+    epoch=60 train_objective=0.348245 validation_mse=0.74474
+    epoch=70 train_objective=0.347799 validation_mse=0.74837
+    epoch=80 train_objective=0.347735 validation_mse=0.753373
+    epoch=90 train_objective=0.347688 validation_mse=0.753286
+    epoch=100 train_objective=0.347677 validation_mse=0.752245
+  Fold 2 (train=32, val=8): validation_mse=0.312365 training_objective=0.297572
+    epoch=10 train_objective=0.463149 validation_mse=0.279535
+    epoch=20 train_objective=0.306333 validation_mse=0.288262
+    epoch=30 train_objective=0.31301 validation_mse=0.320039
+    epoch=40 train_objective=0.300705 validation_mse=0.31608
+    epoch=50 train_objective=0.298523 validation_mse=0.307701
+    epoch=60 train_objective=0.298223 validation_mse=0.309417
+    epoch=70 train_objective=0.29764 validation_mse=0.313595
+    epoch=80 train_objective=0.297655 validation_mse=0.313928
+    epoch=90 train_objective=0.29757 validation_mse=0.312599
+    epoch=100 train_objective=0.297572 validation_mse=0.312365
+  Fold 3 (train=32, val=8): validation_mse=0.99831 training_objective=0.256119
+    epoch=10 train_objective=0.452062 validation_mse=1.12382
+    epoch=20 train_objective=0.268681 validation_mse=0.956849
+    epoch=30 train_objective=0.274263 validation_mse=1.0308
+    epoch=40 train_objective=0.260208 validation_mse=0.987518
+    epoch=50 train_objective=0.257095 validation_mse=0.999579
+    epoch=60 train_objective=0.256777 validation_mse=1.00353
+    epoch=70 train_objective=0.256248 validation_mse=0.99474
+    epoch=80 train_objective=0.256199 validation_mse=1.00166
+    epoch=90 train_objective=0.256127 validation_mse=0.99972
+    epoch=100 train_objective=0.256119 validation_mse=0.99831
+  Fold 4 (train=32, val=8): validation_mse=1.25975 training_objective=0.250974
+    epoch=10 train_objective=0.313594 validation_mse=1.27339
+    epoch=20 train_objective=0.272161 validation_mse=1.23552
+    epoch=30 train_objective=0.260017 validation_mse=1.25036
+    epoch=40 train_objective=0.252802 validation_mse=1.26755
+    epoch=50 train_objective=0.252228 validation_mse=1.26501
+    epoch=60 train_objective=0.251152 validation_mse=1.26009
+    epoch=70 train_objective=0.251148 validation_mse=1.2593
+    epoch=80 train_objective=0.250989 validation_mse=1.26027
+    epoch=90 train_objective=0.250986 validation_mse=1.2606
+    epoch=100 train_objective=0.250974 validation_mse=1.25975
+  Fold 5 (train=32, val=8): validation_mse=0.681928 training_objective=0.263906
+    epoch=10 train_objective=0.402116 validation_mse=0.726773
+    epoch=20 train_objective=0.278718 validation_mse=0.674049
+    epoch=30 train_objective=0.273178 validation_mse=0.666334
+    epoch=40 train_objective=0.267523 validation_mse=0.676712
+    epoch=50 train_objective=0.264452 validation_mse=0.681588
+    epoch=60 train_objective=0.264433 validation_mse=0.68356
+    epoch=70 train_objective=0.263984 validation_mse=0.681727
+    epoch=80 train_objective=0.263962 validation_mse=0.681194
+    epoch=90 train_objective=0.263907 validation_mse=0.681568
+    epoch=100 train_objective=0.263906 validation_mse=0.681928
+
+Candidate: layer-architecture-search [layer-architecture=conv5x5-dense-1536-768]
+  mean validation MSE (physical): 0.971953 +/- 0.381773
+  mean training objective:        0.283247
+  layer-architecture = conv5x5-dense-1536-768
+  Fold 1 (train=32, val=8): validation_mse=0.816253 training_objective=0.347676
+    epoch=10 train_objective=0.396887 validation_mse=0.706382
+    epoch=20 train_objective=0.372737 validation_mse=0.800161
+    epoch=30 train_objective=0.355006 validation_mse=0.825582
+    epoch=40 train_objective=0.350177 validation_mse=0.819726
+    epoch=50 train_objective=0.34863 validation_mse=0.820246
+    epoch=60 train_objective=0.347883 validation_mse=0.821838
+    epoch=70 train_objective=0.347868 validation_mse=0.818775
+    epoch=80 train_objective=0.347682 validation_mse=0.817774
+    epoch=90 train_objective=0.347691 validation_mse=0.817082
+    epoch=100 train_objective=0.347676 validation_mse=0.816253
+  Fold 2 (train=32, val=8): validation_mse=0.338724 training_objective=0.29757
+    epoch=10 train_objective=0.3444 validation_mse=0.338541
+    epoch=20 train_objective=0.32738 validation_mse=0.341004
+    epoch=30 train_objective=0.303852 validation_mse=0.346287
+    epoch=40 train_objective=0.300395 validation_mse=0.338522
+    epoch=50 train_objective=0.298486 validation_mse=0.337144
+    epoch=60 train_objective=0.297847 validation_mse=0.340512
+    epoch=70 train_objective=0.29769 validation_mse=0.34002
+    epoch=80 train_objective=0.297616 validation_mse=0.338249
+    epoch=90 train_objective=0.297563 validation_mse=0.338642
+    epoch=100 train_objective=0.29757 validation_mse=0.338724
+  Fold 3 (train=32, val=8): validation_mse=1.04058 training_objective=0.256112
+    epoch=10 train_objective=0.32276 validation_mse=1.07706
+    epoch=20 train_objective=0.279369 validation_mse=1.11355
+    epoch=30 train_objective=0.267269 validation_mse=1.0117
+    epoch=40 train_objective=0.258375 validation_mse=1.03833
+    epoch=50 train_objective=0.257486 validation_mse=1.05579
+    epoch=60 train_objective=0.256416 validation_mse=1.04106
+    epoch=70 train_objective=0.256298 validation_mse=1.03428
+    epoch=80 train_objective=0.25614 validation_mse=1.03753
+    epoch=90 train_objective=0.256136 validation_mse=1.04065
+    epoch=100 train_objective=0.256112 validation_mse=1.04058
+  Fold 4 (train=32, val=8): validation_mse=1.47247 training_objective=0.250975
+    epoch=10 train_objective=0.293946 validation_mse=1.42278
+    epoch=20 train_objective=0.288938 validation_mse=1.47336
+    epoch=30 train_objective=0.257266 validation_mse=1.48446
+    epoch=40 train_objective=0.254983 validation_mse=1.48039
+    epoch=50 train_objective=0.251738 validation_mse=1.47668
+    epoch=60 train_objective=0.251516 validation_mse=1.47524
+    epoch=70 train_objective=0.25107 validation_mse=1.47475
+    epoch=80 train_objective=0.251041 validation_mse=1.47241
+    epoch=90 train_objective=0.250977 validation_mse=1.47275
+    epoch=100 train_objective=0.250975 validation_mse=1.47247
+  Fold 5 (train=32, val=8): validation_mse=1.19173 training_objective=0.263903
+    epoch=10 train_objective=0.43007 validation_mse=1.2473
+    epoch=20 train_objective=0.279754 validation_mse=1.1738
+    epoch=30 train_objective=0.275594 validation_mse=1.22463
+    epoch=40 train_objective=0.269547 validation_mse=1.17111
+    epoch=50 train_objective=0.26449 validation_mse=1.18878
+    epoch=60 train_objective=0.264625 validation_mse=1.2016
+    epoch=70 train_objective=0.264044 validation_mse=1.19175
+    epoch=80 train_objective=0.263962 validation_mse=1.18712
+    epoch=90 train_objective=0.263926 validation_mse=1.18961
+    epoch=100 train_objective=0.263903 validation_mse=1.19173
+
+Candidate: layer-architecture-search [layer-architecture=conv5x5-dense-2048-1024]
+  mean validation MSE (physical): 1.04082 +/- 0.437162
+  mean training objective:        0.283248
+  layer-architecture = conv5x5-dense-2048-1024
+  Fold 1 (train=32, val=8): validation_mse=1.0485 training_objective=0.347673
+    epoch=10 train_objective=0.375319 validation_mse=1.13698
+    epoch=20 train_objective=0.389018 validation_mse=1.03481
+    epoch=30 train_objective=0.352143 validation_mse=1.01197
+    epoch=40 train_objective=0.3526 validation_mse=1.03035
+    epoch=50 train_objective=0.347991 validation_mse=1.045
+    epoch=60 train_objective=0.348356 validation_mse=1.05047
+    epoch=70 train_objective=0.347773 validation_mse=1.05097
+    epoch=80 train_objective=0.347708 validation_mse=1.05011
+    epoch=90 train_objective=0.347703 validation_mse=1.04899
+    epoch=100 train_objective=0.347673 validation_mse=1.0485
+  Fold 2 (train=32, val=8): validation_mse=0.27284 training_objective=0.29757
+    epoch=10 train_objective=0.318504 validation_mse=0.311523
+    epoch=20 train_objective=0.336078 validation_mse=0.292118
+    epoch=30 train_objective=0.300201 validation_mse=0.27737
+    epoch=40 train_objective=0.302273 validation_mse=0.26913
+    epoch=50 train_objective=0.297963 validation_mse=0.269581
+    epoch=60 train_objective=0.298068 validation_mse=0.271197
+    epoch=70 train_objective=0.297747 validation_mse=0.271844
+    epoch=80 train_objective=0.297573 validation_mse=0.272697
+    epoch=90 train_objective=0.297584 validation_mse=0.273204
+    epoch=100 train_objective=0.29757 validation_mse=0.27284
+  Fold 3 (train=32, val=8): validation_mse=1.01536 training_objective=0.256113
+    epoch=10 train_objective=0.285786 validation_mse=0.97116
+    epoch=20 train_objective=0.29166 validation_mse=1.00239
+    epoch=30 train_objective=0.262323 validation_mse=1.01646
+    epoch=40 train_objective=0.259177 validation_mse=1.01964
+    epoch=50 train_objective=0.257268 validation_mse=1.01976
+    epoch=60 train_objective=0.256509 validation_mse=1.01721
+    epoch=70 train_objective=0.256191 validation_mse=1.01541
+    epoch=80 train_objective=0.256196 validation_mse=1.01494
+    epoch=90 train_objective=0.256117 validation_mse=1.01468
+    epoch=100 train_objective=0.256113 validation_mse=1.01536
+  Fold 4 (train=32, val=8): validation_mse=1.60154 training_objective=0.250977
+    epoch=10 train_objective=0.273683 validation_mse=1.6991
+    epoch=20 train_objective=0.29858 validation_mse=1.59928
+    epoch=30 train_objective=0.254627 validation_mse=1.57211
+    epoch=40 train_objective=0.256913 validation_mse=1.58349
+    epoch=50 train_objective=0.251216 validation_mse=1.59463
+    epoch=60 train_objective=0.251628 validation_mse=1.60202
+    epoch=70 train_objective=0.251156 validation_mse=1.60204
+    epoch=80 train_objective=0.250979 validation_mse=1.60201
+    epoch=90 train_objective=0.251 validation_mse=1.60181
+    epoch=100 train_objective=0.250977 validation_mse=1.60154
+  Fold 5 (train=32, val=8): validation_mse=1.26586 training_objective=0.263906
+    epoch=10 train_objective=0.327216 validation_mse=1.4312
+    epoch=20 train_objective=0.298238 validation_mse=1.21005
+    epoch=30 train_objective=0.275393 validation_mse=1.26779
+    epoch=40 train_objective=0.266513 validation_mse=1.29589
+    epoch=50 train_objective=0.265691 validation_mse=1.26729
+    epoch=60 train_objective=0.264237 validation_mse=1.2557
+    epoch=70 train_objective=0.264109 validation_mse=1.26051
+    epoch=80 train_objective=0.263947 validation_mse=1.26516
+    epoch=90 train_objective=0.263925 validation_mse=1.26655
+    epoch=100 train_objective=0.263906 validation_mse=1.26586
+
+-------------------- WINNER --------------------
+Best candidate: layer-architecture-search [layer-architecture=conv5x5-dense-1024-512]
+Validation physical MSE: 0.800921 +/- 0.317712
+  layer-architecture: conv5x5-dense-1024-512
+Epoch 1/100 | Train objective: 1.15787
+Epoch 2/100 | Train objective: 1.02212
+Epoch 3/100 | Train objective: 0.907937
+Epoch 4/100 | Train objective: 0.809095
+Epoch 5/100 | Train objective: 0.721412
+Epoch 6/100 | Train objective: 0.643186
+Epoch 7/100 | Train objective: 0.574071
+Epoch 8/100 | Train objective: 0.513792
+Epoch 9/100 | Train objective: 0.462438
+Epoch 10/100 | Train objective: 0.419465 | Validation physical MSE: 0.709359
+Epoch 11/100 | Train objective: 0.384233
+Epoch 12/100 | Train objective: 0.355881
+Epoch 13/100 | Train objective: 0.333283
+Epoch 14/100 | Train objective: 0.315714
+Epoch 15/100 | Train objective: 0.302716
+Epoch 16/100 | Train objective: 0.29386
+Epoch 17/100 | Train objective: 0.288488
+Epoch 18/100 | Train objective: 0.285807
+Epoch 19/100 | Train objective: 0.28499
+Epoch 20/100 | Train objective: 0.285374 | Validation physical MSE: 0.715597
+Epoch 21/100 | Train objective: 0.286512
+Epoch 22/100 | Train objective: 0.288104
+Epoch 23/100 | Train objective: 0.289896
+Epoch 24/100 | Train objective: 0.2916
+Epoch 25/100 | Train objective: 0.292943
+Epoch 26/100 | Train objective: 0.293759
+Epoch 27/100 | Train objective: 0.294052
+Epoch 28/100 | Train objective: 0.293893
+Epoch 29/100 | Train objective: 0.293375
+Epoch 30/100 | Train objective: 0.292544 | Validation physical MSE: 0.717889
+Epoch 31/100 | Train objective: 0.291434
+Epoch 32/100 | Train objective: 0.290096
+Epoch 33/100 | Train objective: 0.288639
+Epoch 34/100 | Train objective: 0.287187
+Epoch 35/100 | Train objective: 0.28582
+Epoch 36/100 | Train objective: 0.284562
+Epoch 37/100 | Train objective: 0.283412
+Epoch 38/100 | Train objective: 0.282385
+Epoch 39/100 | Train objective: 0.281514
+Epoch 40/100 | Train objective: 0.280829 | Validation physical MSE: 0.722735
+Epoch 41/100 | Train objective: 0.280326
+Epoch 42/100 | Train objective: 0.279974
+Epoch 43/100 | Train objective: 0.279744
+Epoch 44/100 | Train objective: 0.279599
+Epoch 45/100 | Train objective: 0.279532
+Epoch 46/100 | Train objective: 0.27953
+Epoch 47/100 | Train objective: 0.27957
+Epoch 48/100 | Train objective: 0.27962
+Epoch 49/100 | Train objective: 0.279658
+Epoch 50/100 | Train objective: 0.279679 | Validation physical MSE: 0.724329
+Epoch 51/100 | Train objective: 0.279685
+Epoch 52/100 | Train objective: 0.279676
+Epoch 53/100 | Train objective: 0.279645
+Epoch 54/100 | Train objective: 0.279585
+Epoch 55/100 | Train objective: 0.279502
+Epoch 56/100 | Train objective: 0.279408
+Epoch 57/100 | Train objective: 0.27931
+Epoch 58/100 | Train objective: 0.279213
+Epoch 59/100 | Train objective: 0.279114
+Epoch 60/100 | Train objective: 0.279019 | Validation physical MSE: 0.722995
+Epoch 61/100 | Train objective: 0.278933
+Epoch 62/100 | Train objective: 0.278863
+Epoch 63/100 | Train objective: 0.278809
+Epoch 64/100 | Train objective: 0.278768
+Epoch 65/100 | Train objective: 0.278736
+Epoch 66/100 | Train objective: 0.278715
+Epoch 67/100 | Train objective: 0.278704
+Epoch 68/100 | Train objective: 0.278701
+Epoch 69/100 | Train objective: 0.278699
+Epoch 70/100 | Train objective: 0.278697 | Validation physical MSE: 0.723056
+Epoch 71/100 | Train objective: 0.278694
+Epoch 72/100 | Train objective: 0.27869
+Epoch 73/100 | Train objective: 0.278685
+Epoch 74/100 | Train objective: 0.278677
+Epoch 75/100 | Train objective: 0.278666
+Epoch 76/100 | Train objective: 0.278654
+Epoch 77/100 | Train objective: 0.278643
+Epoch 78/100 | Train objective: 0.278633
+Epoch 79/100 | Train objective: 0.278624
+Epoch 80/100 | Train objective: 0.278616 | Validation physical MSE: 0.723291
+Epoch 81/100 | Train objective: 0.278609
+Epoch 82/100 | Train objective: 0.278605
+Epoch 83/100 | Train objective: 0.278603
+Epoch 84/100 | Train objective: 0.278601
+Epoch 85/100 | Train objective: 0.278599
+Epoch 86/100 | Train objective: 0.278597
+Epoch 87/100 | Train objective: 0.278595
+Epoch 88/100 | Train objective: 0.278593
+Epoch 89/100 | Train objective: 0.27859
+Epoch 90/100 | Train objective: 0.278587 | Validation physical MSE: 0.723333
+Epoch 91/100 | Train objective: 0.278583
+Epoch 92/100 | Train objective: 0.27858
+Epoch 93/100 | Train objective: 0.278578
+Epoch 94/100 | Train objective: 0.278575
+Epoch 95/100 | Train objective: 0.278573
+Epoch 96/100 | Train objective: 0.278572
+Epoch 97/100 | Train objective: 0.278572
+Epoch 98/100 | Train objective: 0.278572
+Epoch 99/100 | Train objective: 0.278572
+Epoch 100/100 | Train objective: 0.278572 | Validation physical MSE: 0.723271
+
+==================== FINAL TEST ====================
+Refit architecture: layer-architecture-search [layer-architecture=conv5x5-dense-1024-512]
+Final untouched-test physical MSE: 0.723271
