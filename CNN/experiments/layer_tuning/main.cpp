@@ -109,7 +109,22 @@ int main(int argc, char** argv) {
              {"conv3x3-dense-256-128", make_blueprint(8, 3, {256, 128})},
              {"conv5x5-dense-512-256", make_blueprint(8, 5, {512, 256})},
              {"conv3x3-dense-512-256", make_blueprint(8, 3, {512, 256})},
-             {"conv5x5-dense-64-32", make_blueprint(8, 5, {64, 32})}},
+             {"conv5x5-dense-64-32", make_blueprint(8, 5, {64, 32})},
+             // Deeper heads built on the winning width: a third and fourth
+             // hidden layer add negligible parameters (the first dense
+             // dominates) and probe whether depth helps the representation.
+             {"conv5x5-dense-512-256-128",
+              make_blueprint(8, 5, {512, 256, 128})},
+             {"conv5x5-dense-512-256-128-64",
+              make_blueprint(8, 5, {512, 256, 128, 64})},
+             // Wider heads beyond the 512-256 winner: does increasing width
+             // keep helping, or does it saturate/overfit on 40 samples? The
+             // first dense dominates, so each step roughly scales parameters.
+             {"conv5x5-dense-768-384", make_blueprint(8, 5, {768, 384})},
+             {"conv5x5-dense-1024-512", make_blueprint(8, 5, {1024, 512})},
+             {"conv5x5-dense-1536-768", make_blueprint(8, 5, {1536, 768})},
+             {"conv5x5-dense-2048-1024",
+              make_blueprint(8, 5, {2048, 1024})}},
             [](TrialConfig& trial, const ModelBlueprint& model) {
                 trial.model = model;
             });
