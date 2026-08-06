@@ -1,0 +1,6 @@
+90550654bc0d5ac00f7dc9f50218ed949abe18d422228760ea00c414759697e3  dataset/cnn_dataset_train.npz
+43a66940bf072edd0cbacf241ffcc83ac852ce99db86aace09f03f5f86efa0b4  dataset/cnn_dataset_test.npz
+
+# shapes and provenance
+# dataset/cnn_dataset_train.npz: X_sdf(1713, 150, 150), X_scalars(1713, 2), Y_cl(1713,), metadata(1713, 1)
+# dataset/cnn_dataset_test.npz: X_sdf(429, 150, 150), X_scalars(429, 2), Y_cl(429,), metadata(429, 1)
