@@ -12,7 +12,7 @@ if any check fails, so it can gate a regeneration.
 Checks (see results/data_audit_v2/ for the reasoning behind each threshold):
   1. lag-1 spatial autocorrelation > 0.9        - an SDF is 1-Lipschitz, hence smooth
   2. negative-cell fraction in [0.02, 0.20]     - an airfoil covers little of the grid
-  3. |grad| coefficient of variation < 0.60     - |grad(SDF)| is nearly constant
+  3. |grad| coefficient of variation < 0.30     - |grad(SDF)| is nearly constant
   4. field values reject N(0,1) (KS p < 0.01)   - guards against the noise failure
   5. every target present in the summaries      - guards against decoupled columns
   6. both scalar columns have positive variance - guards against dead inputs
@@ -33,7 +33,7 @@ THRESHOLDS = {
     "min_autocorrelation": 0.9,
     "min_negative_fraction": 0.02,
     "max_negative_fraction": 0.20,
-    "max_gradient_cv": 0.60,
+    "max_gradient_cv": 0.30,
     "max_normality_p": 0.01,
     "target_match_tolerance": 1e-5,
 }
@@ -62,7 +62,9 @@ def field_stats(X):
         g = np.sqrt(gx ** 2 + gy ** 2)
         # Scale-free: |grad(SDF)| is constant, whatever the grid spacing is, so
         # its coefficient of variation discriminates where its absolute value
-        # cannot. White noise gives a Rayleigh distribution with CV ~ 0.52.
+        # cannot. Measured 0.131 on real fields against 0.536 on N(0,1) noise
+        # (Rayleigh: sqrt(4/pi - 1) = 0.523), so 0.30 separates them with a
+        # 2.2x margin above real data and 1.8x below noise.
         gcv.append(g.std() / g.mean() if g.mean() > 0 else np.inf)
     return map(np.array, (ac_h, ac_v, neg, gcv))
 
