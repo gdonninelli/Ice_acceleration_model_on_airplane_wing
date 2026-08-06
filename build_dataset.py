@@ -1,12 +1,24 @@
+import argparse
 import os
 import glob
 import numpy as np
 import pandas as pd
 
+parser = argparse.ArgumentParser(description="Assemble the CNN dataset from SDF matrices and CFD summaries.")
+parser.add_argument("--seed", type=int, default=42,
+                    help="Seed for the train/test split (default: 42).")
+args = parser.parse_args()
+
 dataset_dir = "dataset"
 sdf_data_dir = "SDF/data"
 
-summary_files = glob.glob(os.path.join(dataset_dir, "summary_*.txt"))
+# Sorted so the assembly order does not depend on the filesystem.
+summary_files = sorted(glob.glob(os.path.join(dataset_dir, "summary_*.txt")))
+
+skipped_angle_filter = 0
+skipped_missing_matrix = 0
+skipped_load_error = 0
+missing_examples = []
 
 X_sdf = []
 X_scalars = [] # (reynolds, angle)
@@ -24,6 +36,7 @@ for summary_file in summary_files:
         
         # Keep only observations with angle of attack between -14 and 14
         if not (-14.0 <= angle <= 14.0):
+            skipped_angle_filter += 1
             continue
         
         # Extract NACA from csv_path
@@ -43,7 +56,9 @@ for summary_file in summary_files:
         matrix_filepath = os.path.join(sdf_data_dir, matrix_filename)
         
         if not os.path.exists(matrix_filepath):
-            print(f"Warning: Matrix not found: {matrix_filepath}")
+            skipped_missing_matrix += 1
+            if len(missing_examples) < 5:
+                missing_examples.append(matrix_filepath)
             continue
             
         # Load the matrix
@@ -51,6 +66,7 @@ for summary_file in summary_files:
             sdf_matrix = np.loadtxt(matrix_filepath)
         except Exception as e:
             print(f"Error loading {matrix_filepath}: {e}")
+            skipped_load_error += 1
             continue
             
         X_sdf.append(sdf_matrix)
@@ -64,6 +80,22 @@ X_scalars = np.array(X_scalars, dtype=np.float32)
 Y_cl = np.array(Y_cl, dtype=np.float32)
 metadata = np.array(metadata, dtype=str)
 
+rows_total = skipped_angle_filter + skipped_missing_matrix + skipped_load_error + len(Y_cl)
+print("\n=== ASSEMBLY REPORT ===")
+print(f"summary rows read                : {rows_total}")
+print(f"  discarded, |angle| > 14        : {skipped_angle_filter}")
+print(f"  discarded, SDF matrix missing  : {skipped_missing_matrix}")
+for example in missing_examples:
+    print(f"      e.g. {example}")
+if skipped_missing_matrix > len(missing_examples):
+    print(f"      ... and {skipped_missing_matrix - len(missing_examples)} more")
+print(f"  discarded, matrix load error   : {skipped_load_error}")
+print(f"samples kept                     : {len(Y_cl)}")
+if skipped_missing_matrix:
+    print("WARNING: samples were dropped because their SDF matrix was missing.")
+    print("         Run SDF/data/rotate_profiles.py and SDF/sdfgen first.")
+print("=======================\n")
+
 print("Full dataset shapes after filtering [-14, 14]:")
 print(f"X_sdf: {X_sdf.shape}")
 print(f"X_scalars: {X_scalars.shape}")
@@ -71,7 +103,8 @@ print(f"Y_cl: {Y_cl.shape}")
 
 # Split into train (80%) and test (20%)
 num_samples = X_sdf.shape[0]
-indices = np.random.permutation(num_samples)
+# Seeded so the split is reproducible; override with --seed.
+indices = np.random.default_rng(args.seed).permutation(num_samples)
 split_idx = int(num_samples * 0.8)
 
 train_idx = indices[:split_idx]
@@ -95,3 +128,4 @@ np.savez_compressed(test_path,
 
 print(f"Train dataset saved to {train_path} with {len(train_idx)} samples")
 print(f"Test dataset saved to {test_path} with {len(test_idx)} samples")
+print(f"Split seed: {args.seed}")
