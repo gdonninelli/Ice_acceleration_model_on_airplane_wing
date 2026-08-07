@@ -14,3 +14,9 @@ SDF/data/*_alpha_*.dat
 .git_backup/
 .DS_Store
 TODO_ANALYSIS.md
+
+# Executables and state
+activation_tuning_state.txt
+cnn_executable
+wp5_exec
+build_test_bin
