@@ -59,7 +59,7 @@ mpicxx -std=c++20 -O3 -ICNN/src \
 To avoid MPI timeouts for lengthy runs, the experiment uses an orchestrator script that invokes the compiled binary separately for each candidate.
 
 ```bash
-python3 orchestrator.py
+python3 CNN/experiments/activation_tuning/orchestrator.py
 ```
 *(The script will create CSV files inside `results/cross_validation/activation_tuning/` for each candidate, and an `aggregated.csv`)*
 
@@ -82,6 +82,14 @@ Criterio di selezione: Un candidato batte il baseline (`leakyrelu-0.05`) solo se
 Nessuna funzione di attivazione supera il rigoroso test di significatività rispetto al baseline.
 Il candidato `leakyrelu-0.01` presenta una MSE leggermente migliore e vince in 4 fold su 5, ma la differenza appaiata media (-0.000112) non supera la sua deviazione standard (0.000116).
 Di conseguenza, il vincitore rimane **`leakyrelu-0.05`**, che è un risultato legittimo a riprova della bontà della configurazione iniziale.
+
+> `leakyrelu α=0.01` migliora in 4 fold su 5 ma non supera il criterio (differenza appaiata
+> media 0.000112 contro std 0.000116) ed è il valore più basso della griglia. Non è però un
+> ottimo di bordo da esplorare oltre: `relu` è matematicamente LeakyReLU con α = 0 ed è stato
+> testato, risultando nettamente peggiore. Se alpha più piccoli fossero migliori, il limite
+> α → 0 sarebbe il migliore di tutti; non lo è. Il 4/5 di α=0.01 è quindi un'oscillazione
+> isolata, non un trend, e la griglia non va estesa verso il basso.
+
 
 ## Caveat on absolute values
 
