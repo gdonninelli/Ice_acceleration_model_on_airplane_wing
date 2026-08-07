@@ -26,7 +26,7 @@ namespace {
 // candidate so activation scores remain directly comparable.
 constexpr size_t kFoldCount = 5;
 constexpr size_t kEpochCount = 100;
-constexpr size_t kGlobalBatchSize = 256;
+constexpr size_t kGlobalBatchSize = 64;
 constexpr uint64_t kSeed = 42;
 constexpr float kLearningRate = 1e-5f;
 constexpr float kPhysicsWeight = 0.25f;
@@ -35,18 +35,18 @@ constexpr float kPhysicsWeight = 0.25f;
 //   Feature: Conv2D(8, 5x5) -> Activation -> Flatten
 //   Head:    Dense(128) -> Activation -> Dense(64) -> Activation -> Dense(1)
 // Only the non-linearity varies between candidates.
-ModelBlueprint make_blueprint(const std::string& activation) {
+ModelBlueprint make_blueprint(const std::string& activation, float alpha = 0.05f) {
     ModelBlueprint blueprint;
     blueprint.feature_layers = {
         Recipes::conv2d(8, 5, 5),
-        Recipes::activation(activation),
+        Recipes::activation(activation, alpha),
         Recipes::flatten()};
 
     blueprint.head_layers = {
         Recipes::dense(128),
-        Recipes::activation(activation),
+        Recipes::activation(activation, alpha),
         Recipes::dense(64),
-        Recipes::activation(activation),
+        Recipes::activation(activation, alpha),
         Recipes::dense(1)};
     return blueprint;
 }
@@ -73,9 +73,13 @@ int main(int argc, char** argv) {
         grid.add_choice<ModelBlueprint>(
             "activation-function",
             {{"relu", make_blueprint("relu")},
-             {"leakyrelu", make_blueprint("leakyrelu")},
              {"tanh", make_blueprint("tanh")},
-             {"sigmoid", make_blueprint("sigmoid")}},
+             {"sigmoid", make_blueprint("sigmoid")},
+             {"leakyrelu-0.01", make_blueprint("leakyrelu", 0.01f)},
+             {"leakyrelu-0.05", make_blueprint("leakyrelu", 0.05f)},
+             {"leakyrelu-0.1", make_blueprint("leakyrelu", 0.1f)},
+             {"leakyrelu-0.2", make_blueprint("leakyrelu", 0.2f)},
+             {"leakyrelu-0.3", make_blueprint("leakyrelu", 0.3f)}},
             [](TrialConfig& trial, const ModelBlueprint& model) {
                 trial.model = model;
             });
