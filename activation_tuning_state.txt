@@ -1,8 +1,0 @@
-leakyrelu-0.01
-leakyrelu-0.05
-leakyrelu-0.1
-leakyrelu-0.2
-leakyrelu-0.3
-relu
-sigmoid
-tanh
