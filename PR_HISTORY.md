@@ -17,6 +17,25 @@ entry per pull request, newest first.
 - **Implementation:** Main technical decisions and affected components.
 - **Validation:** Builds, tests, reviews, or manual checks completed.
 
+## Implementing Internal Weights Analysis
+
+- **Status:** Pending merge
+- **Review date:** 2026-08-07
+- **Implementation date:** 2026-08-07
+- **Author:** Giulio Donninelli (`hello@giuliodonninelli.it`)
+- **Branch:** `feature/store-gradient`
+- **Base:** `main`
+- **Reviewed head:** `1163eea41ffac35863380fbd40168195ba3be65a`
+- **Commit(s):** `1163eea`
+- **Summary:** Added optional MPI-aware training diagnostics, cross-validation artifacts, plotting support, CLI controls, and CMake/CTest integration.
+- **Implementation:**
+  - Added model layer/parameter metadata and activation observation during the existing training forward pass.
+  - Added gradient, update-ratio, activation, learning-rate, epoch, and metadata artifact recording with MPI aggregation and rank-zero output.
+  - Added candidate/fold diagnostic context, cross-validation summaries, plotting utilities, documentation, and tests.
+- **Validation:** CMake build, serial and MPI-2 CTest, direct MPI-2 test execution, `git diff --check`, Python compilation, and a warning-enabled compile completed successfully; dataset-backed training and plotting smoke tests were unavailable because required NPZ/artifact inputs are absent.
+- **Per-PR report:** `PR_REVIEWS/feature-store-gradient.md`
+- **Review outcome:** No critical findings; one compiler warning and dataset-dependent test gaps remain non-blocking.
+
 ## Activation Functions
 
 - **Status:** Pending merge
