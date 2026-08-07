@@ -28,7 +28,7 @@
 namespace {
 constexpr size_t kFoldCount = 5;
 constexpr size_t kEpochCount = 100;
-constexpr size_t kGlobalBatchSize = 256;
+constexpr size_t kGlobalBatchSize = 64;
 constexpr uint64_t kSeed = 42;
 constexpr float kLearningRate = 1e-5f;
 constexpr float kPhysicsWeight = 0.25f;
@@ -123,8 +123,14 @@ int main(int argc, char** argv) {
              {"conv5x5-dense-768-384", make_blueprint(8, 5, {768, 384})},
              {"conv5x5-dense-1024-512", make_blueprint(8, 5, {1024, 512})},
              {"conv5x5-dense-1536-768", make_blueprint(8, 5, {1536, 768})},
-             {"conv5x5-dense-2048-1024",
-              make_blueprint(8, 5, {2048, 1024})}},
+             {"conv5x5-dense-2048-1024", make_blueprint(8, 5, {2048, 1024})},
+             // Extrapolating beyond {512, 256, 128, 64}
+             {"conv5x5-dense-512-256-128-64-32", make_blueprint(8, 5, {512, 256, 128, 64, 32})}, // Deeper
+             {"conv5x5-dense-1024-512-256-128", make_blueprint(8, 5, {1024, 512, 256, 128})}, // Wider, same depth
+             {"conv5x5-dense-1024-512-256-128-64", make_blueprint(8, 5, {1024, 512, 256, 128, 64})}, // Deeper and wider
+             // Separating depth from width
+             {"conv5x5-dense-512-64", make_blueprint(8, 5, {512, 64})},
+             {"conv5x5-dense-256-128-64-32", make_blueprint(8, 5, {256, 128, 64, 32})}},
             [](TrialConfig& trial, const ModelBlueprint& model) {
                 trial.model = model;
             });
