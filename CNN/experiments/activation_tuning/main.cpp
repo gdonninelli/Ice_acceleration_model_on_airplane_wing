@@ -20,7 +20,9 @@
 #include <memory>
 #include <mpi.h>
 #include <string>
+#include <map>
 #include <vector>
+#include "core/Loss.hpp"
 
 namespace {
 constexpr size_t kFoldCount = 5;
@@ -46,7 +48,28 @@ ModelBlueprint make_blueprint(const std::string& activation, float alpha = 0.05f
     return blueprint;
 }
 
-void write_csv(const std::string& candidate_name, const CandidateResult& result) {
+constexpr size_t kEvaluationChunk = 256;
+
+double baseline_mse(const Dataset& dataset,
+                    const std::vector<size_t>& validation,
+                    const NormalizationStats& normalization) {
+    double sum = 0.0;
+    size_t seen = 0;
+    for (size_t offset = 0; offset < validation.size(); offset += kEvaluationChunk) {
+        const size_t count = std::min(kEvaluationChunk, validation.size() - offset);
+        const std::span<const size_t> chunk(validation.data() + offset, count);
+        const DataBatch batch = dataset.make_batch(chunk, normalization);
+        auto zeros = std::make_shared<Tensor>(batch.targets->get_shape());
+        sum += static_cast<double>(Loss::physical_mse(
+                   zeros, batch.targets,
+                   static_cast<float>(normalization.target_std))) *
+               static_cast<double>(count);
+        seen += count;
+    }
+    return seen > 0 ? sum / static_cast<double>(seen) : 0.0;
+}
+
+void write_csv(const std::string& candidate_name, const CandidateResult& result, const std::map<size_t, double>& baselines) {
     std::string path = "results/cross_validation/activation_tuning/" + candidate_name + ".csv";
     std::ofstream f(path);
     if (!f) return;
@@ -54,7 +77,7 @@ void write_csv(const std::string& candidate_name, const CandidateResult& result)
     for (const auto& fold : result.folds) {
         f << candidate_name << "," << fold.fold << "," 
           << fold.training_objective << "," << fold.validation_mse << "," 
-          << 0.0 << "," << kEpochCount << "\n";
+          << baselines.at(fold.fold) << "," << kEpochCount << "\n";
     }
 }
 } // namespace
@@ -114,6 +137,14 @@ int main(int argc, char** argv) {
             });
 
         auto splitter = std::make_shared<RandomKFold>(kFoldCount, true, kSeed);
+        
+        std::map<size_t, double> baseline_by_fold;
+        auto splits = splitter->split(training_dataset.num_samples());
+        for (size_t fold = 0; fold < splits.size(); ++fold) {
+            auto normalization = training_dataset.fit_normalization(splits[fold].training);
+            baseline_by_fold[fold] = baseline_mse(training_dataset, splits[fold].validation, normalization);
+        }
+
         auto runner = std::make_shared<CNNTrialRunner>(MPI_COMM_WORLD);
         CrossValidator validator(training_dataset, splitter, runner,
                                  MPI_COMM_WORLD, true);
@@ -123,7 +154,7 @@ int main(int argc, char** argv) {
         if (rank == 0) {
             for (const CandidateResult& candidate : result.candidates) {
                 if (candidate.success) {
-                    write_csv(candidate.config.selected_parameters.at("activation-function"), candidate);
+                    write_csv(candidate.config.selected_parameters.at("activation-function"), candidate, baseline_by_fold);
                 }
             }
         }
