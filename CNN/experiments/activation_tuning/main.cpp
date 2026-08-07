@@ -54,7 +54,7 @@ void write_csv(const std::string& candidate_name, const CandidateResult& result)
     for (const auto& fold : result.folds) {
         f << candidate_name << "," << fold.fold << "," 
           << fold.training_objective << "," << fold.validation_mse << "," 
-          << fold.baseline_mse << "," << kEpochCount << "\n";
+          << 0.0 << "," << kEpochCount << "\n";
     }
 }
 } // namespace
