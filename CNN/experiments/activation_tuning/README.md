@@ -56,6 +56,14 @@ mpicxx -std=c++20 -O3 -ICNN/src \
 
 ## Run
 
+> ⚠️ **Prerequisito sui dati.** I risultati riportati sono stati ottenuti sul dataset
+> rigenerato con `python3 build_dataset.py --seed 42`. Quella correzione della pipeline
+> (percorsi relativi, ordine deterministico, seed esplicito) è oggetto di una pull request
+> separata e non è ancora su `main`. I file `.npz` attualmente committati su `main`
+> contengono dati non validi — rumore gaussiano anziché Signed Distance Function — quindi
+> eseguire questo esperimento senza prima applicare quella correzione produce risultati
+> privi di significato.
+
 To avoid MPI timeouts for lengthy runs, the experiment uses an orchestrator script that invokes the compiled binary separately for each candidate.
 
 ```bash
