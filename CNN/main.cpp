@@ -18,6 +18,8 @@ namespace {
 struct CommandLineOptions {
     bool cross_validate = false;
     bool show_help = false;
+    bool diagnostics = false;
+    bool verbose_final = true;
     std::string activation = "leakyrelu";
     float leaky_alpha = 0.05f;
     float learning_rate = 1e-5f;
@@ -26,9 +28,14 @@ struct CommandLineOptions {
     size_t epochs = 100;
     size_t global_batch_size = 64;
     size_t folds = 5;
+    size_t validation_interval = 0;
+    size_t histogram_bins = 64;
     uint64_t seed = 42;
     std::string train_path = "dataset/cnn_dataset_train.npz";
     std::string test_path = "dataset/cnn_dataset_test.npz";
+    std::string results_dir = "results";
+    std::string experiment_name = "cnn";
+    std::string run_name = "run";
 };
 
 size_t parse_size(const std::string& option, const std::string& value) {
@@ -71,6 +78,14 @@ CommandLineOptions parse_arguments(int argc, char** argv) {
 
         if (argument == "--cross-validate") {
             options.cross_validate = true;
+        } else if (argument == "--diagnostics") {
+            options.diagnostics = true;
+        } else if (argument == "--no-diagnostics") {
+            options.diagnostics = false;
+        } else if (argument == "--verbose-final") {
+            options.verbose_final = true;
+        } else if (argument == "--quiet-final") {
+            options.verbose_final = false;
         } else if (argument == "--help" || argument == "-h") {
             options.show_help = true;
         } else if (argument == "--activation") {
@@ -89,12 +104,22 @@ CommandLineOptions parse_arguments(int argc, char** argv) {
             options.global_batch_size = parse_size(argument, next_value());
         } else if (argument == "--folds") {
             options.folds = parse_size(argument, next_value());
+        } else if (argument == "--validation-interval") {
+            options.validation_interval = parse_size(argument, next_value());
+        } else if (argument == "--histogram-bins") {
+            options.histogram_bins = parse_size(argument, next_value());
         } else if (argument == "--seed") {
             options.seed = parse_seed(next_value());
         } else if (argument == "--train-path") {
             options.train_path = next_value();
         } else if (argument == "--test-path") {
             options.test_path = next_value();
+        } else if (argument == "--results-dir") {
+            options.results_dir = next_value();
+        } else if (argument == "--experiment") {
+            options.experiment_name = next_value();
+        } else if (argument == "--run-name") {
+            options.run_name = next_value();
         } else {
             throw std::invalid_argument("Unknown option: " + argument);
         }
@@ -112,7 +137,11 @@ void print_help() {
     std::cout
         << "Usage: cnn_executable [options]\n"
         << "  --cross-validate       Evaluate the configured model with random K-fold CV\n"
+        << "  --diagnostics          Write structured per-epoch training diagnostics\n"
+        << "  --no-diagnostics       Disable diagnostics (default)\n"
         << "  --folds N              Number of CV folds (default: 5)\n"
+        << "  --validation-interval N Validation frequency (CV default: 10, final default: 1)\n"
+        << "  --histogram-bins N     Fixed activation histogram bins (default: 64)\n"
         << "  --epochs N             Epochs per fold/training run (default: 100)\n"
         << "  --batch-size N         Global MPI batch size (default: 64)\n"
         << "  --activation NAME      leakyrelu, relu, tanh, or sigmoid\n"
@@ -122,7 +151,12 @@ void print_help() {
         << "  --gradient-clip VALUE  Element-wise gradient clipping threshold\n"
         << "  --seed N               Split, shuffle, and initialization seed\n"
         << "  --train-path PATH      Training NPZ path\n"
-        << "  --test-path PATH       Untouched test NPZ path\n";
+        << "  --test-path PATH       Untouched test NPZ path\n"
+        << "  --results-dir PATH     Diagnostics results root (default: results)\n"
+        << "  --experiment NAME      Diagnostics experiment name (default: cnn)\n"
+        << "  --run-name NAME        Diagnostics run name (default: run)\n"
+        << "  --verbose-final        Print every final-training epoch (default)\n"
+        << "  --quiet-final          Suppress final-training epoch lines\n";
 }
 
 ModelBlueprint make_blueprint(int kernel_size,
@@ -148,11 +182,23 @@ ModelBlueprint make_blueprint(int kernel_size,
 }
 
 TrainingConfig make_training_config(const CommandLineOptions& options) {
-    return TrainingConfig{options.epochs,
-                          options.global_batch_size,
-                          options.gradient_clip,
-                          options.seed,
-                          true};
+    TrainingConfig config;
+    config.epochs = options.epochs;
+    config.global_batch_size = options.global_batch_size;
+    config.gradient_clip = options.gradient_clip;
+    config.seed = options.seed;
+    config.shuffle = true;
+    config.validation_interval = options.validation_interval != 0
+        ? options.validation_interval
+        : (options.cross_validate ? Trainer::kHistoryIntervalEpochs : 1);
+    config.diagnostics.enabled = options.diagnostics;
+    config.diagnostics.results_root = options.results_dir;
+    config.diagnostics.experiment_name = options.experiment_name;
+    config.diagnostics.run_name = options.run_name;
+    config.diagnostics.histogram_bins = options.histogram_bins;
+    config.diagnostics.training_dataset_path = options.train_path;
+    config.diagnostics.validation_dataset_path = options.test_path;
+    return config;
 }
 
 TrialConfig make_single_trial(const CommandLineOptions& options) {
@@ -168,9 +214,10 @@ TrialConfig make_single_trial(const CommandLineOptions& options) {
 
 TrainingResult train_and_test(const TrialConfig& config,
                               const Dataset& training_dataset,
-                              const Dataset& test_dataset,
-                              MPI_Comm communicator,
-                              bool verbose) {
+                               const Dataset& test_dataset,
+                               MPI_Comm communicator,
+                               bool verbose,
+                               const TrainingRunContext& run_context) {
     const auto training_indices = training_dataset.all_indices();
     const auto test_indices = test_dataset.all_indices();
     const NormalizationStats normalization =
@@ -183,7 +230,7 @@ TrainingResult train_and_test(const TrialConfig& config,
     Trainer trainer(communicator);
     return trainer.fit(*model, training_dataset, training_indices, test_dataset,
                        test_indices, normalization, config.loss, config.training,
-                       config.training.seed, verbose);
+                       config.training.seed, verbose, run_context, &config);
 }
 } // namespace
 
@@ -206,8 +253,13 @@ int main(int argc, char** argv) {
         if (!options.cross_validate) {
             Dataset test_dataset(options.test_path);
             const TrialConfig config = make_single_trial(options);
+            TrainingRunContext run_context;
+            run_context.random_seed = config.training.seed;
+            run_context.training_dataset_path = options.train_path;
+            run_context.validation_dataset_path = options.test_path;
             const TrainingResult result = train_and_test(
-                config, training_dataset, test_dataset, MPI_COMM_WORLD, true);
+                config, training_dataset, test_dataset, MPI_COMM_WORLD,
+                options.verbose_final, run_context);
             if (rank == 0) {
                 std::cout << "Final test physical MSE: "
                           << result.validation_mse << std::endl;
@@ -238,9 +290,18 @@ int main(int argc, char** argv) {
             }
 
             Dataset test_dataset(options.test_path);
+            TrialConfig final_config = config;
+            if (options.validation_interval == 0) {
+                final_config.training.validation_interval = 1;
+            }
+            TrainingRunContext final_context;
+            final_context.final_subdirectory = options.diagnostics;
+            final_context.random_seed = final_config.training.seed;
+            final_context.training_dataset_path = options.train_path;
+            final_context.validation_dataset_path = options.test_path;
             const TrainingResult final_result = train_and_test(
-                config, training_dataset, test_dataset, MPI_COMM_WORLD,
-                true);
+                final_config, training_dataset, test_dataset, MPI_COMM_WORLD,
+                options.verbose_final, final_context);
             if (rank == 0) {
                 std::cout << "Final test physical MSE: "
                           << final_result.validation_mse << std::endl;

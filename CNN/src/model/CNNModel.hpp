@@ -5,10 +5,18 @@
 #include "optimizers/Optimizer.hpp"
 #include "core/Tensor.hpp"
 #include <cstddef>
+#include <functional>
 #include <memory>
 #include <mpi.h>
 #include <string>
 #include <vector>
+
+struct ModelLayerInfo {
+    size_t index = 0;
+    std::string name;
+    bool activation = false;
+    std::vector<LayerParameter> parameters;
+};
 
 /**
  * Runtime CNN graph with a feature trunk, optional scalar fusion, and a head.
@@ -17,6 +25,8 @@
  */
 class CNNModel {
 public:
+    using ActivationObserver = std::function<void(
+        size_t, const std::string&, const Tensor&, const Tensor&)>;
     explicit CNNModel(std::unique_ptr<Optimizer> optimizer,
                       MPI_Comm communicator = MPI_COMM_WORLD,
                       float gradient_clip = 1.0f);
@@ -44,6 +54,11 @@ public:
                                     std::shared_ptr<Tensor> scalar_input);
 
     const std::vector<LayerParameter>& parameters() const;
+    std::vector<ModelLayerInfo> layer_info() const;
+    void set_activation_observer(ActivationObserver observer);
+    void clear_activation_observer() noexcept;
+    OptimizerMetadata optimizer_metadata() const;
+    float gradient_clip() const { return _gradient_clip; }
     void export_weights(const std::string& filepath) const;
     void import_weights(const std::string& filepath);
 
@@ -56,6 +71,7 @@ private:
     float _gradient_clip;
     mutable std::vector<LayerParameter> _parameter_cache;
     mutable bool _parameters_dirty = true;
+    ActivationObserver _activation_observer;
 
     std::vector<Layer*> ordered_layers();
     std::vector<const Layer*> ordered_layers() const;

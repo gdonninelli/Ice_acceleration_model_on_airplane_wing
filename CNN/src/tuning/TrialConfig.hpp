@@ -3,6 +3,7 @@
 
 #include "layers/Layer.hpp"
 #include "optimizers/Optimizer.hpp"
+#include "training/DiagnosticsConfig.hpp"
 #include <cstdint>
 #include <functional>
 #include <map>
@@ -64,6 +65,8 @@ struct TrainingConfig {
     float gradient_clip = 1.0f;
     uint64_t seed = 42;
     bool shuffle = true;
+    size_t validation_interval = 10;
+    TrainingDiagnosticsConfig diagnostics;
 };
 
 struct TrialConfig {

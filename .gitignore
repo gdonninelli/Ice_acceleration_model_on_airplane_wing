@@ -1,6 +1,7 @@
 build/
 .cache/
 *.o
+PR_REVIEWS/*
 
 # Generated ML datasets and matrices
 dataset/*.npz

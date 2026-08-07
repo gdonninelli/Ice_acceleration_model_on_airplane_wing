@@ -3,6 +3,7 @@
 
 #include "data/Dataset.hpp"
 #include "model/CNNModel.hpp"
+#include "training/DiagnosticsConfig.hpp"
 #include "tuning/TrialConfig.hpp"
 #include <cstddef>
 #include <cstdint>
@@ -39,7 +40,9 @@ public:
                        const LossConfig& loss_config,
                        const TrainingConfig& training_config,
                        uint64_t run_seed,
-                       bool verbose = false) const;
+                       bool verbose = false,
+                       const TrainingRunContext& run_context = {},
+                       const TrialConfig* trial_config = nullptr) const;
 
 private:
     MPI_Comm _communicator;

@@ -65,11 +65,24 @@ struct SearchResult {
 
 class TrialRunner {
 public:
+    struct Context {
+        size_t candidate_index = 0;
+        size_t candidate_count = 1;
+        size_t fold_count = 0;
+    };
+
     virtual ~TrialRunner() = default;
     virtual FoldMetrics run(const TrialConfig& config,
                             const Dataset& dataset,
+                             const FoldIndices& fold,
+                             size_t fold_index) const = 0;
+    virtual FoldMetrics run(const TrialConfig& config,
+                            const Dataset& dataset,
                             const FoldIndices& fold,
-                            size_t fold_index) const = 0;
+                            size_t fold_index,
+                            const Context&) const {
+        return run(config, dataset, fold, fold_index);
+    }
 };
 
 class CNNTrialRunner : public TrialRunner {
@@ -78,8 +91,13 @@ public:
 
     FoldMetrics run(const TrialConfig& config,
                     const Dataset& dataset,
+                     const FoldIndices& fold,
+                     size_t fold_index) const override;
+    FoldMetrics run(const TrialConfig& config,
+                    const Dataset& dataset,
                     const FoldIndices& fold,
-                    size_t fold_index) const override;
+                    size_t fold_index,
+                    const Context& context) const override;
 
 private:
     MPI_Comm _communicator;
@@ -109,7 +127,9 @@ private:
     std::vector<FoldIndices> make_fold_plan() const;
     CandidateResult evaluate_with_folds(
         const TrialConfig& config,
-        const std::vector<FoldIndices>& folds) const;
+        const std::vector<FoldIndices>& folds,
+        size_t candidate_index,
+        size_t candidate_count) const;
 };
 
 #endif // CROSSVALIDATOR_HPP

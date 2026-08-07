@@ -10,7 +10,7 @@ It covers:
 - Defining model and optimizer choices with `ParameterGrid`
 - Compiling and running a tuning experiment with MPI
 - Reading, recording, and validating results
-- Reading per-fold training history at fixed 10-epoch checkpoints
+- Reading per-fold training history at configurable checkpoints (10 epochs by default)
 - Attaching future layers and optimizers through recipes
 
 ## Architecture
@@ -40,7 +40,7 @@ The main contracts are located under `CNN/src/tuning/`:
 | `RandomKFold` | Deterministic shuffled sample-level folds |
 | `TrialRunner` | Executes one candidate on one fold |
 | `CrossValidator` | Evaluates candidates and selects the minimum physical MSE |
-| `EpochMetrics` | One fixed 10-epoch training-objective and validation-MSE checkpoint |
+| `EpochMetrics` | One configured training-objective and validation-MSE checkpoint |
 | `FoldMetrics` | Final fold metrics plus that fold's epoch history |
 | `SearchResult` | Candidate configurations, fold metrics, means, deviations, and winner |
 
@@ -90,7 +90,8 @@ Do not replace the production entry point in `CNN/main.cpp` for every tuning exp
 │   └── cross_validation/
 │       └── kernel_activation/
 │           └── run.log                  # Generated output, normally not committed
-└── cross_validation.md
+└── docs/
+    └── cross_validation.md
 ```
 
 Commit the experiment's `main.cpp` and short `README.md` when the experiment must be reproducible. Keep large logs, checkpoints, and generated datasets out of Git unless the project explicitly requires them.
@@ -356,7 +357,7 @@ mpirun -n 2 build/experiments/kernel_activation \
 
 Restore the intended fold and epoch counts, rebuild, and write the full run to a separate log after the smoke test succeeds.
 
-The current API returns results in memory through `SearchResult` and prints progress to standard output. It does not automatically write JSON, CSV, or checkpoints. The experiment program is responsible for any additional serialization.
+The API always returns selection results in memory through `SearchResult`. When `TrainingConfig::diagnostics.enabled` is true, `CNNTrialRunner` additionally writes structured per-candidate/fold artifacts and `cv_summary.csv`; diagnostics never participate in candidate selection.
 
 ## What to Record
 
@@ -372,7 +373,7 @@ Record at least the following information for every completed search:
 | Validation score | `FoldMetrics::validation_mse` |
 | Aggregate score | `CandidateResult::mean_validation_mse` |
 | Fold variability | `CandidateResult::validation_stddev` |
-| Per-fold 10-epoch history | `FoldMetrics::history` |
+| Per-fold checkpoint history | `FoldMetrics::history` |
 | MPI process count | Launch command or scheduler log |
 | Source revision | Git commit hash used for the run |
 
@@ -512,15 +513,7 @@ The recipe must construct a new optimizer every time. Optimizer objects must nev
 
 ## Epoch History
 
-History collection uses the compile-time constant:
-
-```cpp
-Trainer::kHistoryIntervalEpochs == 10
-```
-
-It is intentionally not part of `TrainingConfig` and cannot be changed through `TrialConfig` or command-line parameters.
-
-At epochs 10, 20, 30, and so on, `Trainer` records:
+`TrainingConfig::validation_interval` controls validation/history checkpoints and defaults to `Trainer::kHistoryIntervalEpochs == 10`. The executable uses 10 for CV and 1 for verbose final training unless `--validation-interval` is supplied. At each configured checkpoint, `Trainer` records:
 
 ```cpp
 struct EpochMetrics {
@@ -536,7 +529,7 @@ Each fold stores its own points in:
 FoldMetrics::history
 ```
 
-For 100 epochs, every fold contains 10 history entries. For 25 epochs, every fold contains entries for epochs 10 and 20. The final epoch 25 validation MSE is still calculated and used for candidate scoring, but it is not added to the fixed 10-epoch history. Runs shorter than 10 epochs have an empty history while still producing a final validation MSE.
+With the default CV interval, 100 epochs produce 10 history entries. A 25-epoch run contains epochs 10 and 20; epoch 25 is still evaluated for final candidate scoring but is not added to checkpoint history. Runs shorter than the interval have empty history while still producing a final validation MSE. Diagnostic `epoch_metrics.csv` always has one row per epoch and leaves validation missing on non-checkpoint epochs.
 
 Access the history with:
 
@@ -551,11 +544,51 @@ for (const CandidateResult& candidate : result.candidates) {
 }
 ```
 
-Validation requires an additional pass over the fold's validation samples at every history checkpoint. The final scoring pass is reused when the final epoch is divisible by 10.
+Validation requires an additional pass over the fold's validation samples at every configured checkpoint. The final scoring pass is reused when the final epoch is divisible by the interval. Training activation diagnostics never trigger an additional forward pass.
+
+## Diagnostic Artifacts
+
+Set diagnostics on the trial before calling `evaluate()` or `tune()`:
+
+```cpp
+config.training.validation_interval = 10;
+config.training.diagnostics.enabled = true;
+config.training.diagnostics.results_root = "results";
+config.training.diagnostics.experiment_name = "kernel_activation";
+config.training.diagnostics.run_name = "seed_42";
+config.training.diagnostics.histogram_bins = 64;
+config.training.diagnostics.training_dataset_path =
+    "dataset/cnn_dataset_train.npz";
+```
+
+Cross-validation writes numeric, collision-free paths:
+
+```text
+results/kernel_activation/seed_42/
+  metadata.json
+  cv_summary.csv
+  candidate_000/fold_000/{metadata.json,*.csv}
+  candidate_000/fold_001/{metadata.json,*.csv}
+  candidate_001/fold_000/{metadata.json,*.csv}
+```
+
+Every fold recorder includes the candidate name/configuration, selected parameters, actual fold seed, fold count, optimizer settings, model ordering, global batch size, clipping threshold, dataset paths, and MPI size. `CandidateResult` and `FoldMetrics` remain small because dense diagnostic histories are streamed to these files.
+
+The CSV definitions, bounded fixed-bin histogram policy, update-ratio epsilon, and plotting command are documented in `README.md`. Generate plots with:
+
+```bash
+python3 CNN/analysis/plot_training_diagnostics.py \
+  --input results/kernel_activation/seed_42 \
+  --output-dir results/kernel_activation/seed_42/plots
+```
+
+The plotting script groups CV fold comparisons by exact ordered model-layer topology. It does not combine incompatible architectures.
 
 ## MPI Execution
 
 All ranks evaluate the same candidate and fold. One validated fold plan is generated per `tune()` call and reused for every candidate. Candidate descriptions, fold plans, failures, and returned metrics are checked across ranks before candidate selection can continue.
+
+Diagnostics preserve this execution model. Activation statistics are accumulated locally from each rank's assigned training samples, then count/sum/squared-sum/minimum/maximum and fixed histogram counts are globally reduced at the epoch boundary. Gradient norms use the synchronized weighted gradient before clipping. Actual parameter deltas are measured on rank zero after every real replicated optimizer update. Only rank zero writes artifacts, but every rank executes activation collectives in identical layer/phase order.
 
 `MPI_Comm` is injected into `CrossValidator`, `CNNTrialRunner`, `Trainer`, and `CNNModel`; collectives are no longer bound internally to `MPI_COMM_WORLD`. Custom `TrialRunner` implementations must not perform unmatched collectives internally, but exceptions returned from a runner are reconciled before the validator advances to another candidate.
 
@@ -572,6 +605,10 @@ Parallel candidate groups are not implemented. They can be added later by creati
 - Fresh model state per factory build
 - Partial global batches and MPI-weighted training
 - Fixed 10-epoch history retention for every fold
+- Streaming moments, gradient norms, actual update ratios, and near-zero handling
+- Activation pre/post capture and globally reduced histogram populations
+- Deterministic layer metadata and candidate/fold output separation
+- Diagnostics-disabled behavior
 - Best-candidate selection through a fake trial runner
 
 The test executable is safe to run with one or multiple ranks:

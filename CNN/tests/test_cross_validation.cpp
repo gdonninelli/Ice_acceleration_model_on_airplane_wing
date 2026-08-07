@@ -2,13 +2,18 @@
 #include "data/Dataset.hpp"
 #include "layers/ConcatenateLayer.hpp"
 #include "layers/DenseLayer.hpp"
+#include "layers/ReLULayer.hpp"
 #include "model/ModelFactory.hpp"
+#include "optimizers/AdamOptimizer.hpp"
+#include "training/TrainingDiagnostics.hpp"
 #include "tuning/CrossValidator.hpp"
 #include "tuning/SearchSpace.hpp"
 #include "tuning/TrialConfig.hpp"
 #include <algorithm>
 #include <cmath>
+#include <cstdlib>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <memory>
 #include <mpi.h>
@@ -137,6 +142,226 @@ void test_physical_simm_scaling() {
                                               1.0f, 1.0f, 2.0f);
     require_close(gradient->get_data()[0], 1.0, 1e-6,
                   "SIMM physical scaling gradient is incorrect");
+}
+
+void test_diagnostics_math_and_activation_capture() {
+    RunningStatistics first;
+    first.add(1.0);
+    first.add(2.0);
+    RunningStatistics second;
+    second.add(3.0);
+    first.merge(second);
+    require(first.count() == 3, "Streaming statistics count is incorrect");
+    require_close(first.mean(), 2.0, 1e-12,
+                  "Streaming statistics mean is incorrect");
+    require_close(first.population_variance(), 2.0 / 3.0, 1e-12,
+                  "Streaming population variance is incorrect");
+    require_close(first.minimum(), 1.0, 0.0,
+                  "Streaming minimum is incorrect");
+    require_close(first.maximum(), 3.0, 0.0,
+                  "Streaming maximum is incorrect");
+
+    const float norm_values[]{3.0f, 4.0f};
+    require_close(l2_norm(norm_values, 2), 5.0, 0.0,
+                  "Gradient L2 norm calculation is incorrect");
+    const float before[]{3.0f, 4.0f};
+    const float after[]{3.0f, 0.0f};
+    const UpdateMeasurement update = measure_update(before, after, 2);
+    require_close(update.pre_update_norm, 5.0, 0.0,
+                  "Pre-update norm is incorrect");
+    require_close(update.update_norm, 4.0, 0.0,
+                  "Actual update delta is incorrect");
+    require_close(update.ratio, 0.8, 1e-12,
+                  "Actual update ratio is incorrect");
+    const float zeros[]{0.0f, 0.0f};
+    const float tiny_update[]{1e-13f, 0.0f};
+    const UpdateMeasurement near_zero =
+        measure_update(zeros, tiny_update, 2);
+    require(near_zero.denominator_near_zero,
+            "Zero update-ratio denominator was not flagged");
+    require_close(near_zero.ratio, 0.1, 1e-6,
+                  "Update-ratio epsilon handling is incorrect");
+
+    CNNModel model(std::make_unique<AdamOptimizer>(), MPI_COMM_SELF);
+    model.add_conv_layer(std::make_unique<ReLULayer>());
+    size_t captures = 0;
+    model.set_activation_observer(
+        [&](size_t layer_index, const std::string& layer_name,
+            const Tensor& pre, const Tensor& post) {
+            require(layer_index == 0 && layer_name == "ReLULayer",
+                    "Activation observer received unstable layer metadata");
+            require_close(pre.get_data()[0], -1.0, 0.0,
+                          "Pre-activation capture is incorrect");
+            require_close(post.get_data()[0], 0.0, 0.0,
+                          "Post-activation capture is incorrect");
+            ++captures;
+        });
+    auto input = std::make_shared<Tensor>(std::vector<size_t>{1, 2});
+    input->get_data()[0] = -1.0f;
+    input->get_data()[1] = 2.0f;
+    model.forward(input, nullptr);
+    require(captures == 1, "Activation observer did not capture the training pass");
+    const auto layers = model.layer_info();
+    require(layers.size() == 1 && layers[0].index == 0 && layers[0].activation,
+            "Model layer ordering metadata is not deterministic");
+}
+
+std::string read_text_file(const std::filesystem::path& path) {
+    std::ifstream input(path);
+    if (!input) {
+        throw std::runtime_error("Could not read test artifact: " + path.string());
+    }
+    return std::string(std::istreambuf_iterator<char>(input),
+                       std::istreambuf_iterator<char>());
+}
+
+void test_training_diagnostics_artifacts() {
+    int rank = 0;
+    int world_size = 1;
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+    const auto root = std::filesystem::temp_directory_path() /
+        ("cnn_diagnostics_test_" + std::to_string(world_size));
+    if (rank == 0) {
+        std::filesystem::remove_all(root);
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    Dataset dataset = tiny_dataset(7);
+    const std::vector<size_t> training{0, 1, 2, 3, 4};
+    const std::vector<size_t> validation{5, 6};
+    const NormalizationStats normalization =
+        dataset.fit_normalization(training);
+    ModelBlueprint blueprint;
+    blueprint.feature_layers = {Recipes::activation("relu"), Recipes::flatten()};
+    blueprint.head_layers = {Recipes::dense(1)};
+    TrialConfig config{"diagnostics candidate", blueprint, Recipes::adam(1e-3f),
+                       LossConfig{0.0f},
+                       TrainingConfig{1, 3, 1.0f, 31, false}, {}};
+    config.training.validation_interval = 1;
+    config.training.diagnostics.enabled = true;
+    config.training.diagnostics.results_root = root.string();
+    config.training.diagnostics.experiment_name = "experiment";
+    config.training.diagnostics.run_name = "run";
+    config.training.diagnostics.histogram_bins = 8;
+
+    ModelFactory factory;
+    auto model = factory.build(config, 1, 1, 2, 31, MPI_COMM_WORLD);
+    Trainer trainer(MPI_COMM_WORLD);
+    TrainingRunContext context;
+    context.random_seed = 31;
+    const TrainingResult diagnostic_result = trainer.fit(
+        *model, dataset, training, dataset, validation, normalization,
+        config.loss, config.training, 31, false, context, &config);
+    MPI_Barrier(MPI_COMM_WORLD);
+
+    std::string artifact_error;
+    if (rank == 0) {
+        try {
+            const auto directory = root / "experiment" / "run";
+            require(std::filesystem::exists(directory / "metadata.json"),
+                    "Diagnostics metadata was not written");
+            const std::string activations =
+                read_text_file(directory / "activation_statistics.csv");
+            require(activations.find(",pre_activation,5,") != std::string::npos &&
+                        activations.find(",post_activation,5,") != std::string::npos,
+                    "Activation statistics were not globally aggregated");
+            const std::string gradients =
+                read_text_file(directory / "gradient_norms.csv");
+            require(gradients.find(",\"all\",") != std::string::npos &&
+                        gradients.find(",2\n") != std::string::npos,
+                    "Epoch gradient aggregation or optimizer-step count is missing");
+            const std::string updates =
+                read_text_file(directory / "parameter_update_ratios.csv");
+            require(updates.find("near_zero_denominator_steps") != std::string::npos,
+                    "Parameter update-ratio output is incomplete");
+            const std::string histograms =
+                read_text_file(directory / "activation_histograms.csv");
+            require(histograms.find(",5\n") != std::string::npos,
+                    "Activation histogram population is incorrect");
+
+            TrainingRunContext first_fold;
+            first_fold.mode = "cross_validation";
+            first_fold.candidate_index = 0;
+            first_fold.fold_index = 0;
+            TrainingRunContext second_fold = first_fold;
+            second_fold.fold_index = 1;
+            require(diagnostics_run_directory(config.training.diagnostics, first_fold) !=
+                        diagnostics_run_directory(config.training.diagnostics, second_fold),
+                    "Candidate/fold diagnostics paths collide");
+        } catch (const std::exception& error) {
+            artifact_error = error.what();
+        }
+    }
+    int artifact_failed = artifact_error.empty() ? 0 : 1;
+    MPI_Bcast(&artifact_failed, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    require(artifact_failed == 0,
+            artifact_error.empty() ? "Diagnostics artifact verification failed on rank zero"
+                                   : artifact_error);
+
+    CrossValidator diagnostic_cv(
+        dataset, std::make_shared<RandomKFold>(2, true, 31),
+        std::make_shared<CNNTrialRunner>(MPI_COMM_WORLD), MPI_COMM_WORLD, false);
+    const CandidateResult cv_result = diagnostic_cv.evaluate(config);
+    require(cv_result.folds.size() == 2,
+            "Diagnostics cross-validation returned the wrong fold count");
+    MPI_Barrier(MPI_COMM_WORLD);
+    int cv_artifacts_missing = 0;
+    if (rank == 0) {
+        const auto session = root / "experiment" / "run";
+        cv_artifacts_missing =
+            (!std::filesystem::exists(session / "candidate_000" / "fold_000" /
+                                      "epoch_metrics.csv") ||
+             !std::filesystem::exists(session / "candidate_000" / "fold_001" /
+                                      "epoch_metrics.csv") ||
+             !std::filesystem::exists(session / "cv_summary.csv"))
+                ? 1 : 0;
+    }
+    MPI_Bcast(&cv_artifacts_missing, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    require(cv_artifacts_missing == 0,
+            "Cross-validation candidate/fold artifacts are not separated");
+
+    TrialConfig disabled = config;
+    disabled.training.diagnostics.enabled = false;
+    disabled.training.diagnostics.run_name = "disabled";
+    auto disabled_model =
+        factory.build(disabled, 1, 1, 2, 31, MPI_COMM_WORLD);
+    const TrainingResult disabled_result = trainer.fit(
+        *disabled_model, dataset, training, dataset, validation,
+        normalization, disabled.loss, disabled.training, 31, false,
+        context, &disabled);
+    require_close(disabled_result.training_objective,
+                  diagnostic_result.training_objective, 1e-7,
+                  "Enabled diagnostics changed the training objective");
+    require_close(disabled_result.validation_mse,
+                  diagnostic_result.validation_mse, 1e-7,
+                  "Enabled diagnostics changed validation behavior");
+    const auto diagnostic_parameters = model->parameters();
+    const auto disabled_parameters = disabled_model->parameters();
+    require(diagnostic_parameters.size() == disabled_parameters.size(),
+            "Enabled diagnostics changed parameter ordering");
+    for (size_t parameter = 0; parameter < diagnostic_parameters.size(); ++parameter) {
+        for (size_t value = 0;
+             value < diagnostic_parameters[parameter].tensor->size(); ++value) {
+            require_close(
+                diagnostic_parameters[parameter].tensor->get_data()[value],
+                disabled_parameters[parameter].tensor->get_data()[value], 1e-7,
+                "Enabled diagnostics changed a model update");
+        }
+    }
+    MPI_Barrier(MPI_COMM_WORLD);
+    int disabled_artifact_exists = 0;
+    if (rank == 0) {
+        disabled_artifact_exists =
+            std::filesystem::exists(root / "experiment" / "disabled") ? 1 : 0;
+        if (std::getenv("CNN_KEEP_TEST_ARTIFACTS") == nullptr) {
+            std::filesystem::remove_all(root);
+        }
+    }
+    MPI_Bcast(&disabled_artifact_exists, 1, MPI_INT, 0, MPI_COMM_WORLD);
+    require(disabled_artifact_exists == 0,
+            "Disabled diagnostics created result artifacts");
+    MPI_Barrier(MPI_COMM_WORLD);
 }
 
 void test_parameter_grid_and_fresh_models() {
@@ -355,6 +580,16 @@ public:
     }
 };
 
+class DiagnosticsFailureRunner final : public TrialRunner {
+public:
+    FoldMetrics run(const TrialConfig&,
+                    const Dataset&,
+                    const FoldIndices&,
+                    size_t) const override {
+        throw DiagnosticsError("simulated recorder failure");
+    }
+};
+
 class OverlappingSplitter final : public FoldSplitter {
 public:
     std::vector<FoldIndices> split(size_t) const override {
@@ -438,6 +673,13 @@ void test_cross_validator_selection() {
     require_throws([&] { failed.best(); },
                    "SearchResult returned a best candidate when all failed");
 
+    CrossValidator diagnostics_failure(
+        dataset, std::make_shared<RandomKFold>(3, true, 2),
+        std::make_shared<DiagnosticsFailureRunner>(), MPI_COMM_WORLD, false);
+    require_throws(
+        [&] { diagnostics_failure.tune(grid); },
+        "CrossValidator changed candidate selection after a diagnostics failure");
+
     CrossValidator invalid_folds(
         dataset, std::make_shared<OverlappingSplitter>(),
         std::make_shared<FakeTrialRunner>(), MPI_COMM_WORLD, false);
@@ -453,6 +695,14 @@ void test_cross_validator_selection() {
         const SearchResult divergent_result = divergent.tune(grid);
         require(!divergent_result.candidates[0].success,
                 "CrossValidator accepted rank-divergent metrics");
+
+        TrialConfig divergent_diagnostics = minimal_trial();
+        int rank = 0;
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        divergent_diagnostics.training.diagnostics.enabled = rank != 0;
+        require_throws(
+            [&] { validator.evaluate(divergent_diagnostics); },
+            "CrossValidator accepted rank-divergent diagnostics configuration");
     }
 }
 } // namespace
@@ -463,9 +713,11 @@ int main(int argc, char** argv) {
         test_random_kfold();
         test_fold_normalization_and_schema();
         test_physical_simm_scaling();
+        test_diagnostics_math_and_activation_capture();
         test_parameter_grid_and_fresh_models();
         test_trainer_with_partial_batches();
         test_generic_checkpoint_round_trip();
+        test_training_diagnostics_artifacts();
         test_cross_validator_selection();
         std::cout << "All cross-validation tests passed." << std::endl;
     } catch (const std::exception& error) {

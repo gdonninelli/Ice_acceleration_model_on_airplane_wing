@@ -1,8 +1,13 @@
 #include "CrossValidator.hpp"
+#include "training/TrainingDiagnostics.hpp"
 #include <algorithm>
 #include <bit>
+#include <cctype>
 #include <cmath>
 #include <iostream>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
 #include <numeric>
 #include <random>
 #include <stdexcept>
@@ -68,7 +73,8 @@ void validate_folds(const std::vector<FoldIndices>& folds, size_t sample_count) 
 
 void throw_if_distributed_failure(const std::string& local_error,
                                   const std::string& phase,
-                                  MPI_Comm communicator) {
+                                  MPI_Comm communicator,
+                                  bool diagnostics_failure = false) {
     int local_failed = local_error.empty() ? 0 : 1;
     int any_failed = local_failed;
     if (mpi_ready()) {
@@ -76,6 +82,19 @@ void throw_if_distributed_failure(const std::string& local_error,
                       communicator);
     }
     if (any_failed != 0) {
+        int local_diagnostics_failed =
+            !local_error.empty() && diagnostics_failure ? 1 : 0;
+        int any_diagnostics_failed = local_diagnostics_failed;
+        if (mpi_ready()) {
+            MPI_Allreduce(&local_diagnostics_failed, &any_diagnostics_failed,
+                          1, MPI_INT, MPI_MAX, communicator);
+        }
+        if (any_diagnostics_failed != 0) {
+            throw DiagnosticsError(
+                !local_error.empty()
+                    ? phase + ": " + local_error
+                    : phase + " failed on another MPI rank.");
+        }
         if (!local_error.empty()) {
             throw std::runtime_error(phase + ": " + local_error);
         }
@@ -143,11 +162,157 @@ uint64_t trial_config_hash(const TrialConfig& config) {
     append_integer(std::bit_cast<uint32_t>(config.training.gradient_clip));
     append_integer(config.training.seed);
     append_integer(config.training.shuffle ? 1 : 0);
+    append_integer(config.training.validation_interval);
+    append_integer(config.training.diagnostics.enabled ? 1 : 0);
+    append_string(config.training.diagnostics.results_root);
+    append_string(config.training.diagnostics.experiment_name);
+    append_string(config.training.diagnostics.run_name);
+    append_integer(config.training.diagnostics.histogram_bins);
+    append_integer(std::bit_cast<uint64_t>(
+        config.training.diagnostics.histogram_min));
+    append_integer(std::bit_cast<uint64_t>(
+        config.training.diagnostics.histogram_max));
+    append_string(config.training.diagnostics.training_dataset_path);
+    append_string(config.training.diagnostics.validation_dataset_path);
     for (const auto& [name, value] : config.selected_parameters) {
         append_string(name);
         append_string(value);
     }
     return hash;
+}
+
+void verify_trial_config_agreement(const TrialConfig& config,
+                                   MPI_Comm communicator) {
+    if (!mpi_ready()) {
+        return;
+    }
+    const unsigned long long local_hash =
+        static_cast<unsigned long long>(trial_config_hash(config));
+    unsigned long long minimum_hash = 0;
+    unsigned long long maximum_hash = 0;
+    MPI_Allreduce(&local_hash, &minimum_hash, 1, MPI_UNSIGNED_LONG_LONG,
+                  MPI_MIN, communicator);
+    MPI_Allreduce(&local_hash, &maximum_hash, 1, MPI_UNSIGNED_LONG_LONG,
+                  MPI_MAX, communicator);
+    if (minimum_hash != maximum_hash) {
+        throw std::runtime_error(
+            "Trial configuration differs across MPI ranks.");
+    }
+}
+
+std::string csv_field(const std::string& value) {
+    std::string output = "\"";
+    for (char character : value) {
+        if (character == '"') output.push_back('"');
+        output.push_back(character);
+    }
+    output.push_back('"');
+    return output;
+}
+
+std::string json_field(const std::string& value) {
+    std::string output = "\"";
+    constexpr char hexadecimal[] = "0123456789abcdef";
+    for (unsigned char character : value) {
+        switch (character) {
+        case '"': output += "\\\""; break;
+        case '\\': output += "\\\\"; break;
+        case '\n': output += "\\n"; break;
+        case '\r': output += "\\r"; break;
+        case '\t': output += "\\t"; break;
+        default:
+            if (character < 0x20) {
+                output += "\\u00";
+                output.push_back(hexadecimal[character >> 4U]);
+                output.push_back(hexadecimal[character & 0x0fU]);
+            } else {
+                output.push_back(static_cast<char>(character));
+            }
+        }
+    }
+    output.push_back('"');
+    return output;
+}
+
+void write_cv_artifacts(const std::vector<const CandidateResult*>& candidates,
+                        MPI_Comm communicator) {
+    const auto enabled_candidate = std::find_if(
+        candidates.begin(), candidates.end(),
+        [](const CandidateResult* candidate) {
+            return candidate && candidate->config.training.diagnostics.enabled;
+        });
+    if (enabled_candidate == candidates.end()) {
+        return;
+    }
+    int rank = 0;
+    if (mpi_ready()) MPI_Comm_rank(communicator, &rank);
+    std::string local_error;
+    if (rank == 0) {
+        try {
+            const auto& diagnostics =
+                (*enabled_candidate)->config.training.diagnostics;
+            const auto directory = diagnostics_session_directory(diagnostics);
+            std::filesystem::create_directories(directory);
+            const auto summary_path = directory / "cv_summary.csv";
+            std::ofstream summary(summary_path, std::ios::trunc);
+            if (!summary) {
+                throw std::runtime_error("Failed to open " + summary_path.string());
+            }
+            summary << "candidate_index,candidate_name,success,fold,training_objective,validation_physical_mse,training_samples,validation_samples,mean_validation_physical_mse,validation_stddev,error\n";
+            for (size_t candidate_index = 0;
+                 candidate_index < candidates.size(); ++candidate_index) {
+                const CandidateResult& candidate = *candidates[candidate_index];
+                if (candidate.folds.empty()) {
+                    summary << candidate_index << ','
+                            << csv_field(candidate.config.name) << ','
+                            << (candidate.success ? 1 : 0)
+                            << ",,,,,," << candidate.mean_validation_mse << ','
+                            << candidate.validation_stddev << ','
+                            << csv_field(candidate.error) << '\n';
+                }
+                for (const auto& fold : candidate.folds) {
+                    summary << candidate_index << ','
+                            << csv_field(candidate.config.name) << ','
+                            << (candidate.success ? 1 : 0) << ',' << fold.fold
+                            << ',' << std::setprecision(17)
+                            << fold.training_objective << ','
+                            << fold.validation_mse << ','
+                            << fold.training_samples << ','
+                            << fold.validation_samples << ','
+                            << candidate.mean_validation_mse << ','
+                            << candidate.validation_stddev << ','
+                            << csv_field(candidate.error) << '\n';
+                }
+            }
+            summary.flush();
+            if (!summary) {
+                throw std::runtime_error("Failed to write " + summary_path.string());
+            }
+
+            const auto metadata_path = directory / "metadata.json";
+            std::ofstream metadata(metadata_path, std::ios::trunc);
+            if (!metadata) {
+                throw std::runtime_error("Failed to open " + metadata_path.string());
+            }
+            metadata << "{\n  \"format_version\": 1,\n"
+                     << "  \"mode\": \"cross_validation\",\n"
+                     << "  \"experiment_name\": "
+                     << json_field(diagnostics.experiment_name) << ",\n"
+                     << "  \"run_name\": "
+                     << json_field(diagnostics.run_name) << ",\n"
+                     << "  \"candidate_count\": " << candidates.size()
+                     << "\n}\n";
+            metadata.flush();
+            if (!metadata) {
+                throw std::runtime_error("Failed to write " +
+                                         metadata_path.string());
+            }
+        } catch (const std::exception& error) {
+            local_error = error.what();
+        }
+    }
+    throw_if_distributed_failure(local_error, "Cross-validation diagnostics",
+                                 communicator, true);
 }
 } // namespace
 
@@ -207,6 +372,15 @@ FoldMetrics CNNTrialRunner::run(const TrialConfig& config,
                                 const Dataset& dataset,
                                 const FoldIndices& fold,
                                 size_t fold_index) const {
+    return run(config, dataset, fold, fold_index,
+               Context{0, 1, fold_index + 1});
+}
+
+FoldMetrics CNNTrialRunner::run(const TrialConfig& config,
+                                const Dataset& dataset,
+                                const FoldIndices& fold,
+                                size_t fold_index,
+                                const Context& context) const {
     const uint64_t seed = fold_seed(config.training.seed, fold_index);
     NormalizationStats normalization;
     std::unique_ptr<CNNModel> model;
@@ -223,9 +397,20 @@ FoldMetrics CNNTrialRunner::run(const TrialConfig& config,
     }
     throw_if_distributed_failure(local_error, "Trial setup", _communicator);
 
+    TrainingRunContext run_context;
+    run_context.mode = "cross_validation";
+    run_context.candidate_index = context.candidate_index;
+    run_context.candidate_count = context.candidate_count;
+    run_context.fold_index = fold_index;
+    run_context.fold_count = context.fold_count;
+    run_context.random_seed = seed;
+    run_context.training_dataset_path =
+        config.training.diagnostics.training_dataset_path;
+    run_context.validation_dataset_path =
+        config.training.diagnostics.training_dataset_path;
     const TrainingResult result = _trainer.fit(
         *model, dataset, fold.training, dataset, fold.validation, normalization,
-        config.loss, config.training, seed, false);
+        config.loss, config.training, seed, false, run_context, &config);
     return FoldMetrics{fold_index,
                        result.training_objective,
                        result.validation_mse,
@@ -289,7 +474,12 @@ std::vector<FoldIndices> CrossValidator::make_fold_plan() const {
 
 CandidateResult CrossValidator::evaluate_with_folds(
     const TrialConfig& config,
-    const std::vector<FoldIndices>& folds) const {
+    const std::vector<FoldIndices>& folds,
+    size_t candidate_index,
+    size_t candidate_count) const {
+    if (config.training.validation_interval == 0) {
+        throw std::invalid_argument("Validation interval must be positive.");
+    }
     CandidateResult result(config);
     double weighted_training_sum = 0.0;
     double weighted_validation_sum = 0.0;
@@ -299,8 +489,12 @@ CandidateResult CrossValidator::evaluate_with_folds(
     for (size_t fold_index = 0; fold_index < folds.size(); ++fold_index) {
         FoldMetrics metrics;
         std::string local_error;
+        bool local_diagnostics_failure = false;
         try {
-            metrics = _runner->run(config, _dataset, folds[fold_index], fold_index);
+            metrics = _runner->run(
+                config, _dataset, folds[fold_index], fold_index,
+                TrialRunner::Context{candidate_index, candidate_count,
+                                     folds.size()});
             if (metrics.fold != fold_index ||
                 metrics.training_samples != folds[fold_index].training.size() ||
                 metrics.validation_samples != folds[fold_index].validation.size()) {
@@ -315,7 +509,7 @@ CandidateResult CrossValidator::evaluate_with_folds(
                     "Trial runner returned invalid objective metrics.");
             }
             const size_t expected_history_size =
-                config.training.epochs / Trainer::kHistoryIntervalEpochs;
+                config.training.epochs / config.training.validation_interval;
             if (metrics.history.size() != expected_history_size) {
                 throw std::runtime_error(
                     "Trial runner returned an incomplete epoch history.");
@@ -324,7 +518,7 @@ CandidateResult CrossValidator::evaluate_with_folds(
                  history_index < metrics.history.size(); ++history_index) {
                 const EpochMetrics& point = metrics.history[history_index];
                 const size_t expected_epoch =
-                    (history_index + 1) * Trainer::kHistoryIntervalEpochs;
+                    (history_index + 1) * config.training.validation_interval;
                 if (point.epoch != expected_epoch ||
                     !std::isfinite(point.training_objective) ||
                     point.training_objective < 0.0 ||
@@ -334,12 +528,16 @@ CandidateResult CrossValidator::evaluate_with_folds(
                         "Trial runner returned invalid epoch history metrics.");
                 }
             }
+        } catch (const DiagnosticsError& error) {
+            local_error = error.what();
+            local_diagnostics_failure = true;
         } catch (const std::exception& error) {
             local_error = error.what();
         } catch (...) {
             local_error = "unknown trial runner error";
         }
-        throw_if_distributed_failure(local_error, "Fold evaluation", _communicator);
+        throw_if_distributed_failure(local_error, "Fold evaluation", _communicator,
+                                     local_diagnostics_failure);
 
         if (mpi_ready()) {
             unsigned long long integer_metrics[3]{
@@ -439,8 +637,11 @@ CandidateResult CrossValidator::evaluate_with_folds(
 }
 
 CandidateResult CrossValidator::evaluate(const TrialConfig& config) const {
+    verify_trial_config_agreement(config, _communicator);
     const auto folds = make_fold_plan();
-    return evaluate_with_folds(config, folds);
+    CandidateResult result = evaluate_with_folds(config, folds, 0, 1);
+    write_cv_artifacts({&result}, _communicator);
+    return result;
 }
 
 SearchResult CrossValidator::tune(const CandidateSource& candidate_source) const {
@@ -473,18 +674,7 @@ SearchResult CrossValidator::tune(const CandidateSource& candidate_source) const
                 "Candidate source produced different counts across MPI ranks.");
         }
         for (const auto& configuration : configurations) {
-            const unsigned long long local_hash =
-                static_cast<unsigned long long>(trial_config_hash(configuration));
-            unsigned long long minimum_hash = 0;
-            unsigned long long maximum_hash = 0;
-            MPI_Allreduce(&local_hash, &minimum_hash, 1,
-                          MPI_UNSIGNED_LONG_LONG, MPI_MIN, _communicator);
-            MPI_Allreduce(&local_hash, &maximum_hash, 1,
-                          MPI_UNSIGNED_LONG_LONG, MPI_MAX, _communicator);
-            if (minimum_hash != maximum_hash) {
-                throw std::runtime_error(
-                    "Candidate source produced different configurations across MPI ranks.");
-            }
+            verify_trial_config_agreement(configuration, _communicator);
         }
     }
     const auto folds = make_fold_plan();
@@ -501,7 +691,8 @@ SearchResult CrossValidator::tune(const CandidateSource& candidate_source) const
 
         try {
             CandidateResult result =
-                evaluate_with_folds(configurations[index], folds);
+                evaluate_with_folds(configurations[index], folds, index,
+                                    configurations.size());
             if (_verbose && rank() == 0) {
                 std::cout << "  Mean validation physical MSE: "
                           << result.mean_validation_mse << " +/- "
@@ -512,6 +703,8 @@ SearchResult CrossValidator::tune(const CandidateSource& candidate_source) const
                 search.best_index = search.candidates.size();
             }
             search.candidates.push_back(std::move(result));
+        } catch (const DiagnosticsError&) {
+            throw;
         } catch (const std::exception& error) {
             CandidateResult failed(configurations[index]);
             failed.error = error.what();
@@ -521,6 +714,13 @@ SearchResult CrossValidator::tune(const CandidateSource& candidate_source) const
             search.candidates.push_back(std::move(failed));
         }
     }
+
+    std::vector<const CandidateResult*> candidate_pointers;
+    candidate_pointers.reserve(search.candidates.size());
+    for (const auto& candidate : search.candidates) {
+        candidate_pointers.push_back(&candidate);
+    }
+    write_cv_artifacts(candidate_pointers, _communicator);
 
     return search;
 }

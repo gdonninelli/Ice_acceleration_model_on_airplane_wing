@@ -59,6 +59,7 @@ class AdamOptimizer : public Optimizer {
      * @param size The total number of elements in the weights and grads arrays.
      */
     void apply_gradients(float* weights, float* grads, size_t size) override;
+    OptimizerMetadata metadata() const override;
 };
 
 #endif // ADAMOPTIMIZER_HPP

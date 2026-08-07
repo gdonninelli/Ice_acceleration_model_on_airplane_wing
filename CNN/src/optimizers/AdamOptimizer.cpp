@@ -80,3 +80,15 @@ void AdamOptimizer::apply_gradients(float* weights, float* grads, size_t size) {
         grads[i] = 0.0f;
     }
 }
+
+OptimizerMetadata AdamOptimizer::metadata() const {
+    return OptimizerMetadata{
+        "adam",
+        _learning_rate,
+        _learning_rate,
+        false,
+        {{"beta1", _beta1},
+         {"beta2", _beta2},
+         {"epsilon", _epsilon},
+         {"weight_decay", _weight_decay}}};
+}

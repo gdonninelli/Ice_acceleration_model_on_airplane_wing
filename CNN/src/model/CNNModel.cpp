@@ -1,5 +1,6 @@
 #include "CNNModel.hpp"
 #include "layers/ConcatenateLayer.hpp"
+#include "layers/ActivationLayer.hpp"
 #include <algorithm>
 #include <cmath>
 #include <cstring>
@@ -143,20 +144,38 @@ std::shared_ptr<Tensor> CNNModel::forward(std::shared_ptr<Tensor> sdf_input,
         throw std::invalid_argument("CNNModel forward received a null SDF tensor.");
     }
 
+    size_t layer_index = 0;
+    auto run_layer = [&](Layer& layer,
+                         const std::vector<std::shared_ptr<Tensor>>& inputs) {
+        const auto pre_activation = inputs.empty() ? nullptr : inputs[0];
+        auto layer_output = layer.forward(inputs);
+        if (_activation_observer &&
+            dynamic_cast<const ActivationLayer*>(&layer) != nullptr) {
+            if (!pre_activation || !layer_output) {
+                throw std::runtime_error(
+                    "Activation diagnostics received a null tensor.");
+            }
+            _activation_observer(layer_index, layer.get_layer_name(),
+                                 *pre_activation, *layer_output);
+        }
+        ++layer_index;
+        return layer_output;
+    };
+
     auto output = std::move(sdf_input);
     for (const auto& layer : _feature_layers) {
-        output = layer->forward({output});
+        output = run_layer(*layer, {output});
     }
 
     if (_concatenate_layer) {
         if (!scalar_input) {
             throw std::invalid_argument("CNNModel forward received a null scalar tensor.");
         }
-        output = _concatenate_layer->forward({output, scalar_input});
+        output = run_layer(*_concatenate_layer, {output, scalar_input});
     }
 
     for (const auto& layer : _head_layers) {
-        output = layer->forward({output});
+        output = run_layer(*layer, {output});
     }
     return output;
 }
@@ -247,6 +266,32 @@ const std::vector<LayerParameter>& CNNModel::parameters() const {
     _parameter_cache = std::move(output);
     _parameters_dirty = false;
     return _parameter_cache;
+}
+
+std::vector<ModelLayerInfo> CNNModel::layer_info() const {
+    std::vector<ModelLayerInfo> output;
+    const auto layers = ordered_layers();
+    output.reserve(layers.size());
+    for (size_t index = 0; index < layers.size(); ++index) {
+        output.push_back(ModelLayerInfo{
+            index,
+            layers[index]->get_layer_name(),
+            dynamic_cast<const ActivationLayer*>(layers[index]) != nullptr,
+            layers[index]->parameters()});
+    }
+    return output;
+}
+
+void CNNModel::set_activation_observer(ActivationObserver observer) {
+    _activation_observer = std::move(observer);
+}
+
+void CNNModel::clear_activation_observer() noexcept {
+    _activation_observer = nullptr;
+}
+
+OptimizerMetadata CNNModel::optimizer_metadata() const {
+    return _optimizer->metadata();
 }
 
 void CNNModel::zero_grad() {

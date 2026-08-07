@@ -8,6 +8,17 @@
 #define OPTIMIZER_HPP
 
 #include <cstddef>
+#include <limits>
+#include <map>
+#include <string>
+
+struct OptimizerMetadata {
+    std::string name = "optimizer";
+    double configured_learning_rate = std::numeric_limits<double>::quiet_NaN();
+    double effective_learning_rate = std::numeric_limits<double>::quiet_NaN();
+    bool scheduled = false;
+    std::map<std::string, double> settings;
+};
 
 /**
  * @class Optimizer
@@ -28,6 +39,8 @@ class Optimizer {
      * @param size The total number of elements in the weights and grads arrays.
      */
     virtual void apply_gradients(float* weights, float* grads, size_t size) = 0;
+
+    virtual OptimizerMetadata metadata() const { return {}; }
 };
 
 #endif // OPTIMIZER_HPP
