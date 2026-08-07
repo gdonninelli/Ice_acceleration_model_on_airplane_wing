@@ -1,5 +1,14 @@
 # Activation-Function Tuning Experiment
 
+> ⚠️ **Risultati non disponibili.** Questo esperimento è stato eseguito originariamente su
+> un dataset che si è rivelato invalido: i file `.npz` committati nel repository
+> contenevano rumore gaussiano anziché le Signed Distance Function dei profili alari
+> (autocorrelazione lag-1 ≈ 0.0001 contro ≈ 0.999 attesa; nessuno dei target presente nei
+> summary CFD). Tutte le misure e le conclusioni prodotte in quella sede sono state rimosse.
+> L'infrastruttura dell'esperimento è valida e riutilizzabile. Le misure verranno rifatte
+> sul dataset rigenerato (2142 campioni, 5 profili, verificato fisicamente: pendenza
+> C_l vs α = 0.111/grado contro 0.1097 teorico).
+
 ## Question
 
 Which activation function minimises the physical-unit validation MSE for the
@@ -102,19 +111,3 @@ Per the checklist in `cross_validation.md`: experiment name, candidate values,
 fold seed/count, epochs and global batch size, per-fold training objective and
 validation MSE, aggregate mean and standard deviation, the per-fold 10-epoch
 history, the MPI process count, and the Git commit hash used for the run.
-
-## Results (Run Summary)
-
-The cross-validation experiment evaluated all four activation functions across 5 folds for 100 epochs:
-
-| Candidate | Mean Validation Physical MSE | StdDev | Mean Training Objective | Status |
-|---|---|---|---|---|
-| `sigmoid` | **0.924664** | **0.389737** | 1.03441 | **Winner** |
-| `relu` | 0.989648 | 0.519008 | 0.284566 | Evaluated |
-| `leakyrelu` | 0.998040 | 0.527004 | 0.283442 | Evaluated |
-| `tanh` | 1.124960 | 0.372038 | 0.283263 | Evaluated |
-
-### Final Untouched-Test Evaluation
-- **Winning Activation**: `sigmoid`
-- **Final Untouched-Test Physical MSE**: `0.790732`
-
