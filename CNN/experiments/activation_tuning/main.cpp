@@ -16,14 +16,13 @@
 #include <cstddef>
 #include <exception>
 #include <iostream>
+#include <fstream>
 #include <memory>
 #include <mpi.h>
 #include <string>
 #include <vector>
 
 namespace {
-// Baseline experiment budget. Keep the fold seed and count fixed across every
-// candidate so activation scores remain directly comparable.
 constexpr size_t kFoldCount = 5;
 constexpr size_t kEpochCount = 100;
 constexpr size_t kGlobalBatchSize = 64;
@@ -31,10 +30,6 @@ constexpr uint64_t kSeed = 42;
 constexpr float kLearningRate = 1e-5f;
 constexpr float kPhysicsWeight = 0.25f;
 
-// Builds the fixed baseline topology with a single configurable activation:
-//   Feature: Conv2D(8, 5x5) -> Activation -> Flatten
-//   Head:    Dense(128) -> Activation -> Dense(64) -> Activation -> Dense(1)
-// Only the non-linearity varies between candidates.
 ModelBlueprint make_blueprint(const std::string& activation, float alpha = 0.05f) {
     ModelBlueprint blueprint;
     blueprint.feature_layers = {
@@ -50,6 +45,18 @@ ModelBlueprint make_blueprint(const std::string& activation, float alpha = 0.05f
         Recipes::dense(1)};
     return blueprint;
 }
+
+void write_csv(const std::string& candidate_name, const CandidateResult& result) {
+    std::string path = "results/cross_validation/activation_tuning/" + candidate_name + ".csv";
+    std::ofstream f(path);
+    if (!f) return;
+    f << "candidate,fold,train_mse,val_mse,baseline_mse,epochs\n";
+    for (const auto& fold : result.folds) {
+        f << candidate_name << "," << fold.fold << "," 
+          << fold.training_objective << "," << fold.validation_mse << "," 
+          << fold.baseline_mse << "," << kEpochCount << "\n";
+    }
+}
 } // namespace
 
 int main(int argc, char** argv) {
@@ -58,7 +65,11 @@ int main(int argc, char** argv) {
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
     try {
-        // Cross-validation uses the training NPZ only.
+        std::string target_candidate = "";
+        if (argc > 1) {
+            target_candidate = argv[1];
+        }
+
         Dataset training_dataset("dataset/cnn_dataset_train.npz");
 
         TrialConfig baseline{
@@ -70,16 +81,34 @@ int main(int argc, char** argv) {
             {}};
 
         ParameterGrid grid(baseline);
-        grid.add_choice<ModelBlueprint>(
-            "activation-function",
-            {{"relu", make_blueprint("relu")},
+        std::vector<NamedChoice<ModelBlueprint>> choices = {
+             {"relu", make_blueprint("relu")},
              {"tanh", make_blueprint("tanh")},
              {"sigmoid", make_blueprint("sigmoid")},
              {"leakyrelu-0.01", make_blueprint("leakyrelu", 0.01f)},
              {"leakyrelu-0.05", make_blueprint("leakyrelu", 0.05f)},
              {"leakyrelu-0.1", make_blueprint("leakyrelu", 0.1f)},
              {"leakyrelu-0.2", make_blueprint("leakyrelu", 0.2f)},
-             {"leakyrelu-0.3", make_blueprint("leakyrelu", 0.3f)}},
+             {"leakyrelu-0.3", make_blueprint("leakyrelu", 0.3f)}
+        };
+
+        if (!target_candidate.empty()) {
+            std::vector<NamedChoice<ModelBlueprint>> filtered;
+            for (const auto& c : choices) {
+                if (c.label == target_candidate) {
+                    filtered.push_back(c);
+                }
+            }
+            if (filtered.empty()) {
+                if (rank == 0) std::cerr << "Candidate not found!" << std::endl;
+                MPI_Abort(MPI_COMM_WORLD, 1);
+            }
+            choices = filtered;
+        }
+
+        grid.add_choice<ModelBlueprint>(
+            "activation-function",
+            choices,
             [](TrialConfig& trial, const ModelBlueprint& model) {
                 trial.model = model;
             });
@@ -90,81 +119,13 @@ int main(int argc, char** argv) {
                                  MPI_COMM_WORLD, true);
 
         const SearchResult result = validator.tune(grid);
-        const CandidateResult& best = result.best();
-
+        
         if (rank == 0) {
-            std::cout << "\n===== Activation search summary =====\n";
             for (const CandidateResult& candidate : result.candidates) {
-                std::cout << candidate.config.name << '\n';
-                if (!candidate.success) {
-                    std::cout << "  status: FAILED (" << candidate.error
-                              << ")\n";
-                    continue;
-                }
-                std::cout << "  mean validation MSE: "
-                          << candidate.mean_validation_mse << " +/- "
-                          << candidate.validation_stddev << '\n'
-                          << "  mean training objective: "
-                          << candidate.mean_training_objective << '\n';
-            }
-
-            std::cout << "\n===== Best candidate =====\n"
-                      << "Name: " << best.config.name << '\n'
-                      << "Validation physical MSE: " << best.mean_validation_mse
-                      << " +/- " << best.validation_stddev << '\n';
-            for (const auto& [parameter, value] :
-                 best.config.selected_parameters) {
-                std::cout << "  " << parameter << ": " << value << '\n';
-            }
-            for (const FoldMetrics& fold : best.folds) {
-                std::cout << "Fold " << (fold.fold + 1)
-                          << " validation MSE=" << fold.validation_mse
-                          << " (train=" << fold.training_samples
-                          << ", val=" << fold.validation_samples << ")\n";
-                for (const EpochMetrics& point : fold.history) {
-                    std::cout << "  epoch=" << point.epoch
-                              << " train_objective=" << point.training_objective
-                              << " validation_mse=" << point.validation_mse
-                              << '\n';
+                if (candidate.success) {
+                    write_csv(candidate.config.selected_parameters.at("activation-function"), candidate);
                 }
             }
-        }
-
-        // Only now load the untouched test set and refit the selected candidate
-        // on the complete training dataset for a single unbiased estimate.
-        Dataset test_dataset("dataset/cnn_dataset_test.npz");
-        const auto training_indices = training_dataset.all_indices();
-        const auto test_indices = test_dataset.all_indices();
-        const NormalizationStats normalization =
-            training_dataset.fit_normalization(training_indices);
-
-        ModelFactory factory;
-        auto final_model = factory.build(
-            best.config,
-            training_dataset.sdf_height(),
-            training_dataset.sdf_width(),
-            training_dataset.scalar_features(),
-            best.config.training.seed,
-            MPI_COMM_WORLD);
-
-        Trainer trainer(MPI_COMM_WORLD);
-        const TrainingResult final_result = trainer.fit(
-            *final_model,
-            training_dataset,
-            training_indices,
-            test_dataset,
-            test_indices,
-            normalization,
-            best.config.loss,
-            best.config.training,
-            best.config.training.seed,
-            true);
-
-        if (rank == 0) {
-            std::cout << "\n===== Final unbiased estimate =====\n"
-                      << "Winning activation: " << best.config.name << '\n'
-                      << "Final untouched-test physical MSE: "
-                      << final_result.validation_mse << '\n';
         }
     } catch (const std::exception& error) {
         std::cerr << "Tuning failed on rank " << rank << ": " << error.what()
