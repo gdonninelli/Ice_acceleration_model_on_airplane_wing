@@ -57,6 +57,8 @@ struct ModelBlueprint {
 
 struct LossConfig {
     float physics_weight = 0.25f;
+    float l1_weight = 0.0f;
+    float l2_weight = 0.0f;
 };
 
 struct TrainingConfig {

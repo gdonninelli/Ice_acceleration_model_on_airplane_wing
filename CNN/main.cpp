@@ -24,6 +24,8 @@ struct CommandLineOptions {
     float leaky_alpha = 0.05f;
     float learning_rate = 1e-5f;
     float physics_weight = 0.25f;
+    float l1_weight = 0.0f;
+    float l2_weight = 0.0f;
     float gradient_clip = 1.0f;
     size_t epochs = 100;
     size_t global_batch_size = 64;
@@ -96,6 +98,10 @@ CommandLineOptions parse_arguments(int argc, char** argv) {
             options.learning_rate = parse_float(argument, next_value());
         } else if (argument == "--physics-weight") {
             options.physics_weight = parse_float(argument, next_value());
+        } else if (argument == "--l1-weight") {
+            options.l1_weight = parse_float(argument, next_value());
+        } else if (argument == "--l2-weight") {
+            options.l2_weight = parse_float(argument, next_value());
         } else if (argument == "--gradient-clip") {
             options.gradient_clip = parse_float(argument, next_value());
         } else if (argument == "--epochs") {
@@ -126,9 +132,10 @@ CommandLineOptions parse_arguments(int argc, char** argv) {
     }
 
     if (options.leaky_alpha < 0.0f || options.learning_rate <= 0.0f ||
-        options.physics_weight < 0.0f || options.gradient_clip < 0.0f) {
+        options.physics_weight < 0.0f || options.gradient_clip < 0.0f ||
+        options.l1_weight < 0.0f || options.l2_weight < 0.0f) {
         throw std::invalid_argument(
-            "Alpha, learning rate, physics weight, and gradient clip are outside their valid ranges.");
+            "Alpha, learning rate, physics weight, L1/L2 weights, and gradient clip are outside their valid ranges.");
     }
     return options;
 }
@@ -148,6 +155,8 @@ void print_help() {
         << "  --alpha VALUE          LeakyReLU negative slope\n"
         << "  --learning-rate VALUE  Adam learning rate for ordinary training\n"
         << "  --physics-weight VALUE SIMM physics weight\n"
+        << "  --l1-weight VALUE      L1 (Lasso) penalty weight on weight tensors\n"
+        << "  --l2-weight VALUE      L2 (Ridge) penalty weight on weight tensors\n"
         << "  --gradient-clip VALUE  Element-wise gradient clipping threshold\n"
         << "  --seed N               Split, shuffle, and initialization seed\n"
         << "  --train-path PATH      Training NPZ path\n"
@@ -207,7 +216,7 @@ TrialConfig make_single_trial(const CommandLineOptions& options) {
         make_blueprint(5, 5, 8, options.activation, options.leaky_alpha,
                        {128, 64}),
         Recipes::adam(options.learning_rate),
-        LossConfig{options.physics_weight},
+        LossConfig{options.physics_weight, options.l1_weight, options.l2_weight},
         make_training_config(options),
         {}};
 }

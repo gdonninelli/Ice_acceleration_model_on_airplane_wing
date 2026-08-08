@@ -35,6 +35,28 @@ entry per pull request, newest first.
 - **Validation:** CMake build, serial and MPI-2 CTest, direct MPI-2 test execution, `git diff --check`, Python compilation, and a warning-enabled compile completed successfully; dataset-backed training and plotting smoke tests were unavailable because required NPZ/artifact inputs are absent.
 - **Per-PR report:** `PR_REVIEWS/feature-store-gradient.md`
 - **Review outcome:** No critical findings; one compiler warning and dataset-dependent test gaps remain non-blocking.
+## Feature/l1 l2 regularization
+
+- **Status:** Pending merge
+- **Implementation dates:** 2026-08-06 to 2026-08-07
+- **Review date:** 2026-08-08
+- **Author:** Alessandro Ferdinando Verrengia (`alessandro.verrengia@mail.polimi.it`)
+- **Branch:** `feature/l1-l2-regularization`
+- **Base:** `main`
+- **Reviewed head:** `1e097aa1c1d34280945bdcc09346eee169298cf3`
+- **PR:** https://github.com/gdonninelli/Ice_acceleration_model_on_airplane_wing/pull/7
+- **Commit(s):** `0c0d7f8`, `6210681`, `5128a24`, `96e97e1`, `303bdee`, `9edc8e7`, `1e097aa`
+- **Summary:** Added weight-only L1/L2 regularization to CNN training and a paired cross-validation experiment for selecting penalty strengths.
+- **Implementation:**
+  - Added L1/L2 configuration and CLI options, with distributed gradient penalties applied after data-gradient synchronization.
+  - Added standalone L1/L2 sweeps, CSV recording, paired analysis, and committed experiment results/documentation.
+- **Validation:**
+  - Production and experiment sources compiled warning-free with `mpicxx -std=c++20 -O3 -Wall -Wextra -Wpedantic`.
+  - Cross-validation tests, including invalid L1/L2 configuration guards, passed serially and with two MPI ranks; both committed CSVs analyzed to lambda = 0.
+  - Two-rank one-epoch real-dataset smoke training with non-zero L1/L2 completed; `git diff --check` passed.
+- **Follow-up:** Added `Trainer` API-boundary validation for finite non-negative L1/L2 values and corrected README dataset, runtime, and result claims.
+- **Review report:** `PR_REVIEWS/feature-l1-l2-regularization.md`
+- **Review outcome:** No critical findings; previously reported medium API-validation and low documentation findings are resolved in the follow-up changes.
 
 ## Activation Functions
 

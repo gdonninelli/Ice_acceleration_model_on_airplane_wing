@@ -157,6 +157,8 @@ uint64_t trial_config_hash(const TrialConfig& config) {
     }
     append_string(config.optimizer.description());
     append_integer(std::bit_cast<uint32_t>(config.loss.physics_weight));
+    append_integer(std::bit_cast<uint32_t>(config.loss.l1_weight));
+    append_integer(std::bit_cast<uint32_t>(config.loss.l2_weight));
     append_integer(config.training.epochs);
     append_integer(config.training.global_batch_size);
     append_integer(std::bit_cast<uint32_t>(config.training.gradient_clip));

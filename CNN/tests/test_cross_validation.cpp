@@ -507,6 +507,41 @@ void test_trainer_with_partial_batches() {
     }
 }
 
+void test_regularization_config_validation() {
+    Dataset dataset = tiny_dataset(2);
+    const std::vector<size_t> training{0};
+    const std::vector<size_t> validation{1};
+    const NormalizationStats normalization =
+        dataset.fit_normalization(training);
+    ModelFactory factory;
+    Trainer trainer(MPI_COMM_WORLD);
+
+    for (const float invalid_l1 : {-1.0f,
+                                   std::numeric_limits<float>::quiet_NaN()}) {
+        TrialConfig config = minimal_trial(0.0f);
+        config.loss.l1_weight = invalid_l1;
+        auto model = factory.build(config, 1, 1, 2, 23, MPI_COMM_WORLD);
+        require_throws(
+            [&] {
+                trainer.fit(*model, dataset, training, dataset, validation,
+                            normalization, config.loss, config.training, 23,
+                            false);
+            },
+            "Trainer accepted an invalid L1 weight");
+    }
+
+    TrialConfig config = minimal_trial(0.0f);
+    config.loss.l2_weight = std::numeric_limits<float>::quiet_NaN();
+    auto model = factory.build(config, 1, 1, 2, 23, MPI_COMM_WORLD);
+    require_throws(
+        [&] {
+            trainer.fit(*model, dataset, training, dataset, validation,
+                        normalization, config.loss, config.training, 23,
+                        false);
+        },
+        "Trainer accepted an invalid L2 weight");
+}
+
 void test_generic_checkpoint_round_trip() {
     TrialConfig config = minimal_trial();
     ModelFactory factory;
@@ -716,6 +751,7 @@ int main(int argc, char** argv) {
         test_diagnostics_math_and_activation_capture();
         test_parameter_grid_and_fresh_models();
         test_trainer_with_partial_batches();
+        test_regularization_config_validation();
         test_generic_checkpoint_round_trip();
         test_training_diagnostics_artifacts();
         test_cross_validator_selection();

@@ -3,6 +3,7 @@
 #include "training/TrainingDiagnostics.hpp"
 #include <algorithm>
 #include <bit>
+#include <cmath>
 #include <iostream>
 #include <random>
 #include <limits>
@@ -144,6 +145,88 @@ void verify_diagnostics_agreement(const TrainingConfig& config,
             "Training diagnostics configuration differs across MPI ranks.");
     }
 }
+
+// Weight regularization is applied to weight tensors only. Biases are left
+// untouched because penalizing them shifts the learned output offset without
+// constraining model capacity. DenseLayer and Conv2DLayer are the only layers
+// exposing parameters, and both name them "weights" and "biases".
+constexpr char kWeightParameterName[] = "weights";
+
+bool is_weight_tensor(const LayerParameter& parameter) {
+    return parameter.tensor && parameter.name == kWeightParameterName;
+}
+
+// Subgradient of |w| with sign(0) = 0, so a weight driven exactly to zero
+// receives no further push. std::copysign is unusable here: it returns +/-1
+// for zero.
+float weight_sign(float value) {
+    if (value > 0.0f) {
+        return 1.0f;
+    }
+    return (value < 0.0f) ? -1.0f : 0.0f;
+}
+
+// R_L2(W) = lambda * sum(w^2), summed over every weight tensor. The sum is
+// deliberately not normalized by the parameter count or the batch size, so
+// lambda keeps a fixed meaning across topologies and batch sizes.
+double l2_penalty(const std::vector<LayerParameter>& parameters,
+                  float lambda) {
+    if (lambda == 0.0f) {
+        return 0.0;
+    }
+    double squared_sum = 0.0;
+    for (const auto& parameter : parameters) {
+        if (!is_weight_tensor(parameter)) {
+            continue;
+        }
+        const float* weights = parameter.tensor->get_data();
+        for (size_t i = 0; i < parameter.tensor->size(); ++i) {
+            squared_sum += static_cast<double>(weights[i]) * weights[i];
+        }
+    }
+    return static_cast<double>(lambda) * squared_sum;
+}
+
+// R_L1(W) = lambda * sum(|w|), with the same non-normalized convention as
+// l2_penalty.
+double l1_penalty(const std::vector<LayerParameter>& parameters,
+                  float lambda) {
+    if (lambda == 0.0f) {
+        return 0.0;
+    }
+    double absolute_sum = 0.0;
+    for (const auto& parameter : parameters) {
+        if (!is_weight_tensor(parameter)) {
+            continue;
+        }
+        const float* weights = parameter.tensor->get_data();
+        for (size_t i = 0; i < parameter.tensor->size(); ++i) {
+            absolute_sum += std::abs(static_cast<double>(weights[i]));
+        }
+    }
+    return static_cast<double>(lambda) * absolute_sum;
+}
+
+// Adds d(R_L2)/dw = 2 * lambda2 * w and d(R_L1)/dw = lambda1 * sign(w) to the
+// already synchronized gradient.
+void add_regularization_gradient(const std::vector<LayerParameter>& parameters,
+                                 float l1_weight,
+                                 float l2_weight) {
+    if (l1_weight == 0.0f && l2_weight == 0.0f) {
+        return;
+    }
+    for (const auto& parameter : parameters) {
+        if (!is_weight_tensor(parameter)) {
+            continue;
+        }
+        const float* weights = parameter.tensor->get_data();
+        float* gradient = parameter.tensor->get_grad();
+        for (size_t i = 0; i < parameter.tensor->size(); ++i) {
+            gradient[i] += 2.0f * l2_weight * weights[i] +
+                           l1_weight * weight_sign(weights[i]);
+        }
+    }
+}
 } // namespace
 
 Trainer::Trainer(MPI_Comm communicator) : _communicator(communicator) {}
@@ -169,6 +252,13 @@ TrainingResult Trainer::fit(CNNModel& model,
             "Training epochs, global batch size, and validation interval must be positive.");
     }
     verify_diagnostics_agreement(training_config, _communicator);
+    if (!std::isfinite(loss_config.l1_weight) ||
+        loss_config.l1_weight < 0.0f ||
+        !std::isfinite(loss_config.l2_weight) ||
+        loss_config.l2_weight < 0.0f) {
+        throw std::invalid_argument(
+            "L1/L2 weights must be finite and non-negative.");
+    }
 
     const DistributedInfo distributed = distributed_info(_communicator);
     std::string parameter_error;
@@ -320,6 +410,12 @@ TrainingResult Trainer::fit(CNNModel& model,
                                          local_diagnostics_failure);
 
             model.synchronize_gradients(local.count);
+            // The gradient is globally averaged here and not yet clipped or
+            // consumed. Every rank holds identical weights, so every rank adds
+            // the identical penalty gradient and the replicas stay in step.
+            add_regularization_gradient(model.parameters(),
+                                        loss_config.l1_weight,
+                                        loss_config.l2_weight);
             local_error.clear();
             try {
                 if (diagnostics) {
@@ -410,6 +506,18 @@ TrainingResult Trainer::fit(CNNModel& model,
                            training_config.global_batch_size - 1) /
                           training_config.global_batch_size)
                       << " | train=" << final_training_objective;
+            // Reported separately from the training objective so that the
+            // objective stays comparable across regularization strengths.
+            if (loss_config.l2_weight != 0.0f) {
+                std::cout << " | L2 penalty: "
+                          << l2_penalty(model.parameters(),
+                                        loss_config.l2_weight);
+            }
+            if (loss_config.l1_weight != 0.0f) {
+                std::cout << " | L1 penalty: "
+                          << l1_penalty(model.parameters(),
+                                        loss_config.l1_weight);
+            }
             if (history_checkpoint) {
                 std::cout << " | validation_mse="
                           << checkpoint_validation_mse;
