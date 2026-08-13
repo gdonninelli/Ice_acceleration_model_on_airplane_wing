@@ -12,6 +12,7 @@ AdamOptimizer::AdamOptimizer(float learning_rate,
       _beta2(beta2),
       _epsilon(epsilon),
       _weight_decay(weight_decay) {
+        
     // Hyperparameter validation
     if (!std::isfinite(_learning_rate) || _learning_rate <= 0.0f) {
         throw std::invalid_argument("Adam learning_rate must be finite and positive.");
