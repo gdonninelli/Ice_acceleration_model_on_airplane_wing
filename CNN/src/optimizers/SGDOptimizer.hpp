@@ -40,7 +40,7 @@ class SGDOptimizer : public Optimizer {
      * @param momentum The momentum factor.
      * @param weight_decay The coefficient for L2 weight decay (regularization).
      */
-    SGDOptimizer(float learning_rate = 1e-2f,
+    SGDOptimizer(float learning_rate = 1e-3f,
                  float momentum = 0.0f,
                  float weight_decay = 0.0f);
 
