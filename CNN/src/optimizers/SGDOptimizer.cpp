@@ -23,10 +23,7 @@ SGDOptimizer::SGDOptimizer(float learning_rate,
 
 void SGDOptimizer::apply_gradients(float* weights, float* grads, size_t size) {
     // If pointers are null or size is zero, there's nothing to do.
-    if (!weights || !grads) {
-        return;
-    }
-    if (size == 0) {
+    if (!weights || !grads || size == 0) {
         return;
     }
 
