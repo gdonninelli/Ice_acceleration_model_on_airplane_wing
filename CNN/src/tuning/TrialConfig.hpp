@@ -89,7 +89,20 @@ LayerRecipe activation(const std::string& name, float leaky_alpha = 0.05f);
 LayerRecipe flatten();
 LayerRecipe dense(int output_features);
 
-OptimizerRecipe adam(float learning_rate,
+OptimizerRecipe sgd(float learning_rate = 1e-3f,
+                    float momentum = 0.0f,
+                    float weight_decay = 0.0f);
+OptimizerRecipe sgd_momentum(float learning_rate = 1e-3f,
+                             float momentum = 0.9f,
+                             float weight_decay = 0.0f);
+OptimizerRecipe adagrad(float learning_rate = 1e-3f,
+                        float epsilon = 1e-8f,
+                        float weight_decay = 0.0f);
+OptimizerRecipe rmsprop(float learning_rate = 1e-3f,
+                        float decay_rate = 0.9f,
+                        float epsilon = 1e-8f,
+                        float weight_decay = 0.0f);
+OptimizerRecipe adam(float learning_rate = 1e-3f,
                      float beta1 = 0.9f,
                      float beta2 = 0.999f,
                      float epsilon = 1e-8f,

@@ -26,6 +26,16 @@ target_compile_definitions(
 add_executable(cnn_executable main.cpp)
 target_link_libraries(cnn_executable PRIVATE cnn_core)
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/experiments/optimizer_comparison/main.cpp")
+    add_executable(optimizer_comparison experiments/optimizer_comparison/main.cpp)
+    target_link_libraries(optimizer_comparison PRIVATE cnn_core)
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/experiments/regularization_tuning/main.cpp")
+    add_executable(regularization_tuning experiments/regularization_tuning/main.cpp)
+    target_link_libraries(regularization_tuning PRIVATE cnn_core)
+endif()
+
 include(CTest)
 if(BUILD_TESTING)
     add_executable(cnn_tests tests/test_cross_validation.cpp)

@@ -740,6 +740,30 @@ void test_cross_validator_selection() {
             "CrossValidator accepted rank-divergent diagnostics configuration");
     }
 }
+
+void test_optimizer_recipes() {
+    auto sgd_recipe = Recipes::sgd(1e-3f, 0.0f, 0.0f);
+    auto sgd_mom_recipe = Recipes::sgd_momentum(1e-3f, 0.9f, 0.0f);
+    auto adagrad_recipe = Recipes::adagrad(1e-2f, 1e-8f, 0.0f);
+    auto rmsprop_recipe = Recipes::rmsprop(1e-4f, 0.9f, 1e-8f, 0.0f);
+    auto adam_recipe = Recipes::adam(1e-4f, 0.9f, 0.999f, 1e-8f, 0.0f);
+
+    auto opt1 = sgd_recipe.build();
+    auto opt2 = sgd_mom_recipe.build();
+    auto opt3 = adagrad_recipe.build();
+    auto opt4 = rmsprop_recipe.build();
+    auto opt5 = adam_recipe.build();
+
+    require(opt1 != nullptr, "SGD recipe produced null optimizer");
+    require(opt2 != nullptr, "SGD Momentum recipe produced null optimizer");
+    require(opt3 != nullptr, "AdaGrad recipe produced null optimizer");
+    require(opt4 != nullptr, "RMSprop recipe produced null optimizer");
+    require(opt5 != nullptr, "Adam recipe produced null optimizer");
+
+    // Verify fresh instance creation
+    auto opt1_second = sgd_recipe.build();
+    require(opt1.get() != opt1_second.get(), "Optimizer recipe must construct distinct instances");
+}
 } // namespace
 
 int main(int argc, char** argv) {
@@ -755,6 +779,7 @@ int main(int argc, char** argv) {
         test_generic_checkpoint_round_trip();
         test_training_diagnostics_artifacts();
         test_cross_validator_selection();
+        test_optimizer_recipes();
         std::cout << "All cross-validation tests passed." << std::endl;
     } catch (const std::exception& error) {
         std::cerr << "Test failure: " << error.what() << std::endl;

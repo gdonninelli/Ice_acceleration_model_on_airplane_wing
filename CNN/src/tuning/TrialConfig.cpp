@@ -3,7 +3,10 @@
 #include "layers/Conv2DLayer.hpp"
 #include "layers/DenseLayer.hpp"
 #include "layers/FlattenLayer.hpp"
+#include "optimizers/AdagradOptimizer.hpp"
 #include "optimizers/AdamOptimizer.hpp"
+#include "optimizers/RMSpropOptimizer.hpp"
+#include "optimizers/SGDOptimizer.hpp"
 #include <iomanip>
 #include <limits>
 #include <sstream>
@@ -163,6 +166,59 @@ LayerRecipe dense(int output_features) {
             return std::make_unique<DenseLayer>(
                 checked_int(input[0], "Dense input features"), output_features, seed);
         });
+}
+
+OptimizerRecipe sgd(float learning_rate,
+                    float momentum,
+                    float weight_decay) {
+    std::ostringstream description;
+    description << std::setprecision(std::numeric_limits<float>::max_digits10);
+    description << "sgd(lr=" << learning_rate << ",momentum=" << momentum
+                << ",weight_decay=" << weight_decay << ")";
+    return OptimizerRecipe(description.str(), [=] {
+        return std::make_unique<SGDOptimizer>(learning_rate, momentum,
+                                              weight_decay);
+    });
+}
+
+OptimizerRecipe sgd_momentum(float learning_rate,
+                             float momentum,
+                             float weight_decay) {
+    std::ostringstream description;
+    description << std::setprecision(std::numeric_limits<float>::max_digits10);
+    description << "sgd_momentum(lr=" << learning_rate << ",momentum=" << momentum
+                << ",weight_decay=" << weight_decay << ")";
+    return OptimizerRecipe(description.str(), [=] {
+        return std::make_unique<SGDOptimizer>(learning_rate, momentum,
+                                              weight_decay);
+    });
+}
+
+OptimizerRecipe adagrad(float learning_rate,
+                        float epsilon,
+                        float weight_decay) {
+    std::ostringstream description;
+    description << std::setprecision(std::numeric_limits<float>::max_digits10);
+    description << "adagrad(lr=" << learning_rate << ",eps=" << epsilon
+                << ",weight_decay=" << weight_decay << ")";
+    return OptimizerRecipe(description.str(), [=] {
+        return std::make_unique<AdagradOptimizer>(learning_rate, epsilon,
+                                                  weight_decay);
+    });
+}
+
+OptimizerRecipe rmsprop(float learning_rate,
+                        float decay_rate,
+                        float epsilon,
+                        float weight_decay) {
+    std::ostringstream description;
+    description << std::setprecision(std::numeric_limits<float>::max_digits10);
+    description << "rmsprop(lr=" << learning_rate << ",decay=" << decay_rate
+                << ",eps=" << epsilon << ",weight_decay=" << weight_decay << ")";
+    return OptimizerRecipe(description.str(), [=] {
+        return std::make_unique<RMSpropOptimizer>(learning_rate, decay_rate,
+                                                  epsilon, weight_decay);
+    });
 }
 
 OptimizerRecipe adam(float learning_rate,
