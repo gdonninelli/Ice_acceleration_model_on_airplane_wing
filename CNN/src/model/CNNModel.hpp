@@ -53,6 +53,15 @@ public:
     std::shared_ptr<Tensor> predict(std::shared_ptr<Tensor> sdf_input,
                                     std::shared_ptr<Tensor> scalar_input);
 
+    /**
+     * Propagates the execution context (training/inference mode plus the
+     * deterministic randomness coordinates) to every layer. The trainer sets
+     * a training context before each optimization batch; predict() resets the
+     * default inference context, so stochastic layers such as dropout are
+     * active only where the trainer requested them.
+     */
+    void set_execution_context(const LayerExecutionContext& context);
+
     const std::vector<LayerParameter>& parameters() const;
     std::vector<ModelLayerInfo> layer_info() const;
     void set_activation_observer(ActivationObserver observer);

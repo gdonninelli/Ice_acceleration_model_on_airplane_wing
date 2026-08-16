@@ -10,6 +10,7 @@
 #define LAYER_HPP
 
 #include "core/Tensor.hpp"
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
@@ -17,6 +18,46 @@
 struct LayerParameter {
   std::string name;
   std::shared_ptr<Tensor> tensor;
+};
+
+/**
+ * @brief Stateless 64-bit mixing helpers for layers that need deterministic,
+ * MPI-rank-invariant randomness (e.g. dropout masks). splitmix64 maps any
+ * counter to a well-distributed value, so a mask can be a pure function of
+ * (seed, sample, feature) instead of the state of a sequential generator.
+ */
+namespace layer_rng {
+inline uint64_t splitmix64(uint64_t value) {
+  value += 0x9e3779b97f4a7c15ULL;
+  value = (value ^ (value >> 30U)) * 0xbf58476d1ce4e5b9ULL;
+  value = (value ^ (value >> 27U)) * 0x94d049bb133111ebULL;
+  return value ^ (value >> 31U);
+}
+
+inline uint64_t combine(uint64_t seed, uint64_t value) {
+  return splitmix64(seed ^ splitmix64(value));
+}
+
+/** Maps a mixed hash to a float uniformly distributed in [0, 1). */
+inline float to_unit_float(uint64_t hash) {
+  return static_cast<float>(hash >> 40U) * 0x1.0p-24f;
+}
+} // namespace layer_rng
+
+/**
+ * @brief Per-forward-pass execution context shared with every layer.
+ *
+ * The default state describes inference: layers that behave differently in
+ * training (dropout, and in the future batch normalization) stay inactive
+ * until the trainer switches the context. `stream_seed` and `sample_offset`
+ * make stochastic layers deterministic and independent of the MPI rank
+ * layout: the seed is a pure function of (run seed, epoch, global batch) and
+ * the offset locates this rank's first sample inside the global batch.
+ */
+struct LayerExecutionContext {
+  bool training = false;
+  uint64_t stream_seed = 0;
+  size_t sample_offset = 0;
 };
 
 /**
@@ -54,6 +95,13 @@ public:
    * Parameter-free layers inherit the empty default implementation.
    */
   virtual std::vector<LayerParameter> parameters() const { return {}; }
+
+  /**
+   * @brief Receives the execution context for the next forward pass.
+   * Layers whose behavior does not depend on the training/inference
+   * distinction inherit this no-op default.
+   */
+  virtual void set_execution_context(const LayerExecutionContext&) {}
 
   /**
    * @brief Get the name of the layer.
