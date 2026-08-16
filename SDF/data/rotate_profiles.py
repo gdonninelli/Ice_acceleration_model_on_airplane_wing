@@ -3,8 +3,12 @@ import glob
 import math
 
 baseline_files = ["naca0006.dat", "naca0008.dat", "naca0010.dat", "n0012.dat", "naca0018.dat"]
-data_dir = "/Users/giuliodonninelli/Documents/shared-folder/Ice_acceleration_model_on_airplane_wing/SDF/data"
-dataset_dir = "/Users/giuliodonninelli/Documents/shared-folder/Ice_acceleration_model_on_airplane_wing/dataset"
+
+# Paths are resolved from this file's location so the script runs from any
+# working directory and on any machine.
+repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
+data_dir = os.environ.get("SDF_DATA_DIR", os.path.join(repo_root, "SDF", "data"))
+dataset_dir = os.environ.get("DATASET_DIR", os.path.join(repo_root, "dataset"))
 
 # Collect unique angles
 angles = set()
