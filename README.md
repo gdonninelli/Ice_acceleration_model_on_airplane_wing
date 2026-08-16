@@ -156,33 +156,54 @@ cmake --build build/CNN --parallel
 ctest --test-dir build/CNN --output-on-failure
 ```
 
-### How to Run
-
-From the repository root:
+Or use the top-level Makefile, which wraps the same commands and also builds
+every experiment under `CNN/experiments/*/` into `build/CNN/experiments/`:
 
 ```bash
-mpirun -n 4 ./CNN/cnn_executable
+make cnn         # configure + build (executable, tests, experiments)
+make test        # ctest, serial and 2-rank MPI
+make run NP=4 ARGS="--epochs 100 --dropout 0.2"
+make help        # full target list (sdf, dataset, clean, ...)
 ```
+
+### How to Run
+
+From the repository root, after building with `make cnn` (or the CMake commands above):
+
+```bash
+mpirun -n 4 ./build/CNN/cnn_executable
+```
+
+> ⚠️ Do not run the `./CNN/cnn_executable` binary tracked in the repository: it
+> is a stale artifact from before the command-line interface existed and
+> silently ignores every option. Always use the freshly built
+> `./build/CNN/cnn_executable` (or `make run`).
 
 The activation function can be selected from the command line (default: `leakyrelu`):
 
 ```bash
-mpirun -n 4 ./CNN/cnn_executable --activation tanh
-mpirun -n 4 ./CNN/cnn_executable --activation leakyrelu --alpha 0.1
+mpirun -n 4 ./build/CNN/cnn_executable --activation tanh
+mpirun -n 4 ./build/CNN/cnn_executable --activation leakyrelu --alpha 0.1
 ```
 
 Valid activations are `leakyrelu`, `relu`, `tanh` and `sigmoid`; `--alpha` sets the negative slope and only affects `leakyrelu`.
 
+Inverted dropout can be enabled on the dense head with `--dropout` (default 0, i.e. disabled; valid range `[0, 1)`). Dropout is active during training only, inference always runs the deterministic network, and masks are seeded so that results do not depend on the MPI rank count:
+
+```bash
+mpirun -n 4 ./build/CNN/cnn_executable --dropout 0.2
+```
+
 Training parameters are available from the command line:
 
 ```bash
-mpirun -n 4 ./CNN/cnn_executable --epochs 100 --batch-size 256 --learning-rate 1e-5
+mpirun -n 4 ./build/CNN/cnn_executable --epochs 100 --batch-size 256 --learning-rate 1e-5
 ```
 
 Run deterministic random K-fold evaluation for the configured model:
 
 ```bash
-mpirun -n 4 ./CNN/cnn_executable --cross-validate --folds 5 --epochs 100 --batch-size 256 --seed 42
+mpirun -n 4 ./build/CNN/cnn_executable --cross-validate --folds 5 --epochs 100 --batch-size 256 --seed 42
 ```
 
 The global batch size is independent of MPI rank count. Fold normalization is fitted from training samples only, the test NPZ remains untouched until cross-validation is complete, and scoring uses physical-unit validation MSE. Developers can pass a typed `ParameterGrid` to `CrossValidator::tune()` when comparing configurations.

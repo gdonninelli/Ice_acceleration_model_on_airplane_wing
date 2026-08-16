@@ -17,6 +17,50 @@ entry per pull request, newest first.
 - **Implementation:** Main technical decisions and affected components.
 - **Validation:** Builds, tests, reviews, or manual checks completed.
 
+## Dropout, Makefile, and physics-weight tuning
+
+- **Status:** Pending merge
+- **Date:** 2026-08-16
+- **Author:** Vittorio Sironi (`vittorio.sironi@icloud.com`)
+- **Branch:** `feature/dropout-makefile-physics-tuning`
+- **Base:** `main`
+- **Commit(s):** `51820f9`, `6ef94e9`, `ca9fdaa`, `f4ce5f9`, plus a docs commit
+- **Summary:** Added inverted dropout with MPI-rank-invariant deterministic
+  masks, a top-level Makefile with automatic CMake experiment builds, and two
+  paired cross-validation experiments (dropout rate, SIMM physics weight).
+- **Implementation:**
+  - Added `LayerExecutionContext` + `Layer::set_execution_context` (training
+    vs inference mode with deterministic randomness coordinates);
+    `CNNModel::predict` restores inference, the `Trainer` installs a training
+    context per optimization batch. Batch normalization can reuse this hook.
+  - Added `DropoutLayer` (inverted scaling, stateless splitmix64 masks keyed
+    on run seed / epoch / global batch / global sample row / feature, so
+    results are independent of the MPI rank count), `Recipes::dropout`, and
+    the `--dropout` CLI option.
+  - Added a root `Makefile` (cnn, sdf, test, run, cross-validate, dataset,
+    clean, help) and a CMake glob building every `CNN/experiments/*/main.cpp`;
+    `make dataset` fails loudly until the data-pipeline portability fix is
+    merged.
+  - Added `CNN/experiments/dropout_tuning` and
+    `CNN/experiments/physics_weight_tuning` following the
+    `regularization_tuning` pattern (per-fold CSV, paired analysis vs
+    reference, pre-registered ≥4/5-folds rule); the physics recorder splits
+    validation MSE by the |α| ≤ 10° mask.
+- **Validation:**
+  - CMake build warning-free; CTest serial and 2-rank suites pass, including
+    eight new dropout assertions (eval identity, mask statistics/scaling,
+    determinism, slice-offset rank invariance, masked backward, recipe
+    validation, deterministic training, rate-0 vs positive divergence).
+  - End-to-end rank invariance: `--epochs 2 --dropout 0.3` produced the
+    identical final test MSE (0.0104787) with 1 and 2 ranks on the
+    regenerated dataset (1713/429, all 10 acceptance checks passed).
+  - Both experiment sweeps smoke-ran end-to-end at 1 epoch (binaries → CSVs →
+    analyzers) with sensible verdicts.
+  - Multi-agent adversarial review over the full diff: four confirmed
+    findings (stale-binary README example, `make dataset` clobber hazard,
+    help-text literal, cross-experiment comparability overclaim) all fixed;
+    refuted findings documented in the review transcript.
+
 ## Implementing Internal Weights Analysis
 
 - **Status:** Pending merge
