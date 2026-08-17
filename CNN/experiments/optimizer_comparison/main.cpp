@@ -116,6 +116,15 @@ public:
                     const Dataset& dataset,
                     const FoldIndices& fold,
                     size_t fold_index) const override {
+        return run(config, dataset, fold, fold_index,
+                   Context{0, 1, fold_index + 1});
+    }
+
+    FoldMetrics run(const TrialConfig& config,
+                    const Dataset& dataset,
+                    const FoldIndices& fold,
+                    size_t fold_index,
+                    const Context& context) const override {
         const uint64_t seed = fold_seed(config.training.seed, fold_index);
         const NormalizationStats normalization =
             dataset.fit_normalization(fold.training);
@@ -125,9 +134,23 @@ public:
                                           dataset.scalar_features(), seed,
                                           _communicator);
 
+        TrainingRunContext run_context;
+        run_context.mode = "cross_validation";
+        run_context.candidate_index = context.candidate_index;
+        run_context.candidate_count = context.candidate_count;
+        run_context.fold_index = fold_index;
+        run_context.fold_count = context.fold_count;
+        run_context.random_seed = seed;
+        run_context.training_dataset_path =
+            config.training.diagnostics.training_dataset_path;
+        // CV validation samples come from the same training dataset.
+        run_context.validation_dataset_path =
+            config.training.diagnostics.training_dataset_path;
+
         const TrainingResult result = _trainer.fit(
             *model, dataset, fold.training, dataset, fold.validation,
-            normalization, config.loss, config.training, seed, false);
+            normalization, config.loss, config.training, seed, false,
+            run_context, &config);
 
         FoldRecord record;
         record.candidate = config.name;
@@ -505,17 +528,22 @@ int main(int argc, char** argv) {
             training_dataset.fit_normalization(training_indices);
 
         ModelFactory factory;
+        TrialConfig final_config = best.config;
+        final_config.training.validation_interval = 1;
         auto final_model = factory.build(
-            best.config,
+            final_config,
             training_dataset.sdf_height(),
             training_dataset.sdf_width(),
             training_dataset.scalar_features(),
-            best.config.training.seed,
+            final_config.training.seed,
             MPI_COMM_WORLD);
 
         Trainer trainer(MPI_COMM_WORLD);
-        TrainingConfig final_training_config = best.config.training;
-        final_training_config.validation_interval = 1; // verbose tracking on final refit
+        TrainingRunContext final_context;
+        final_context.final_subdirectory = options.diagnostics;
+        final_context.random_seed = final_config.training.seed;
+        final_context.training_dataset_path = options.train_path;
+        final_context.validation_dataset_path = options.test_path;
 
         const TrainingResult final_result = trainer.fit(
             *final_model,
@@ -524,10 +552,12 @@ int main(int argc, char** argv) {
             test_dataset,
             test_indices,
             normalization,
-            best.config.loss,
-            final_training_config,
-            best.config.training.seed,
-            (rank == 0)); // verbose on rank 0
+            final_config.loss,
+            final_config.training,
+            final_config.training.seed,
+            (rank == 0),
+            final_context,
+            &final_config);
 
         if (rank == 0) {
             std::cout << "\n========================================================\n"
