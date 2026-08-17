@@ -50,6 +50,7 @@ constexpr size_t kGlobalBatchSize = 64;
 constexpr uint64_t kSeed = 42;
 constexpr float kLearningRate = 1e-5f;
 constexpr size_t kEvaluationChunk = 256;
+constexpr const char* kDatasetPath = "dataset/cnn_dataset_train.npz";
 // Same constant as Loss.cpp: the physics prior is masked to |alpha| <= 10 deg.
 constexpr float kMaskLimitRad = 0.174533f;
 
@@ -193,6 +194,15 @@ public:
                     const Dataset& dataset,
                     const FoldIndices& fold,
                     size_t fold_index) const override {
+        return run(config, dataset, fold, fold_index,
+                   Context{0, 1, fold_index + 1});
+    }
+
+    FoldMetrics run(const TrialConfig& config,
+                    const Dataset& dataset,
+                    const FoldIndices& fold,
+                    size_t fold_index,
+                    const Context& context) const override {
         const uint64_t seed = fold_seed(config.training.seed, fold_index);
         const NormalizationStats normalization =
             dataset.fit_normalization(fold.training);
@@ -201,9 +211,24 @@ public:
                                           dataset.sdf_width(),
                                           dataset.scalar_features(), seed,
                                           _communicator);
+        // Same run-context wiring as CNNTrialRunner, so enabled diagnostics
+        // land in the standard candidate_NNN/fold_NNN layout with gradient
+        // and weight-update statistics per epoch.
+        TrainingRunContext run_context;
+        run_context.mode = "cross_validation";
+        run_context.candidate_index = context.candidate_index;
+        run_context.candidate_count = context.candidate_count;
+        run_context.fold_index = fold_index;
+        run_context.fold_count = context.fold_count;
+        run_context.random_seed = seed;
+        run_context.training_dataset_path =
+            config.training.diagnostics.training_dataset_path;
+        run_context.validation_dataset_path =
+            config.training.diagnostics.training_dataset_path;
         const TrainingResult result = _trainer.fit(
             *model, dataset, fold.training, dataset, fold.validation,
-            normalization, config.loss, config.training, seed, false);
+            normalization, config.loss, config.training, seed, false,
+            run_context, &config);
 
         FoldRecord record;
         record.candidate = config.name;
@@ -278,10 +303,19 @@ int run_sweep(const Dataset& dataset,
               const std::vector<float>& values,
               size_t epochs,
               const std::string& csv_path,
-              int rank) {
+              int rank,
+              bool diagnostics) {
     auto records = std::make_shared<std::vector<FoldRecord>>();
 
     TrialConfig base = make_config("phys", 0.25f, epochs);
+    // Per-epoch gradient/update/activation statistics for stability analysis
+    // (requested by the group); disable with --no-diagnostics.
+    base.training.diagnostics.enabled = diagnostics;
+    base.training.diagnostics.results_root = "results";
+    base.training.diagnostics.experiment_name = "physics_weight_tuning";
+    base.training.diagnostics.run_name = "sweep";
+    base.training.diagnostics.training_dataset_path = kDatasetPath;
+    base.training.diagnostics.validation_dataset_path = kDatasetPath;
     ParameterGrid grid(base);
     std::vector<NamedChoice<float>> choices;
     choices.reserve(values.size());
@@ -332,10 +366,21 @@ int main(int argc, char** argv) {
 
     try {
         const std::string mode = argc > 1 ? argv[1] : "help";
-        const size_t epochs = argc > 2 ? std::stoul(argv[2]) : 100;
+        size_t epochs = 100;
+        bool diagnostics = true;
+        for (int index = 2; index < argc; ++index) {
+            const std::string argument = argv[index];
+            if (argument == "--no-diagnostics") {
+                diagnostics = false;
+            } else if (argument == "--diagnostics") {
+                diagnostics = true;
+            } else {
+                epochs = std::stoul(argument);
+            }
+        }
 
         if (mode == "sweep") {
-            Dataset dataset("dataset/cnn_dataset_train.npz");
+            Dataset dataset(kDatasetPath);
             // Log-ish spacing around the production default 0.25, with 0 as
             // the pure data-driven reference and 2 as a deliberately strong
             // prior that should visibly distort the fit if lambda matters.
@@ -344,11 +389,16 @@ int main(int argc, char** argv) {
                                epochs,
                                "results/cross_validation/physics_weight_tuning/"
                                "sweep_physics.csv",
-                               rank);
+                               rank, diagnostics);
         } else if (rank == 0) {
-            std::cout << "Usage: physics_weight_tuning <mode> <epochs>\n"
-                      << "  sweep <epochs>   7-value lambda sweep, 5-fold CV "
-                         "(default epochs: 100)\n";
+            std::cout
+                << "Usage: physics_weight_tuning <mode> [epochs] "
+                   "[--no-diagnostics]\n"
+                << "  sweep [epochs]   7-value lambda sweep, 5-fold CV "
+                   "(default epochs: 100)\n"
+                << "  Per-epoch gradient/weight diagnostics are written to\n"
+                << "  results/physics_weight_tuning/sweep/ by default; disable\n"
+                << "  with --no-diagnostics.\n";
         }
     } catch (const std::exception& error) {
         std::cerr << "Physics-weight tuning failed on rank " << rank << ": "

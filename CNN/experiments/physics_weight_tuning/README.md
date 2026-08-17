@@ -54,6 +54,17 @@ python3 CNN/experiments/physics_weight_tuning/analyze.py \
     results/cross_validation/physics_weight_tuning/sweep_physics.csv
 ```
 
+Per-epoch gradient, weight-update, and activation statistics (for stability
+analysis) are recorded **by default** under
+`results/physics_weight_tuning/sweep/candidate_NNN/fold_NNN/`; disable with
+`--no-diagnostics` as the last argument. Plots:
+
+```bash
+python3 CNN/analysis/plot_training_diagnostics.py \
+    --input results/physics_weight_tuning/sweep \
+    --output-dir results/physics_weight_tuning/sweep/plots
+```
+
 > ⚠️ **Dataset prerequisite.** Results are only meaningful on the dataset
 > regenerated with `python3 build_dataset.py --seed 42` from the
 > data-pipeline portability fix (see `dataset/README.md` on that branch).
