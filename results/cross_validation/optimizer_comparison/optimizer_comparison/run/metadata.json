@@ -1,0 +1,7 @@
+{
+  "format_version": 1,
+  "mode": "cross_validation",
+  "experiment_name": "optimizer_comparison",
+  "run_name": "run",
+  "candidate_count": 5
+}

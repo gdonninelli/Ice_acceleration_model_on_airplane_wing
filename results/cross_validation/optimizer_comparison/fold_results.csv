@@ -1,0 +1,26 @@
+candidate,optimizer,fold,train_mse,validation_mse,training_objective,epochs
+"optimizer-trial [optimizer=SGD (lr=1e-3)]","sgd(lr=0.00100000005,momentum=0,weight_decay=0)",0,0.005882279208,0.006172010776,0.01297611149,100
+"optimizer-trial [optimizer=SGD (lr=1e-3)]","sgd(lr=0.00100000005,momentum=0,weight_decay=0)",1,0.005613568108,0.008246561817,0.01222836644,100
+"optimizer-trial [optimizer=SGD (lr=1e-3)]","sgd(lr=0.00100000005,momentum=0,weight_decay=0)",2,0.005420549328,0.00586163827,0.01222076692,100
+"optimizer-trial [optimizer=SGD (lr=1e-3)]","sgd(lr=0.00100000005,momentum=0,weight_decay=0)",3,0.005998337821,0.004142821544,0.01354519569,100
+"optimizer-trial [optimizer=SGD (lr=1e-3)]","sgd(lr=0.00100000005,momentum=0,weight_decay=0)",4,0.005797821432,0.006652302404,0.01265007746,100
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]","sgd_momentum(lr=0.00100000005,momentum=0.899999976,weight_decay=0)",0,0.004957655702,0.005404919391,0.01164759726,100
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]","sgd_momentum(lr=0.00100000005,momentum=0.899999976,weight_decay=0)",1,0.004458404955,0.006811328165,0.01033381213,100
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]","sgd_momentum(lr=0.00100000005,momentum=0.899999976,weight_decay=0)",2,0.004684497651,0.005101097619,0.01096162177,100
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]","sgd_momentum(lr=0.00100000005,momentum=0.899999976,weight_decay=0)",3,0.005196208298,0.003532051385,0.01211690372,100
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]","sgd_momentum(lr=0.00100000005,momentum=0.899999976,weight_decay=0)",4,0.004667280043,0.004844992737,0.01158105923,100
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]","adagrad(lr=0.00100000005,eps=9.99999994e-09,weight_decay=0)",0,0.005246808087,0.005613293199,0.01200703962,100
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]","adagrad(lr=0.00100000005,eps=9.99999994e-09,weight_decay=0)",1,0.004958772889,0.007472022975,0.01128129898,100
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]","adagrad(lr=0.00100000005,eps=9.99999994e-09,weight_decay=0)",2,0.005426183838,0.005905977947,0.01212520219,100
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]","adagrad(lr=0.00100000005,eps=9.99999994e-09,weight_decay=0)",3,0.004964696504,0.003645899297,0.01189632693,100
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]","adagrad(lr=0.00100000005,eps=9.99999994e-09,weight_decay=0)",4,0.005813228339,0.0067361231,0.01233326363,100
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]","rmsprop(lr=0.00100000005,decay=0.899999976,eps=9.99999994e-09,weight_decay=0)",0,0.006677270213,0.006753826128,0.01861518981,100
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]","rmsprop(lr=0.00100000005,decay=0.899999976,eps=9.99999994e-09,weight_decay=0)",1,0.003457812385,0.005519107024,0.01528459674,100
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]","rmsprop(lr=0.00100000005,decay=0.899999976,eps=9.99999994e-09,weight_decay=0)",2,0.01159966025,0.01170744288,0.01873313821,100
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]","rmsprop(lr=0.00100000005,decay=0.899999976,eps=9.99999994e-09,weight_decay=0)",3,0.006283724688,0.004966609088,0.02026737708,100
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]","rmsprop(lr=0.00100000005,decay=0.899999976,eps=9.99999994e-09,weight_decay=0)",4,0.01376813629,0.01651537117,0.01644984412,100
+"optimizer-trial [optimizer=Adam (lr=1e-3)]","adam(lr=0.00100000005,beta1=0.899999976,beta2=0.999000013,eps=9.99999994e-09,weight_decay=0)",0,0.006963342368,0.006408162393,0.01201486904,100
+"optimizer-trial [optimizer=Adam (lr=1e-3)]","adam(lr=0.00100000005,beta1=0.899999976,beta2=0.999000013,eps=9.99999994e-09,weight_decay=0)",1,0.002631591843,0.004505252513,0.007819596286,100
+"optimizer-trial [optimizer=Adam (lr=1e-3)]","adam(lr=0.00100000005,beta1=0.899999976,beta2=0.999000013,eps=9.99999994e-09,weight_decay=0)",2,0.002837798532,0.003147786185,0.008988731852,100
+"optimizer-trial [optimizer=Adam (lr=1e-3)]","adam(lr=0.00100000005,beta1=0.899999976,beta2=0.999000013,eps=9.99999994e-09,weight_decay=0)",3,0.003058251244,0.002510653645,0.009940352271,100
+"optimizer-trial [optimizer=Adam (lr=1e-3)]","adam(lr=0.00100000005,beta1=0.899999976,beta2=0.999000013,eps=9.99999994e-09,weight_decay=0)",4,0.004569780021,0.005502250124,0.008426643028,100

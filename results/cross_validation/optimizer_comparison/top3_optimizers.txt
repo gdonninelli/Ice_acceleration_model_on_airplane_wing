@@ -1,0 +1,4 @@
+RANK,CANDIDATE,MEAN_VAL_MSE,VAL_STDDEV
+1,"optimizer-trial [optimizer=Adam (lr=1e-3)]",0.0044153,0.00144176
+2,"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",0.00513999,0.00105226
+3,"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",0.00587546,0.00129023
