@@ -20,46 +20,40 @@ entry per pull request, newest first.
 ## Dropout, Makefile, and physics-weight tuning
 
 - **Status:** Pending merge
-- **Date:** 2026-08-16
-- **Author:** Vittorio Sironi (`vittorio.sironi@icloud.com`)
+- **Implementation dates:** 2026-08-16 to 2026-08-21
+- **Review date:** 2026-08-21
+- **Authors:** Vittorio Sironi (`vittorio.sironi@icloud.com`) - `51820f9`,
+  `6ef94e9`, `ca9fdaa`, `f4ce5f9`, `fb1fc2a`, `28d39eb`; Alessia Rigoni
+  (`a.rigoni5@campus.unimib.it`) - `d4fc0ff`
 - **Branch:** `feature/dropout-makefile-physics-tuning`
 - **Base:** `main`
-- **Commit(s):** `51820f9`, `6ef94e9`, `ca9fdaa`, `f4ce5f9`, plus a docs commit
-- **Summary:** Added inverted dropout with MPI-rank-invariant deterministic
-  masks, a top-level Makefile with automatic CMake experiment builds, and two
-  paired cross-validation experiments (dropout rate, SIMM physics weight).
+- **Reviewed head:** `d4fc0ff2e1680c82fa7e1e5626f026744b8bbe9e`
+- **PR:** https://github.com/gdonninelli/Ice_acceleration_model_on_airplane_wing/pull/9
+- **Summary:** Added deterministic MPI-rank-invariant inverted dropout, a
+  top-level Makefile/CMake experiment build path, and paired dropout-rate and
+  SIMM physics-weight tuning experiments with committed artifacts.
 - **Implementation:**
-  - Added `LayerExecutionContext` + `Layer::set_execution_context` (training
-    vs inference mode with deterministic randomness coordinates);
-    `CNNModel::predict` restores inference, the `Trainer` installs a training
-    context per optimization batch. Batch normalization can reuse this hook.
-  - Added `DropoutLayer` (inverted scaling, stateless splitmix64 masks keyed
-    on run seed / epoch / global batch / global sample row / feature, so
-    results are independent of the MPI rank count), `Recipes::dropout`, and
-    the `--dropout` CLI option.
-  - Added a root `Makefile` (cnn, sdf, test, run, cross-validate, dataset,
-    clean, help) and a CMake glob building every `CNN/experiments/*/main.cpp`;
-    `make dataset` fails loudly until the data-pipeline portability fix is
-    merged.
-  - Added `CNN/experiments/dropout_tuning` and
-    `CNN/experiments/physics_weight_tuning` following the
-    `regularization_tuning` pattern (per-fold CSV, paired analysis vs
-    reference, pre-registered ≥4/5-folds rule); the physics recorder splits
-    validation MSE by the |α| ≤ 10° mask.
+  - Added `LayerExecutionContext`, `DropoutLayer`, `Recipes::dropout`, and the
+    `--dropout` CLI option; the trainer supplies per-batch deterministic context
+    and prediction restores inference behavior.
+  - Added Makefile targets and automatic experiment executable discovery in
+    CMake; `make dataset` explicitly blocks on the missing seed-capable data
+    pipeline.
+  - Added two 5-fold paired tuning executables, analyzers, documentation, and
+    per-fold CSV/diagnostic artifacts.
 - **Validation:**
-  - CMake build warning-free; CTest serial and 2-rank suites pass, including
-    eight new dropout assertions (eval identity, mask statistics/scaling,
-    determinism, slice-offset rank invariance, masked backward, recipe
-    validation, deterministic training, rate-0 vs positive divergence).
-  - End-to-end rank invariance: `--epochs 2 --dropout 0.3` produced the
-    identical final test MSE (0.0104787) with 1 and 2 ranks on the
-    regenerated dataset (1713/429, all 10 acceptance checks passed).
-  - Both experiment sweeps smoke-ran end-to-end at 1 epoch (binaries → CSVs →
-    analyzers) with sensible verdicts.
-  - Multi-agent adversarial review over the full diff: four confirmed
-    findings (stale-binary README example, `make dataset` clobber hazard,
-    help-text literal, cross-experiment comparability overclaim) all fixed;
-    refuted findings documented in the review transcript.
+  - `make test` built all CNN and experiment targets; serial and MPI-2 CTest
+    suites passed.
+  - `git diff --check`, analyzer Python compilation, both committed sweep
+    analyzers, CLI/help smoke tests, and representative metadata JSON parsing
+    passed.
+  - Full 100-epoch sweeps were not rerun in this review; `make dataset` was
+    confirmed to stop at its documented portability guard.
+- **Per-PR report:** `PR_REVIEWS/feature-dropout-makefile-physics-tuning.md`
+- **Review outcome:** No critical findings; the medium dropout shape-validation
+  finding and incomplete result documentation were resolved with regression
+  tests and numerical README analysis. Low analyzer/metadata and provenance
+  gaps remain non-blocking.
 
 ## Implementing Internal Weights Analysis
 

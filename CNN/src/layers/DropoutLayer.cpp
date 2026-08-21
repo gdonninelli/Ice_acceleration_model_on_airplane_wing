@@ -24,6 +24,12 @@ void DropoutLayer::set_execution_context(const LayerExecutionContext& context) {
 
 std::shared_ptr<Tensor> DropoutLayer::forward(
     const std::vector<std::shared_ptr<Tensor>>& inputs) {
+    // A failed forward must not leave a previous mask or shape available to
+    // backward. The next successful forward establishes a new cache.
+    _mask_cache.reset();
+    _forward_shape_cache.clear();
+    _forward_cache_valid = false;
+
     if (inputs.size() != 1 || !inputs[0]) {
         throw std::invalid_argument(
             "DropoutLayer expects exactly one non-null input tensor.");
@@ -39,13 +45,14 @@ std::shared_ptr<Tensor> DropoutLayer::forward(
     // Inference, or a zero rate: the layer is exactly the identity. The mask
     // cache is cleared so the backward pass is a passthrough as well.
     if (!_context.training || _rate == 0.0f) {
-        _mask_cache.reset();
         auto output = std::make_shared<Tensor>(shape);
         const float* in_ptr = input->get_data();
         float* out_ptr = output->get_data();
         for (size_t i = 0; i < input->size(); ++i) {
             out_ptr[i] = in_ptr[i];
         }
+        _forward_shape_cache = shape;
+        _forward_cache_valid = true;
         return output;
     }
 
@@ -81,6 +88,8 @@ std::shared_ptr<Tensor> DropoutLayer::forward(
     }
 
     _mask_cache = std::move(mask);
+    _forward_shape_cache = shape;
+    _forward_cache_valid = true;
     return output;
 }
 
@@ -89,6 +98,12 @@ std::vector<std::shared_ptr<Tensor>> DropoutLayer::backward(
     if (!grad_output) {
         throw std::invalid_argument(
             "DropoutLayer backward received a null gradient tensor.");
+    }
+
+    if (!_forward_cache_valid ||
+        grad_output->get_shape() != _forward_shape_cache) {
+        throw std::invalid_argument(
+            "DropoutLayer backward gradient does not match the forward shape.");
     }
 
     // Identity forward pass -> identity backward pass.
@@ -100,11 +115,6 @@ std::vector<std::shared_ptr<Tensor>> DropoutLayer::backward(
             grad_in_ptr[i] = grad_out_ptr[i];
         }
         return {grad_input};
-    }
-
-    if (grad_output->size() != _mask_cache->size()) {
-        throw std::invalid_argument(
-            "DropoutLayer backward gradient does not match the forward mask.");
     }
 
     auto grad_input = std::make_shared<Tensor>(grad_output->get_shape());

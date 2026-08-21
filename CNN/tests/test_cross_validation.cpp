@@ -774,6 +774,17 @@ void test_dropout_layer_behavior() {
                       "Inference dropout backward must be a passthrough");
     }
 
+    const auto wrong_shape_gradient = std::make_shared<Tensor>(
+        std::vector<size_t>{32, 64});
+    require_throws(
+        [&] { inference_layer.backward(wrong_shape_gradient); },
+        "Identity dropout backward must reject a shape-mismatched gradient");
+
+    DropoutLayer no_forward_layer(0.5f, 21);
+    require_throws(
+        [&] { no_forward_layer.backward(identity_output); },
+        "Dropout backward must reject a call before forward");
+
     // Training context: elements are either dropped or scaled by 1/(1-rate),
     // the drop fraction concentrates near the rate, and the same context
     // reproduces the same mask.
@@ -806,6 +817,20 @@ void test_dropout_layer_behavior() {
         require_close((*masked_gradients[0])[i], (*first_output)[i], 0.0,
                       "Dropout backward must apply the forward mask");
     }
+
+    const auto wrong_mask_shape_gradient = std::make_shared<Tensor>(
+        std::vector<size_t>{32, 64});
+    training_layer.forward({input});
+    require_throws(
+        [&] { training_layer.backward(wrong_mask_shape_gradient); },
+        "Training dropout backward must reject a shape-mismatched gradient");
+
+    require_throws(
+        [&] { training_layer.forward({}); },
+        "A failed dropout forward must invalidate the backward cache");
+    require_throws(
+        [&] { training_layer.backward(gradient_seed); },
+        "Dropout backward must reject a stale cache after failed forward");
 
     training_layer.set_execution_context(context);
     const auto repeated_output = training_layer.forward({input});

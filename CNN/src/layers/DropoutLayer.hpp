@@ -32,6 +32,8 @@ class DropoutLayer : public Layer {
     uint64_t _salt;                         // per-layer-position salt, from the build seed
     LayerExecutionContext _context;         // inference by default
     std::shared_ptr<Tensor> _mask_cache;    // scaled keep mask for the backward pass
+    std::vector<size_t> _forward_shape_cache;
+    bool _forward_cache_valid = false;
 
     public:
     /**
