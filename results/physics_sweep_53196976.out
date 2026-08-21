@@ -1,0 +1,73 @@
+Loading python/3.11.7
+  Loading requirement: bzip2/1.0.8-ib3znej libmd/1.0.4-2km2lxx
+    libbsd/0.12.1-oocs6an expat/2.6.2-p2t4wry ncurses/6.5-svfl57u
+    readline/8.2-zeda6mx gdbm/1.23-wiol7vk libiconv/1.17-nhc3mhm
+    xz/5.4.6-xxxg42c zlib-ng/2.1.6-jkgunjc libxml2/2.10.3-zbbe7lm
+    pigz/2.8-5bwzpml zstd/1.5.6-uq5yyux tar/1.34-jgektnv gettext/0.22.5-hsxgafg
+    libffi/3.4.6-4vs4jpp libxcrypt/4.4.35-7om46b5 sqlite/3.43.2-4kl5mnp
+    util-linux-uuid/2.38.1-5achpds
+
+Loading gcc/11.3.0
+  Loading requirement: gmp/6.2.1 mpfr/4.1.0 mpc/1.2.1
+Candidate 1/7: phys [physics-weight=0]
+  Fold 1/5 | validation physical MSE: 0.00365153
+  Fold 2/5 | validation physical MSE: 0.00510892
+  Fold 3/5 | validation physical MSE: 0.006444
+  Fold 4/5 | validation physical MSE: 0.00642672
+  Fold 5/5 | validation physical MSE: 0.00637667
+  Mean validation physical MSE: 0.00560063 +/- 0.00109909
+Candidate 2/7: phys [physics-weight=0.05]
+  Fold 1/5 | validation physical MSE: 0.00360865
+  Fold 2/5 | validation physical MSE: 0.00516123
+  Fold 3/5 | validation physical MSE: 0.00650235
+  Fold 4/5 | validation physical MSE: 0.00651677
+  Fold 5/5 | validation physical MSE: 0.00640404
+  Mean validation physical MSE: 0.00563765 +/- 0.00113625
+Candidate 3/7: phys [physics-weight=0.1]
+  Fold 1/5 | validation physical MSE: 0.00363006
+  Fold 2/5 | validation physical MSE: 0.00517317
+  Fold 3/5 | validation physical MSE: 0.00650143
+  Fold 4/5 | validation physical MSE: 0.00643271
+  Fold 5/5 | validation physical MSE: 0.00641276
+  Mean validation physical MSE: 0.0056291 +/- 0.00111611
+Candidate 4/7: phys [physics-weight=0.25]
+  Fold 1/5 | validation physical MSE: 0.00357989
+  Fold 2/5 | validation physical MSE: 0.00518565
+  Fold 3/5 | validation physical MSE: 0.00665117
+  Fold 4/5 | validation physical MSE: 0.00658864
+  Fold 5/5 | validation physical MSE: 0.00653294
+  Mean validation physical MSE: 0.00570666 +/- 0.00119594
+Candidate 5/7: phys [physics-weight=0.5]
+  Fold 1/5 | validation physical MSE: 0.00386447
+  Fold 2/5 | validation physical MSE: 0.00560107
+  Fold 3/5 | validation physical MSE: 0.00694932
+  Fold 4/5 | validation physical MSE: 0.00696727
+  Fold 5/5 | validation physical MSE: 0.00675233
+  Mean validation physical MSE: 0.00602592 +/- 0.00119357
+Candidate 6/7: phys [physics-weight=1]
+  Fold 1/5 | validation physical MSE: 0.00430928
+  Fold 2/5 | validation physical MSE: 0.00576139
+  Fold 3/5 | validation physical MSE: 0.00770895
+  Fold 4/5 | validation physical MSE: 0.00775376
+  Fold 5/5 | validation physical MSE: 0.00737993
+  Mean validation physical MSE: 0.00658151 +/- 0.00135079
+Candidate 7/7: phys [physics-weight=2]
+  Fold 1/5 | validation physical MSE: 0.00487557
+  Fold 2/5 | validation physical MSE: 0.00650249
+  Fold 3/5 | validation physical MSE: 0.00862533
+  Fold 4/5 | validation physical MSE: 0.00893902
+  Fold 5/5 | validation physical MSE: 0.00809906
+  Mean validation physical MSE: 0.007407 +/- 0.00151933
+
+============ PHYSICS-WEIGHT SWEEP RESULTS ============
+phys [physics-weight=0] : val MSE 0.00560063 +/- 0.00109909
+phys [physics-weight=0.05] : val MSE 0.00563765 +/- 0.00113625
+phys [physics-weight=0.1] : val MSE 0.0056291 +/- 0.00111611
+phys [physics-weight=0.25] : val MSE 0.00570666 +/- 0.00119594
+phys [physics-weight=0.5] : val MSE 0.00602592 +/- 0.00119357
+phys [physics-weight=1] : val MSE 0.00658151 +/- 0.00135079
+phys [physics-weight=2] : val MSE 0.007407 +/- 0.00151933
+Best by mean validation MSE: phys [physics-weight=0] (0.00560063)
+NOTE: ranking by the mean is reported for continuity only.
+The conclusion comes from the paired analysis of results/cross_validation/physics_weight_tuning/sweep_physics.csv.
+CSV written to results/cross_validation/physics_weight_tuning/sweep_physics.csv
