@@ -1,0 +1,251 @@
+candidate,fold,epoch,training_objective,validation_mse
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",0,10,0.0160057421,0.008111809157
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",0,20,0.01493553054,0.007183999716
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",0,30,0.01435095595,0.007148044129
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",0,40,0.01410949617,0.007513160793
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",0,50,0.01399916606,0.006526727802
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",0,60,0.01367516844,0.006612774315
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",0,70,0.01372724161,0.006346566269
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",0,80,0.01335662826,0.006849806634
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",0,90,0.01316970277,0.006181624717
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",0,100,0.01297611149,0.006172010776
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",1,10,0.01542787355,0.01004732537
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",1,20,0.01389370914,0.009618142822
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",1,30,0.01339930759,0.009504080367
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",1,40,0.01307027276,0.008885861073
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",1,50,0.01282892157,0.008708934807
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",1,60,0.0127062573,0.008860248248
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",1,70,0.01249308029,0.008385648388
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",1,80,0.01245350473,0.008842064833
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",1,90,0.01221971863,0.00827171126
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",1,100,0.01222836644,0.008246561817
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",2,10,0.0149675643,0.007177478165
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",2,20,0.01395716084,0.006658225687
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",2,30,0.01371513182,0.00646984759
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",2,40,0.01316880465,0.006353662647
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",2,50,0.0130615492,0.006582853528
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",2,60,0.01291742922,0.006100446022
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",2,70,0.01264346983,0.006026109543
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",2,80,0.01241410506,0.006111782942
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",2,90,0.012273655,0.005948077558
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",2,100,0.01222076692,0.00586163827
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",3,10,0.01674078615,0.005421782306
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",3,20,0.01541777257,0.005003688511
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",3,30,0.01490362175,0.004660805051
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",3,40,0.014450872,0.004688431672
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",3,50,0.01423794739,0.0044162481
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",3,60,0.01402552453,0.004535263918
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",3,70,0.01386602646,0.004258607591
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",3,80,0.01380170285,0.004310511024
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",3,90,0.01373770603,0.004246342881
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",3,100,0.01354519569,0.004142821544
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",4,10,0.01556162797,0.007346078312
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",4,20,0.01453831453,0.006824879693
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",4,30,0.01393252609,0.006545984962
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",4,40,0.01375379094,0.006666374444
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",4,50,0.01334099507,0.007037308498
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",4,60,0.01311407725,0.006798225423
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",4,70,0.01306117891,0.006171937467
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",4,80,0.01283480714,0.006264100713
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",4,90,0.01278593771,0.006241351503
+"optimizer-trial [optimizer=SGD (lr=1e-3)]",4,100,0.01265007746,0.006652302404
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",0,10,0.01500093847,0.006865789629
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",0,20,0.01414911653,0.006384454271
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",0,30,0.01308681818,0.006201410469
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",0,40,0.01269695421,0.006537097743
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",0,50,0.01260665381,0.005818360061
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",0,60,0.01256495452,0.006071705634
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",0,70,0.01200886046,0.005442448588
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",0,80,0.01169788969,0.005998371076
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",0,90,0.01167923415,0.005672894504
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",0,100,0.01164759726,0.005404919391
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",1,10,0.01381075783,0.008761529114
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",1,20,0.01312370961,0.008463171885
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",1,30,0.01227014321,0.00793668464
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",1,40,0.01196926169,0.007663486404
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",1,50,0.01137178832,0.007678368652
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",1,60,0.01125483768,0.00849449828
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",1,70,0.01104117495,0.007049228142
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",1,80,0.01114389207,0.00836478369
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",1,90,0.01063177181,0.006926367856
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",1,100,0.01033381213,0.006811328165
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",2,10,0.01406446487,0.006690043065
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",2,20,0.01337620972,0.006269214484
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",2,30,0.0127022189,0.00636557374
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",2,40,0.0122808258,0.005806119258
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",2,50,0.0124410197,0.005684080723
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",2,60,0.01167566035,0.005457316855
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",2,70,0.01174968749,0.005532538609
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",2,80,0.011101202,0.005372155272
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",2,90,0.01181787245,0.005400998258
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",2,100,0.01096162177,0.005101097619
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",3,10,0.01593095239,0.005032838267
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",3,20,0.01478434553,0.005197883421
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",3,30,0.01554007261,0.004836562705
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",3,40,0.01399152019,0.004831085701
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",3,50,0.01379546039,0.004076598697
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",3,60,0.01335172789,0.003852620798
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",3,70,0.01277897365,0.003782672439
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",3,80,0.01270979421,0.003967357571
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",3,90,0.0123650447,0.00396357859
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",3,100,0.01211690372,0.003532051385
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",4,10,0.01521005901,0.007993999537
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",4,20,0.01407544011,0.006754344812
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",4,30,0.01307666631,0.006254111539
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",4,40,0.01284423701,0.005806750098
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",4,50,0.01277881269,0.006172832987
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",4,60,0.01195163659,0.005790543121
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",4,70,0.01301707008,0.005824126411
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",4,80,0.01199128301,0.005901493401
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",4,90,0.01169541253,0.005466958837
+"optimizer-trial [optimizer=SGD+Momentum (lr=1e-3, m=0.9)]",4,100,0.01158105923,0.004844992737
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",0,10,0.01561640604,0.007809406662
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",0,20,0.01492548506,0.008204756888
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",0,30,0.0140965051,0.006878893742
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",0,40,0.0137035093,0.01011651768
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",0,50,0.01370657288,0.006208489546
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",0,60,0.01303354276,0.006284531974
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",0,70,0.01300668273,0.006164455046
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",0,80,0.01250180103,0.007170718076
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",0,90,0.0123488091,0.005633702032
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",0,100,0.01200703962,0.005613293199
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",1,10,0.01476902058,0.009660241445
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",1,20,0.01403950498,0.01077520494
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",1,30,0.01325922172,0.01051133142
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",1,40,0.01273910257,0.008753701558
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",1,50,0.01236402119,0.008321595623
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",1,60,0.01242085586,0.008842086844
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",1,70,0.0118872781,0.0077568935
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",1,80,0.01196721555,0.008379229757
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",1,90,0.01133133354,0.007534617767
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",1,100,0.01128129898,0.007472022975
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",2,10,0.01640695027,0.007750475865
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",2,20,0.01505385841,0.007037177309
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",2,30,0.0151292778,0.007144791056
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",2,40,0.01381692972,0.007268664405
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",2,50,0.01375624318,0.007854027958
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",2,60,0.01394442152,0.006221225661
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",2,70,0.01316028434,0.0064817053
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",2,80,0.01269742498,0.006348799157
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",2,90,0.01216543593,0.005960435107
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",2,100,0.01212520219,0.005905977947
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",3,10,0.0166434265,0.005287063653
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",3,20,0.01597811241,0.006321334582
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",3,30,0.01521931456,0.004867969342
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",3,40,0.01391571507,0.004926883102
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",3,50,0.01338122692,0.003888199351
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",3,60,0.01308489911,0.00416104159
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",3,70,0.0125371657,0.004137573365
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",3,80,0.01254734653,0.003825761539
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",3,90,0.01222914616,0.004154350854
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",3,100,0.01189632693,0.003645899297
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",4,10,0.0158704217,0.00717528178
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",4,20,0.01482704451,0.006859405271
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",4,30,0.01442314431,0.006535204002
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",4,40,0.01449922497,0.007139187329
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",4,50,0.01346401559,0.007801451641
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",4,60,0.01308610988,0.006361075868
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",4,70,0.01321751998,0.006651101367
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",4,80,0.0124206672,0.005820842226
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",4,90,0.01271412621,0.005589205047
+"optimizer-trial [optimizer=AdaGrad (lr=1e-3)]",4,100,0.01233326363,0.0067361231
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",0,10,0.06072440241,0.02473500477
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",0,20,0.03568560538,0.03749169694
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",0,30,0.02590366263,0.007678955205
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",0,40,0.02615872701,0.0279263215
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",0,50,0.02403037039,0.008542505601
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",0,60,0.02419300901,0.01420300483
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",0,70,0.0207843004,0.01628092579
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",0,80,0.02102386279,0.005598228497
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",0,90,0.01881628484,0.01741748539
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",0,100,0.01861518981,0.006753826128
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",1,10,0.05971650282,0.02529565932
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",1,20,0.03904752027,0.01553757727
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",1,30,0.02962760497,0.0157509064
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",1,40,0.02660974572,0.00837268227
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",1,50,0.02227098589,0.009674561562
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",1,60,0.01925281829,0.0143552807
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",1,70,0.01920116023,0.008768060423
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",1,80,0.01712021228,0.01613481546
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",1,90,0.01682454367,0.008508611604
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",1,100,0.01528459674,0.005519107024
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",2,10,0.07516680605,0.01514052929
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",2,20,0.03752564488,0.02010559321
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",2,30,0.03646104951,0.01013932469
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",2,40,0.02804584145,0.008711681595
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",2,50,0.02783495651,0.0108742286
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",2,60,0.02368951418,0.006858266931
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",2,70,0.02308924492,0.01080333263
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",2,80,0.01842978437,0.01168296657
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",2,90,0.0197231227,0.01189981521
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",2,100,0.01873313821,0.01170744288
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",3,10,0.06814342286,0.02644688049
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",3,20,0.03902770021,0.005893752702
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",3,30,0.03352593579,0.01332253049
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",3,40,0.02498765137,0.01039069666
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",3,50,0.02346985782,0.004955900581
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",3,60,0.02269358298,0.005691751352
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",3,70,0.0225917198,0.01052627863
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",3,80,0.02039695807,0.005951470672
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",3,90,0.02177299106,0.003430487911
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",3,100,0.02026737708,0.004966609088
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",4,10,0.06812687747,0.01593905244
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",4,20,0.03914535356,0.01599338955
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",4,30,0.03339382278,0.01653818264
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",4,40,0.03280144441,0.00574899585
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",4,50,0.02696363128,0.006240502307
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",4,60,0.02128741044,0.01079879494
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",4,70,0.02023723478,0.01443956148
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",4,80,0.01915902994,0.007445662481
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",4,90,0.02111413451,0.009518334357
+"optimizer-trial [optimizer=RMSprop (lr=1e-3)]",4,100,0.01644984412,0.01651537117
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",0,10,0.014646748,0.007910368494
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",0,20,0.01439635379,0.005547272
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",0,30,0.0117250956,0.004906625788
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",0,40,0.01066604909,0.006273689187
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",0,50,0.01032140301,0.004225085534
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",0,60,0.0110382387,0.004662774686
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",0,70,0.01069110465,0.004574363061
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",0,80,0.0100988529,0.004487820416
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",0,90,0.008960724956,0.003570930113
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",0,100,0.01201486904,0.006408162393
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",1,10,0.01396086354,0.008456246622
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",1,20,0.01277046421,0.009748381183
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",1,30,0.0102180026,0.007131505708
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",1,40,0.009966921331,0.005960638112
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",1,50,0.01023868958,0.006530737395
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",1,60,0.0103583831,0.006110756467
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",1,70,0.008361022713,0.004938350829
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",1,80,0.008869244614,0.005486585782
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",1,90,0.007562016225,0.005093594701
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",1,100,0.007819596286,0.004505252513
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",2,10,0.01413727948,0.006357184848
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",2,20,0.0134204768,0.005764283762
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",2,30,0.01244205951,0.004631912691
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",2,40,0.01106994002,0.006572402164
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",2,50,0.01176852434,0.004212158275
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",2,60,0.009609670388,0.004004565659
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",2,70,0.009933605591,0.005061333669
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",2,80,0.009125325177,0.004078266634
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",2,90,0.009270101756,0.004234082398
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",2,100,0.008988731852,0.003147786185
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",3,10,0.020695247,0.006805290818
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",3,20,0.01352738666,0.003845144572
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",3,30,0.0117385465,0.003330962005
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",3,40,0.0121862928,0.004558991442
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",3,50,0.01175607854,0.003423441052
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",3,60,0.01000383108,0.003556696353
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",3,70,0.009714431227,0.003109918448
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",3,80,0.009511061402,0.002875149185
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",3,90,0.01092868979,0.00329541999
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",3,100,0.009940352271,0.002510653645
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",4,10,0.01762162869,0.006635495442
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",4,20,0.01329442274,0.005707403952
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",4,30,0.01203075705,0.005637048722
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",4,40,0.01004847676,0.00545885596
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",4,50,0.01009629216,0.004662324924
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",4,60,0.01071709352,0.006173776937
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",4,70,0.00987519403,0.003576675477
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",4,80,0.008456285648,0.003359491387
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",4,90,0.008738677834,0.003610783731
+"optimizer-trial [optimizer=Adam (lr=1e-3)]",4,100,0.008426643028,0.005502250124
