@@ -2,6 +2,7 @@
 #include "layers/ActivationFactory.hpp"
 #include "layers/Conv2DLayer.hpp"
 #include "layers/DenseLayer.hpp"
+#include "layers/DropoutLayer.hpp"
 #include "layers/FlattenLayer.hpp"
 #include "optimizers/AdamOptimizer.hpp"
 #include <iomanip>
@@ -162,6 +163,24 @@ LayerRecipe dense(int output_features) {
             }
             return std::make_unique<DenseLayer>(
                 checked_int(input[0], "Dense input features"), output_features, seed);
+        });
+}
+
+LayerRecipe dropout(float rate) {
+    // Construct a probe layer so an invalid rate fails here, when the recipe
+    // (or a search grid) is assembled, instead of deep inside a training run.
+    const DropoutLayer validation_probe(rate, 0);
+    (void)validation_probe;
+
+    std::ostringstream description;
+    description << "dropout(rate="
+                << std::setprecision(std::numeric_limits<float>::max_digits10)
+                << rate << ")";
+    return LayerRecipe(
+        description.str(),
+        [](const TensorShape& input) { return input; },
+        [=](const TensorShape&, uint64_t seed) {
+            return std::make_unique<DropoutLayer>(rate, seed);
         });
 }
 

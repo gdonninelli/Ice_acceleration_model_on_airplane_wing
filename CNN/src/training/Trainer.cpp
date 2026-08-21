@@ -382,6 +382,18 @@ TrainingResult Trainer::fit(CNNModel& model,
                         local.count);
                     const DataBatch batch =
                         training_dataset.make_batch(local_indices, normalization);
+                    // Training context for stochastic layers (dropout). The
+                    // stream seed depends only on globally agreed values and
+                    // the sample offset locates this rank's slice inside the
+                    // global batch, so masks are identical for any rank count.
+                    LayerExecutionContext execution_context;
+                    execution_context.training = true;
+                    execution_context.stream_seed = layer_rng::combine(
+                        layer_rng::combine(run_seed,
+                                           static_cast<uint64_t>(epoch)),
+                        static_cast<uint64_t>(batch_offset));
+                    execution_context.sample_offset = local.offset;
+                    model.set_execution_context(execution_context);
                     const auto predictions = model.forward(batch.sdf, batch.scalars);
                     const float loss = Loss::simm_forward(
                         predictions, batch.targets, batch.alpha_radians,

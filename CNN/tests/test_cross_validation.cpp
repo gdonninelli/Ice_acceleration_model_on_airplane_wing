@@ -2,6 +2,7 @@
 #include "data/Dataset.hpp"
 #include "layers/ConcatenateLayer.hpp"
 #include "layers/DenseLayer.hpp"
+#include "layers/DropoutLayer.hpp"
 #include "layers/ReLULayer.hpp"
 #include "model/ModelFactory.hpp"
 #include "optimizers/AdamOptimizer.hpp"
@@ -742,6 +743,183 @@ void test_cross_validator_selection() {
 }
 } // namespace
 
+void test_dropout_layer_behavior() {
+    require_throws([] { DropoutLayer invalid(1.0f); },
+                   "Dropout rate 1.0 must be rejected.");
+    require_throws([] { DropoutLayer invalid(-0.1f); },
+                   "Negative dropout rates must be rejected.");
+    require_throws(
+        [] { Recipes::dropout(std::numeric_limits<float>::quiet_NaN()); },
+        "A NaN dropout recipe must be rejected.");
+
+    const std::vector<size_t> shape{64, 32};
+    auto input = std::make_shared<Tensor>(shape);
+    for (size_t i = 0; i < input->size(); ++i) {
+        (*input)[i] = 1.0f;
+    }
+
+    // Default context is inference: the layer must be the identity in both
+    // directions.
+    DropoutLayer inference_layer(0.5f, 21);
+    const auto identity_output = inference_layer.forward({input});
+    for (size_t i = 0; i < input->size(); ++i) {
+        require_close((*identity_output)[i], 1.0f, 0.0,
+                      "Inference dropout must be the identity");
+    }
+    const auto identity_gradients = inference_layer.backward(identity_output);
+    require(identity_gradients.size() == 1,
+            "Dropout backward must return one gradient tensor.");
+    for (size_t i = 0; i < input->size(); ++i) {
+        require_close((*identity_gradients[0])[i], 1.0f, 0.0,
+                      "Inference dropout backward must be a passthrough");
+    }
+
+    const auto wrong_shape_gradient = std::make_shared<Tensor>(
+        std::vector<size_t>{32, 64});
+    require_throws(
+        [&] { inference_layer.backward(wrong_shape_gradient); },
+        "Identity dropout backward must reject a shape-mismatched gradient");
+
+    DropoutLayer no_forward_layer(0.5f, 21);
+    require_throws(
+        [&] { no_forward_layer.backward(identity_output); },
+        "Dropout backward must reject a call before forward");
+
+    // Training context: elements are either dropped or scaled by 1/(1-rate),
+    // the drop fraction concentrates near the rate, and the same context
+    // reproduces the same mask.
+    LayerExecutionContext context;
+    context.training = true;
+    context.stream_seed = 1234;
+    context.sample_offset = 0;
+
+    DropoutLayer training_layer(0.5f, 21);
+    training_layer.set_execution_context(context);
+    const auto first_output = training_layer.forward({input});
+    size_t dropped = 0;
+    for (size_t i = 0; i < input->size(); ++i) {
+        const float value = (*first_output)[i];
+        require(value == 0.0f || value == 2.0f,
+                "Training dropout must zero or rescale every element.");
+        dropped += value == 0.0f ? 1 : 0;
+    }
+    const double drop_fraction =
+        static_cast<double>(dropped) / static_cast<double>(input->size());
+    require_close(drop_fraction, 0.5, 0.05,
+                  "Dropout must drop close to `rate` of the elements");
+
+    const auto gradient_seed = std::make_shared<Tensor>(shape);
+    for (size_t i = 0; i < gradient_seed->size(); ++i) {
+        (*gradient_seed)[i] = 1.0f;
+    }
+    const auto masked_gradients = training_layer.backward(gradient_seed);
+    for (size_t i = 0; i < input->size(); ++i) {
+        require_close((*masked_gradients[0])[i], (*first_output)[i], 0.0,
+                      "Dropout backward must apply the forward mask");
+    }
+
+    const auto wrong_mask_shape_gradient = std::make_shared<Tensor>(
+        std::vector<size_t>{32, 64});
+    training_layer.forward({input});
+    require_throws(
+        [&] { training_layer.backward(wrong_mask_shape_gradient); },
+        "Training dropout backward must reject a shape-mismatched gradient");
+
+    require_throws(
+        [&] { training_layer.forward({}); },
+        "A failed dropout forward must invalidate the backward cache");
+    require_throws(
+        [&] { training_layer.backward(gradient_seed); },
+        "Dropout backward must reject a stale cache after failed forward");
+
+    training_layer.set_execution_context(context);
+    const auto repeated_output = training_layer.forward({input});
+    for (size_t i = 0; i < input->size(); ++i) {
+        require_close((*repeated_output)[i], (*first_output)[i], 0.0,
+                      "The same context must reproduce the same mask");
+    }
+
+    // Rank-layout invariance: masking the batch in one piece must equal
+    // masking it as two slices whose sample offsets locate them inside the
+    // global batch, because that is exactly how MPI ranks see their slices.
+    const std::vector<size_t> half_shape{32, 32};
+    auto lower_half = std::make_shared<Tensor>(half_shape);
+    auto upper_half = std::make_shared<Tensor>(half_shape);
+    for (size_t i = 0; i < lower_half->size(); ++i) {
+        (*lower_half)[i] = 1.0f;
+        (*upper_half)[i] = 1.0f;
+    }
+
+    DropoutLayer sliced_layer(0.5f, 21);
+    LayerExecutionContext lower_context = context;
+    lower_context.sample_offset = 0;
+    sliced_layer.set_execution_context(lower_context);
+    const auto lower_output = sliced_layer.forward({lower_half});
+
+    LayerExecutionContext upper_context = context;
+    upper_context.sample_offset = 32;
+    sliced_layer.set_execution_context(upper_context);
+    const auto upper_output = sliced_layer.forward({upper_half});
+
+    for (size_t i = 0; i < lower_output->size(); ++i) {
+        require_close((*lower_output)[i], (*first_output)[i], 0.0,
+                      "Sliced dropout must match the full batch (lower half)");
+        require_close((*upper_output)[i],
+                      (*first_output)[lower_output->size() + i], 0.0,
+                      "Sliced dropout must match the full batch (upper half)");
+    }
+}
+
+void test_dropout_training_integration() {
+    const Dataset dataset = tiny_dataset(12);
+    const auto indices = dataset.all_indices();
+    const NormalizationStats normalization =
+        dataset.fit_normalization(indices);
+
+    const auto make_dropout_trial = [](float rate) {
+        ModelBlueprint blueprint;
+        blueprint.feature_layers = {Recipes::flatten()};
+        blueprint.head_layers = {Recipes::dense(4), Recipes::dropout(rate),
+                                 Recipes::dense(1)};
+        return TrialConfig{"dropout-test",   blueprint,
+                           Recipes::adam(1e-3f), LossConfig{0.25f},
+                           TrainingConfig{2, 4, 1.0f, 7, true},
+                           {}};
+    };
+
+    const auto run_training = [&](const TrialConfig& config) {
+        ModelFactory factory;
+        auto model = factory.build(config, dataset.sdf_height(),
+                                   dataset.sdf_width(),
+                                   dataset.scalar_features(),
+                                   config.training.seed, MPI_COMM_WORLD);
+        const Trainer trainer(MPI_COMM_WORLD);
+        return trainer.fit(*model, dataset, indices, dataset, indices,
+                           normalization, config.loss, config.training,
+                           config.training.seed, false);
+    };
+
+    // The dropout path must train to finite metrics and stay deterministic:
+    // rebuilding the model from the same seed must reproduce the run exactly.
+    const TrainingResult first = run_training(make_dropout_trial(0.35f));
+    require(std::isfinite(first.training_objective) &&
+                std::isfinite(first.validation_mse),
+            "Training with dropout must produce finite metrics.");
+    const TrainingResult repeated = run_training(make_dropout_trial(0.35f));
+    require_close(repeated.validation_mse, first.validation_mse, 0.0,
+                  "Dropout training must be deterministic for a fixed seed");
+    require_close(repeated.training_objective, first.training_objective, 0.0,
+                  "Dropout training objective must be deterministic");
+
+    // A zero rate must run the identity path, and a positive rate must
+    // actually change the optimization trajectory.
+    const TrainingResult without = run_training(make_dropout_trial(0.0f));
+    require(std::isfinite(without.validation_mse),
+            "Zero-rate dropout training must produce finite metrics.");
+    require(std::abs(without.validation_mse - first.validation_mse) > 0.0,
+            "A positive dropout rate must change the training trajectory.");
+}
+
 int main(int argc, char** argv) {
     MPI_Init(&argc, &argv);
     try {
@@ -752,6 +930,8 @@ int main(int argc, char** argv) {
         test_parameter_grid_and_fresh_models();
         test_trainer_with_partial_batches();
         test_regularization_config_validation();
+        test_dropout_layer_behavior();
+        test_dropout_training_integration();
         test_generic_checkpoint_round_trip();
         test_training_diagnostics_artifacts();
         test_cross_validator_selection();

@@ -22,6 +22,7 @@ struct CommandLineOptions {
     bool verbose_final = true;
     std::string activation = "leakyrelu";
     float leaky_alpha = 0.05f;
+    float dropout = 0.0f;
     float learning_rate = 1e-5f;
     float physics_weight = 0.25f;
     float l1_weight = 0.0f;
@@ -94,6 +95,8 @@ CommandLineOptions parse_arguments(int argc, char** argv) {
             options.activation = next_value();
         } else if (argument == "--alpha") {
             options.leaky_alpha = parse_float(argument, next_value());
+        } else if (argument == "--dropout") {
+            options.dropout = parse_float(argument, next_value());
         } else if (argument == "--learning-rate") {
             options.learning_rate = parse_float(argument, next_value());
         } else if (argument == "--physics-weight") {
@@ -133,9 +136,10 @@ CommandLineOptions parse_arguments(int argc, char** argv) {
 
     if (options.leaky_alpha < 0.0f || options.learning_rate <= 0.0f ||
         options.physics_weight < 0.0f || options.gradient_clip < 0.0f ||
-        options.l1_weight < 0.0f || options.l2_weight < 0.0f) {
+        options.l1_weight < 0.0f || options.l2_weight < 0.0f ||
+        options.dropout < 0.0f || options.dropout >= 1.0f) {
         throw std::invalid_argument(
-            "Alpha, learning rate, physics weight, L1/L2 weights, and gradient clip are outside their valid ranges.");
+            "Alpha, learning rate, physics weight, L1/L2 weights, dropout rate, and gradient clip are outside their valid ranges.");
     }
     return options;
 }
@@ -153,6 +157,7 @@ void print_help() {
         << "  --batch-size N         Global MPI batch size (default: 64)\n"
         << "  --activation NAME      leakyrelu, relu, tanh, or sigmoid\n"
         << "  --alpha VALUE          LeakyReLU negative slope\n"
+        << "  --dropout VALUE        Dropout rate in [0, 1) for the dense head (default: 0)\n"
         << "  --learning-rate VALUE  Adam learning rate for ordinary training\n"
         << "  --physics-weight VALUE SIMM physics weight\n"
         << "  --l1-weight VALUE      L1 (Lasso) penalty weight on weight tensors\n"
@@ -173,7 +178,8 @@ ModelBlueprint make_blueprint(int kernel_size,
                               int channels,
                               const std::string& activation,
                               float leaky_alpha,
-                              const std::vector<int>& hidden_layers) {
+                              const std::vector<int>& hidden_layers,
+                              float dropout = 0.0f) {
     ModelBlueprint blueprint;
     blueprint.feature_layers.push_back(
         Recipes::conv2d(channels, kernel_size, stride, 0));
@@ -185,6 +191,9 @@ ModelBlueprint make_blueprint(int kernel_size,
         blueprint.head_layers.push_back(Recipes::dense(width));
         blueprint.head_layers.push_back(
             Recipes::activation(activation, leaky_alpha));
+        if (dropout > 0.0f) {
+            blueprint.head_layers.push_back(Recipes::dropout(dropout));
+        }
     }
     blueprint.head_layers.push_back(Recipes::dense(1));
     return blueprint;
@@ -214,7 +223,7 @@ TrialConfig make_single_trial(const CommandLineOptions& options) {
     return TrialConfig{
         "single-training",
         make_blueprint(5, 5, 8, options.activation, options.leaky_alpha,
-                       {128, 64}),
+                       {128, 64}, options.dropout),
         Recipes::adam(options.learning_rate),
         LossConfig{options.physics_weight, options.l1_weight, options.l2_weight},
         make_training_config(options),

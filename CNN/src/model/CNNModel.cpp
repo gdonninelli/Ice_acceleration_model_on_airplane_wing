@@ -381,7 +381,17 @@ void CNNModel::broadcast_initial_weights(int root_rank) {
 
 std::shared_ptr<Tensor> CNNModel::predict(std::shared_ptr<Tensor> sdf_input,
                                          std::shared_ptr<Tensor> scalar_input) {
+    // Inference must not apply stochastic training behavior (e.g. dropout),
+    // so the default context is restored before running the network. The
+    // trainer re-installs a training context before every optimization batch.
+    set_execution_context(LayerExecutionContext{});
     return forward(std::move(sdf_input), std::move(scalar_input));
+}
+
+void CNNModel::set_execution_context(const LayerExecutionContext& context) {
+    for (Layer* layer : ordered_layers()) {
+        layer->set_execution_context(context);
+    }
 }
 
 void CNNModel::export_weights(const std::string& filepath) const {

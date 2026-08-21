@@ -88,6 +88,7 @@ LayerRecipe conv2d(int output_channels,
 LayerRecipe activation(const std::string& name, float leaky_alpha = 0.05f);
 LayerRecipe flatten();
 LayerRecipe dense(int output_features);
+LayerRecipe dropout(float rate);
 
 OptimizerRecipe adam(float learning_rate,
                      float beta1 = 0.9f,

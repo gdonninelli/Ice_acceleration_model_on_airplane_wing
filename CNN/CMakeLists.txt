@@ -26,6 +26,19 @@ target_compile_definitions(
 add_executable(cnn_executable main.cpp)
 target_link_libraries(cnn_executable PRIVATE cnn_core)
 
+# One executable per experiment directory: experiments/<name>/main.cpp
+# builds to <build>/experiments/<name>.
+file(GLOB CNN_EXPERIMENT_MAINS CONFIGURE_DEPENDS
+     "${CMAKE_CURRENT_SOURCE_DIR}/experiments/*/main.cpp")
+foreach(experiment_main IN LISTS CNN_EXPERIMENT_MAINS)
+    get_filename_component(experiment_dir "${experiment_main}" DIRECTORY)
+    get_filename_component(experiment_name "${experiment_dir}" NAME)
+    add_executable(${experiment_name} "${experiment_main}")
+    target_link_libraries(${experiment_name} PRIVATE cnn_core)
+    set_target_properties(${experiment_name} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/experiments")
+endforeach()
+
 include(CTest)
 if(BUILD_TESTING)
     add_executable(cnn_tests tests/test_cross_validation.cpp)

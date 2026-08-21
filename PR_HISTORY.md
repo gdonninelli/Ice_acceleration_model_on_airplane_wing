@@ -17,6 +17,44 @@ entry per pull request, newest first.
 - **Implementation:** Main technical decisions and affected components.
 - **Validation:** Builds, tests, reviews, or manual checks completed.
 
+## Dropout, Makefile, and physics-weight tuning
+
+- **Status:** Pending merge
+- **Implementation dates:** 2026-08-16 to 2026-08-21
+- **Review date:** 2026-08-21
+- **Authors:** Vittorio Sironi (`vittorio.sironi@icloud.com`) - `51820f9`,
+  `6ef94e9`, `ca9fdaa`, `f4ce5f9`, `fb1fc2a`, `28d39eb`; Alessia Rigoni
+  (`a.rigoni5@campus.unimib.it`) - `d4fc0ff`
+- **Branch:** `feature/dropout-makefile-physics-tuning`
+- **Base:** `main`
+- **Reviewed head:** `d4fc0ff2e1680c82fa7e1e5626f026744b8bbe9e`
+- **PR:** https://github.com/gdonninelli/Ice_acceleration_model_on_airplane_wing/pull/9
+- **Summary:** Added deterministic MPI-rank-invariant inverted dropout, a
+  top-level Makefile/CMake experiment build path, and paired dropout-rate and
+  SIMM physics-weight tuning experiments with committed artifacts.
+- **Implementation:**
+  - Added `LayerExecutionContext`, `DropoutLayer`, `Recipes::dropout`, and the
+    `--dropout` CLI option; the trainer supplies per-batch deterministic context
+    and prediction restores inference behavior.
+  - Added Makefile targets and automatic experiment executable discovery in
+    CMake; `make dataset` explicitly blocks on the missing seed-capable data
+    pipeline.
+  - Added two 5-fold paired tuning executables, analyzers, documentation, and
+    per-fold CSV/diagnostic artifacts.
+- **Validation:**
+  - `make test` built all CNN and experiment targets; serial and MPI-2 CTest
+    suites passed.
+  - `git diff --check`, analyzer Python compilation, both committed sweep
+    analyzers, CLI/help smoke tests, and representative metadata JSON parsing
+    passed.
+  - Full 100-epoch sweeps were not rerun in this review; `make dataset` was
+    confirmed to stop at its documented portability guard.
+- **Per-PR report:** `PR_REVIEWS/feature-dropout-makefile-physics-tuning.md`
+- **Review outcome:** No critical findings; the medium dropout shape-validation
+  finding and incomplete result documentation were resolved with regression
+  tests and numerical README analysis. Low analyzer/metadata and provenance
+  gaps remain non-blocking.
+
 ## Implementing Internal Weights Analysis
 
 - **Status:** Pending merge

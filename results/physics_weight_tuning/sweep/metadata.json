@@ -1,0 +1,7 @@
+{
+  "format_version": 1,
+  "mode": "cross_validation",
+  "experiment_name": "physics_weight_tuning",
+  "run_name": "sweep",
+  "candidate_count": 7
+}
