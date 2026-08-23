@@ -46,7 +46,7 @@ class AdamOptimizer : public Optimizer {
      * @param epsilon A small constant to prevent division by zero.
      * @param weight_decay The coefficient for L2 weight decay (regularization).
      */
-    AdamOptimizer(float learning_rate = 1e-3f,
+    AdamOptimizer(float learning_rate = 1e-5f,
                   float beta1 = 0.9f,
                   float beta2 = 0.999f,
                   float epsilon = 1e-8f,

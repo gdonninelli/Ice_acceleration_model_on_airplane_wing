@@ -81,16 +81,6 @@ mpirun -n 4 ./build/experiments/optimizer_comparison \
   --results-dir results/cross_validation/optimizer_comparison
 ```
 
-### 3. Full Learning-Rate Sweep Grid
-```bash
-mpirun -n 4 ./build/experiments/optimizer_comparison \
-  --mode grid \
-  --folds 5 \
-  --epochs 100 \
-  --batch-size 64 \
-  --results-dir results/cross_validation/optimizer_comparison_grid
-```
-
 ## Generated Outputs
 
 The experiment writes results to the specified output directory:

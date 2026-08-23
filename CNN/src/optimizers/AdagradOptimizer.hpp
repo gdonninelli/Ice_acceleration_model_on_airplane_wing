@@ -40,7 +40,7 @@ class AdagradOptimizer : public Optimizer {
      * @param epsilon A small constant to prevent division by zero.
      * @param weight_decay The coefficient for L2 weight decay (regularization).
      */
-    AdagradOptimizer(float learning_rate = 1e-3f,
+    AdagradOptimizer(float learning_rate = 1e-5f,
                      float epsilon = 1e-8f,
                      float weight_decay = 0.0f);
 
