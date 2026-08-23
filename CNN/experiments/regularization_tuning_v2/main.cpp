@@ -1,18 +1,24 @@
-// Weight-regularization (L1/L2) tuning at lr = 1e-3, on the
-// optimizer_comparison / activation_tuning / physics_weight_tuning_lr1e3
-// topology.
+// Weight-regularization (L1/L2) tuning on the optimizer_comparison /
+// layer_tuning winning topology, at the project's original lr = 1e-5.
 //
 // Scientific question: CNN/experiments/regularization_tuning selected
 // lambda* = 0 for both L1 and L2 at lr = 1e-5 on the {128,64} topology
-// (7.4e4 parameters over 1713 samples), where the measured train/validation
+// (~7.5e4 parameters over 1713 samples), where the measured train/validation
 // gap was +0.000413 against a 0.001397 fold spread -- essentially no
-// overfitting for a penalty to remove. At lr = 1e-3 on {1024,512,256,128}
-// (~7.4e6 parameters, 100x more, on the same 1713 samples) that premise no
-// longer holds automatically: this is the first run of this experiment
-// where lambda = 0 is not the a-priori expected answer. See
-// CNN/experiments/physics_weight_tuning_lr1e3, which already showed this
-// topology/lr leaves the lazy-training regime and fits the data
-// substantially better than the old one.
+// overfitting for a penalty to remove. At lr = 1e-5 lambda* = 0 is still the
+// expected answer here too, for the same reason: the update-ratio mechanism
+// that keeps the network near its initialization (~3.9e-5, measured in
+// physics_weight_tuning_lr1e3's README on the old topology) is a property
+// of the learning rate, not of the architecture. What changed is the
+// architecture, not the rate: {1024,512,256,128} is ~8.06M parameters
+// (recomputed from the layer shapes, not carried over from an earlier
+// estimate) instead of ~7.5e4, on the same 1713 samples -- a ~100x larger
+// network is a legitimately different regime even if it still moves very
+// little per step, which is the actual reason to run this rather than
+// assume the old conclusion transfers. See
+// CNN/experiments/physics_weight_tuning_lr1e3, the one experiment in this
+// family that stayed at lr = 1e-3 (it already has real results measured
+// there, which is why the learning-rate question was raised at all).
 //
 // Same two independent one-dimensional sweeps as the original (L2 alone,
 // L1 alone, lambda = 0 as the shared reference in each), same 8-point grids,
@@ -34,7 +40,7 @@
 // argument, not a compiled-in constant: none of this requires recompiling
 // on the cluster.
 //
-// See CNN/experiments/regularization_tuning_lr1e3/README.md.
+// See CNN/experiments/regularization_tuning_v2/README.md.
 
 #include "core/Loss.hpp"
 #include "core/Tensor.hpp"
@@ -68,10 +74,11 @@ constexpr size_t kDefaultFolds = 5;
 constexpr size_t kDefaultEpochs = 100;
 constexpr size_t kDefaultGlobalBatchSize = 64;
 constexpr uint64_t kDefaultSeed = 42;
-// Fixed, not a tunable axis of this experiment: re-runs the original grids
-// at 1e-3 to see whether lambda* = 0 still holds once the network can
-// actually overfit.
-constexpr float kLearningRate = 1e-3f;
+// Fixed, not a tunable axis of this experiment: the project's original
+// learning rate, unchanged from CNN/experiments/regularization_tuning.
+// Only the architecture changed relative to that original (see the header
+// comment above for why lambda* = 0 is still the expected outcome here).
+constexpr float kLearningRate = 1e-5f;
 constexpr float kPhysicsWeight = 0.25f;
 constexpr float kLeakyAlpha = 0.05f;
 constexpr size_t kEvaluationChunk = 256;
@@ -372,7 +379,7 @@ struct ProgramOptions {
     uint64_t seed = kDefaultSeed;
     size_t validation_interval = 0; // 0 means "use the Trainer default"
     std::string train_path = "dataset/cnn_dataset_train.npz";
-    std::string results_dir = "results/cross_validation/regularization_tuning_lr1e3";
+    std::string results_dir = "results/cross_validation/regularization_tuning_v2";
     bool diagnostics = false;
     size_t histogram_bins = 64;
     bool help = false;
@@ -443,8 +450,8 @@ ProgramOptions parse_options(int argc, char** argv) {
 
 void print_help() {
     std::cout
-        << "Regularization (L1/L2) Tuning at lr=1e-3 (activation topology)\n\n"
-        << "Usage: regularization_tuning_lr1e3 [options]\n\n"
+        << "Regularization (L1/L2) Tuning, layer_tuning architecture (lr=1e-5)\n\n"
+        << "Usage: regularization_tuning_v2 [options]\n\n"
         << "Options:\n"
         << "  --mode <cv|probe>        cv:    5-fold CV for ONE lambda (default)\n"
         << "                           probe: one fold, long run, to pick the epoch budget\n"
@@ -463,7 +470,7 @@ void print_help() {
         << "  --histogram-bins N       Activation histogram bins (default: 64)\n"
         << "  --smoke                  Shortcut for 2 folds, 2 epochs\n"
         << "  --help, -h               Show this message\n\n"
-        << "Note: topology (conv5x5-dense-1024-512-256-128), learning rate (1e-3, Adam),\n"
+        << "Note: topology (conv5x5-dense-1024-512-256-128), learning rate (1e-5, Adam),\n"
         << "LeakyReLU alpha (0.05), and physics weight (0.25) are fixed, not CLI options:\n"
         << "this experiment holds everything but the regularization axis constant.\n";
 }
@@ -484,7 +491,7 @@ TrialConfig make_config(const std::string& axis,
     if (options.diagnostics) {
         training.diagnostics.enabled = true;
         training.diagnostics.results_root = options.results_dir;
-        training.diagnostics.experiment_name = "regularization_tuning_lr1e3";
+        training.diagnostics.experiment_name = "regularization_tuning_v2";
         training.diagnostics.run_name = diagnostics_run_name;
         training.diagnostics.histogram_bins = options.histogram_bins;
         training.diagnostics.training_dataset_path = options.train_path;
@@ -536,7 +543,7 @@ CandidateResult run_candidate(const Dataset& dataset,
 }
 
 // One fold, long run, validating every epoch. Used to choose the epoch
-// budget at lr=1e-3 for this experiment specifically: the caller reads the
+// budget at lr=1e-5 for this experiment specifically: the caller reads the
 // per-epoch history to see where validation MSE bottoms out and whether it
 // turns back up -- now a live question, since this topology has enough
 // capacity to actually overfit.
@@ -634,7 +641,7 @@ int main(int argc, char** argv) {
 
         if (rank == 0) {
             std::cout << "========================================================\n"
-                      << "  REGULARIZATION TUNING AT lr=1e-3 (activation topology)  \n"
+                      << "  REGULARIZATION TUNING, LAYER_TUNING ARCHITECTURE (lr=1e-5)   \n"
                       << "========================================================\n"
                       << "Mode:            " << options.mode << "\n"
                       << "Axis:            " << options.axis << "\n"
@@ -659,7 +666,7 @@ int main(int argc, char** argv) {
             run_candidate(training_dataset, options, rank);
         }
     } catch (const std::exception& error) {
-        std::cerr << "regularization_tuning_lr1e3 failed on rank " << rank
+        std::cerr << "regularization_tuning_v2 failed on rank " << rank
                   << ": " << error.what() << '\n';
         if (world_size > 1) {
             MPI_Abort(MPI_COMM_WORLD, 1);

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Segmented driver for the L1/L2 regularization sweep at lr=1e-3.
+"""Segmented driver for the L1/L2 regularization sweep (layer_tuning architecture, lr=1e-5).
 
 One MPI invocation per (axis, lambda) candidate, so an interrupted sweep
 loses at most the candidate that was running. Completed candidates are
@@ -13,7 +13,7 @@ l1_0.csv and l2_0.csv, instead of spending a second ~76-minute run on a
 bit-identical result.
 
 Usage:
-    python3 CNN/experiments/regularization_tuning_lr1e3/orchestrator.py [options]
+    python3 CNN/experiments/regularization_tuning_v2/orchestrator.py [options]
 
 Run with --help for the option list.
 """
@@ -29,7 +29,7 @@ import time
 
 L2_GRID = [0.0, 1e-4, 3.16e-4, 1e-3, 3.16e-3, 1e-2, 3.16e-2, 1e-1]
 L1_GRID = [0.0, 6.75e-7, 2.13e-6, 6.75e-6, 2.13e-5, 6.75e-5, 2.13e-4, 6.75e-4]
-DEFAULT_RESULTS_DIR = "results/cross_validation/regularization_tuning_lr1e3"
+DEFAULT_RESULTS_DIR = "results/cross_validation/regularization_tuning_v2"
 # OpenMPI is not on PATH by default on every machine in the group.
 OPENMPI_BIN = "/usr/lib64/openmpi/bin"
 
@@ -44,8 +44,8 @@ def format_lambda(value):
 
 def parse_args():
     parser = argparse.ArgumentParser(
-        description="Run the L1/L2 regularization (lr=1e-3) grids one candidate at a time.")
-    parser.add_argument("--binary", default="build/CNN/experiments/regularization_tuning_lr1e3",
+        description="Run the L1/L2 regularization grids one candidate at a time.")
+    parser.add_argument("--binary", default="build/CNN/experiments/regularization_tuning_v2",
                         help="Path to the executable.")
     parser.add_argument("--ranks", type=int, default=4,
                         help="MPI ranks per invocation (default: 4, matching "
@@ -150,7 +150,7 @@ def copy_zero_candidate(results_dir, from_axis, to_axis, folds):
 
 
 def aggregate(results_dir, axis, labels, folds):
-    """Concatenate one axis's per-lambda CSVs into sweep_<axis>_lr1e3.csv,
+    """Concatenate one axis's per-lambda CSVs into sweep_<axis>_v2.csv,
     with the same schema as regularization_tuning's sweep_l1.csv/sweep_l2.csv,
     so analyze.py runs against it unmodified."""
     rows = []
@@ -166,7 +166,7 @@ def aggregate(results_dir, axis, labels, folds):
             rows.extend(reader)
     if not rows:
         return None
-    out_path = os.path.join(results_dir, f"sweep_{axis}_lr1e3.csv")
+    out_path = os.path.join(results_dir, f"sweep_{axis}_v2.csv")
     with open(out_path, "w", newline="") as handle:
         writer = csv.writer(handle)
         writer.writerow(header)
@@ -196,7 +196,7 @@ def main():
     if os.path.isdir(OPENMPI_BIN):
         env["PATH"] = OPENMPI_BIN + os.pathsep + env.get("PATH", "")
 
-    print("===== Regularization tuning (lr=1e-3) orchestrator =====")
+    print("===== Regularization tuning orchestrator =====")
     print(f"  axes       : {axes}")
     print(f"  ranks      : {args.ranks}")
     print(f"  epochs     : {args.epochs}   folds: {args.folds}")
