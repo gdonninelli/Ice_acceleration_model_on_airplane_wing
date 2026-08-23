@@ -27,7 +27,7 @@
 #     measured on this architecture/axis"). Do not submit the full array
 #     with a guessed walltime; time one candidate first.
 
-#SBATCH --job-name=reg-tuning-v2
+#SBATCH --job-name=reg-tuning-bigarch
 #SBATCH --account=TODO_ACCOUNT
 #SBATCH --partition=TODO_PARTITION
 #SBATCH --nodes=1
@@ -35,7 +35,7 @@
 #SBATCH --ntasks-per-node=4
 #SBATCH --cpus-per-task=1
 #SBATCH --time=02:00:00            # TODO: PLACEHOLDER. Time one candidate (see below) before trusting this.
-#SBATCH --output=reg_tuning_v2_%A_%a.out
+#SBATCH --output=reg_tuning_bigarch_%A_%a.out
 #SBATCH --array=0                  # TODO: expand once per-candidate cost is known (see array note below)
 
 set -euo pipefail

@@ -130,7 +130,7 @@ assuming away.
 
 `orchestrator.py` runs one MPI invocation per (axis, lambda) candidate, with
 an idempotent resume state (`orchestrator_state.json`) and per-axis CSV
-aggregation (`sweep_l1_v2.csv`, `sweep_l2_v2.csv`), mirroring
+aggregation (`sweep_l1_bigarch.csv`, `sweep_l2_bigarch.csv`), mirroring
 `physics_weight_tuning_lr1e3/orchestrator.py`. It also implements the
 lambda = 0 reuse described above (`copy_zero_candidate`), so the shared
 reference run is computed once.

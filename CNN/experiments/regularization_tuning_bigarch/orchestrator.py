@@ -150,7 +150,7 @@ def copy_zero_candidate(results_dir, from_axis, to_axis, folds):
 
 
 def aggregate(results_dir, axis, labels, folds):
-    """Concatenate one axis's per-lambda CSVs into sweep_<axis>_v2.csv,
+    """Concatenate one axis's per-lambda CSVs into sweep_<axis>_bigarch.csv,
     with the same schema as regularization_tuning's sweep_l1.csv/sweep_l2.csv,
     so analyze.py runs against it unmodified."""
     rows = []
@@ -166,7 +166,7 @@ def aggregate(results_dir, axis, labels, folds):
             rows.extend(reader)
     if not rows:
         return None
-    out_path = os.path.join(results_dir, f"sweep_{axis}_v2.csv")
+    out_path = os.path.join(results_dir, f"sweep_{axis}_bigarch.csv")
     with open(out_path, "w", newline="") as handle:
         writer = csv.writer(handle)
         writer.writerow(header)
