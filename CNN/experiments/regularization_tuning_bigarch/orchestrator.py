@@ -13,7 +13,7 @@ l1_0.csv and l2_0.csv, instead of spending a second ~76-minute run on a
 bit-identical result.
 
 Usage:
-    python3 CNN/experiments/regularization_tuning_v2/orchestrator.py [options]
+    python3 CNN/experiments/regularization_tuning_bigarch/orchestrator.py [options]
 
 Run with --help for the option list.
 """
@@ -29,7 +29,7 @@ import time
 
 L2_GRID = [0.0, 1e-4, 3.16e-4, 1e-3, 3.16e-3, 1e-2, 3.16e-2, 1e-1]
 L1_GRID = [0.0, 6.75e-7, 2.13e-6, 6.75e-6, 2.13e-5, 6.75e-5, 2.13e-4, 6.75e-4]
-DEFAULT_RESULTS_DIR = "results/cross_validation/regularization_tuning_v2"
+DEFAULT_RESULTS_DIR = "results/cross_validation/regularization_tuning_bigarch"
 # OpenMPI is not on PATH by default on every machine in the group.
 OPENMPI_BIN = "/usr/lib64/openmpi/bin"
 
@@ -45,7 +45,7 @@ def format_lambda(value):
 def parse_args():
     parser = argparse.ArgumentParser(
         description="Run the L1/L2 regularization grids one candidate at a time.")
-    parser.add_argument("--binary", default="build/CNN/experiments/regularization_tuning_v2",
+    parser.add_argument("--binary", default="build/CNN/experiments/regularization_tuning_bigarch",
                         help="Path to the executable.")
     parser.add_argument("--ranks", type=int, default=4,
                         help="MPI ranks per invocation (default: 4, matching "

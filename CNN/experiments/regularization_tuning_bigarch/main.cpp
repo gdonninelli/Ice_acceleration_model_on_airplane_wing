@@ -40,7 +40,7 @@
 // argument, not a compiled-in constant: none of this requires recompiling
 // on the cluster.
 //
-// See CNN/experiments/regularization_tuning_v2/README.md.
+// See CNN/experiments/regularization_tuning_bigarch/README.md.
 
 #include "core/Loss.hpp"
 #include "core/Tensor.hpp"
@@ -379,7 +379,7 @@ struct ProgramOptions {
     uint64_t seed = kDefaultSeed;
     size_t validation_interval = 0; // 0 means "use the Trainer default"
     std::string train_path = "dataset/cnn_dataset_train.npz";
-    std::string results_dir = "results/cross_validation/regularization_tuning_v2";
+    std::string results_dir = "results/cross_validation/regularization_tuning_bigarch";
     bool diagnostics = false;
     size_t histogram_bins = 64;
     bool help = false;
@@ -451,7 +451,7 @@ ProgramOptions parse_options(int argc, char** argv) {
 void print_help() {
     std::cout
         << "Regularization (L1/L2) Tuning, layer_tuning architecture (lr=1e-5)\n\n"
-        << "Usage: regularization_tuning_v2 [options]\n\n"
+        << "Usage: regularization_tuning_bigarch [options]\n\n"
         << "Options:\n"
         << "  --mode <cv|probe>        cv:    5-fold CV for ONE lambda (default)\n"
         << "                           probe: one fold, long run, to pick the epoch budget\n"
@@ -491,7 +491,7 @@ TrialConfig make_config(const std::string& axis,
     if (options.diagnostics) {
         training.diagnostics.enabled = true;
         training.diagnostics.results_root = options.results_dir;
-        training.diagnostics.experiment_name = "regularization_tuning_v2";
+        training.diagnostics.experiment_name = "regularization_tuning_bigarch";
         training.diagnostics.run_name = diagnostics_run_name;
         training.diagnostics.histogram_bins = options.histogram_bins;
         training.diagnostics.training_dataset_path = options.train_path;
@@ -666,7 +666,7 @@ int main(int argc, char** argv) {
             run_candidate(training_dataset, options, rank);
         }
     } catch (const std::exception& error) {
-        std::cerr << "regularization_tuning_v2 failed on rank " << rank
+        std::cerr << "regularization_tuning_bigarch failed on rank " << rank
                   << ": " << error.what() << '\n';
         if (world_size > 1) {
             MPI_Abort(MPI_COMM_WORLD, 1);

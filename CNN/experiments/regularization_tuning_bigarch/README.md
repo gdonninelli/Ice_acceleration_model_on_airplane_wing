@@ -20,8 +20,16 @@ every experiment to `lr = 1e-3`. That decision was **reversed**: the group
 settled on `lr = 1e-5` everywhere except `physics_weight_tuning_lr1e3`
 itself, which keeps `1e-3` because it already has real results measured
 there and is the reason the learning-rate question was raised in the first
-place. This branch, its directory, and this README were updated
-accordingly; the git history still contains the `1e-3` version.
+place. The directory was then renamed a second time, from
+`regularization_tuning_v2` to `regularization_tuning_bigarch`: "v2"
+implied a public first version that never existed (this branch was never
+pushed), and `_bigarch` says what actually differs from the original
+(a fixed, larger architecture), matching `layer_tuning_grid`'s naming
+principle even though the literal suffix differs. **The branch name itself
+is still `feature/regularization-tuning-v2` at the time of writing** --
+renaming it to match was blocked by a pre-existing, unrelated local branch
+named `feature/regularization-tuning`, and is pending a decision on that
+branch before the rename can happen; update this note once it does.
 
 ## Question
 
@@ -88,7 +96,7 @@ which candidate to run are all `main.cpp` command-line arguments, not
 compiled-in constants:
 
 ```
-regularization_tuning_v2 --mode cv --axis <l1|l2> --lambda V
+regularization_tuning_bigarch --mode cv --axis <l1|l2> --lambda V
     [--epochs N] [--folds N] [--seed N] [--batch-size N]
     [--train-path PATH] [--results-dir PATH]
     [--diagnostics|--no-diagnostics] [--histogram-bins N] [--smoke]
@@ -110,7 +118,7 @@ wiring here is copied from `optimizer_comparison` /
 `gradient_norms.csv`, `parameter_update_ratios.csv`,
 `activation_statistics.csv`, `activation_histograms.csv`,
 `learning_rate_steps.csv`, `metadata.json`) under
-`<results-dir>/regularization_tuning_v2/<axis>_<label>/candidate_000/fold_NNN/`.
+`<results-dir>/regularization_tuning_bigarch/<axis>_<label>/candidate_000/fold_NNN/`.
 At lr = 1e-5 these diagnostics matter more, not less, than they would at a
 higher rate: if the update ratios here turn out much larger than
 `physics_weight_tuning_lr1e3`'s lr=1e-5 figure despite the identical
@@ -145,7 +153,7 @@ reference run is computed once.
 
 See the repository-level cluster notes (compiler, dataset provisioning,
 SLURM script) documented alongside this PR's description -- they are common
-to this experiment and `layer_tuning_v2`, so they are not duplicated
+to this experiment and `layer_tuning_grid`, so they are not duplicated
 per-experiment. In short: the C++20 build was verified with the cluster's
 actual `gcc/11.3.0` (via a local Docker container, not on Leonardo itself --
 see the PR description), and the dataset must come from

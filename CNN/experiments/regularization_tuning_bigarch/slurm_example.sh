@@ -1,5 +1,5 @@
 #!/bin/bash
-# Example SLURM submission script for the regularization_tuning_v2 sweep
+# Example SLURM submission script for the regularization_tuning_bigarch sweep
 # on CINECA Leonardo. This is a STARTING POINT, not a validated script: the
 # group's actual SLURM scripts (used to produce
 # results/dropout_tuning/dropout_sweep_53196963.out and
@@ -64,13 +64,13 @@ fi
 
 # --- Build ---
 cmake -S CNN -B build/CNN -DCMAKE_BUILD_TYPE=Release
-cmake --build build/CNN --target regularization_tuning_v2 --parallel
+cmake --build build/CNN --target regularization_tuning_bigarch --parallel
 
 # --- Cost probe: measure ONE candidate before the array is widened ---
 # Uncomment and run this by itself first (single job, not an array):
-# time mpirun -n ${SLURM_NTASKS} ./build/CNN/experiments/regularization_tuning_v2 \
+# time mpirun -n ${SLURM_NTASKS} ./build/CNN/experiments/regularization_tuning_bigarch \
 #     --mode cv --axis l1 --lambda 2.13e-5 --epochs 100 --folds 5 \
-#     --diagnostics --results-dir results/cross_validation/regularization_tuning_v2
+#     --diagnostics --results-dir results/cross_validation/regularization_tuning_bigarch
 # Multiply by 15 (unique candidates -- lambda=0 is shared between axes, see
 # README.md) to project the full-sweep cost, and only then decide --array
 # range and --time above.
@@ -82,7 +82,7 @@ cmake --build build/CNN --target regularization_tuning_v2 --parallel
 # SLURM array (one candidate per array task) is the alternative if the
 # per-candidate cost makes a single long job impractical -- not set up here
 # since the per-candidate cost isn't known yet.
-python3 CNN/experiments/regularization_tuning_v2/orchestrator.py \
+python3 CNN/experiments/regularization_tuning_bigarch/orchestrator.py \
     --ranks ${SLURM_NTASKS} \
     --epochs 100 --folds 5 --seed 42 --diagnostics \
-    --results-dir results/cross_validation/regularization_tuning_v2
+    --results-dir results/cross_validation/regularization_tuning_bigarch
