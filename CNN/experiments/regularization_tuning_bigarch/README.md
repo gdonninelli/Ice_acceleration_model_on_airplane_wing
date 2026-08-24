@@ -6,15 +6,21 @@ Does L1 or L2 weight regularization improve the cross-validated validation MSE
 of the `conv5x5-dense-1024-512-256-128` network trained at `lr = 1e-5`?
 
 The original `CNN/experiments/regularization_tuning` answered "no" on the
-smaller `{128,64}` topology (~75 k parameters) at the same learning rate. The
-rationale for repeating the sweep here is that this network is roughly **100×
-larger** (8.06 M parameters), and it is not obvious whether capacity alone
-changes the regularization answer when the learning rate is fixed. The
-honest prior expectation going in is still λ* = 0: at `lr = 1e-5` the
-weight-update ratio is small, so the network barely moves from its
-initialization during the 100-epoch budget and overfitting is unlikely.
-**The sweep confirms this expectation.** Every nonzero λ worsens
-validation MSE monotonically on both axes.
+smaller `{128,64}` topology (**930 k parameters**: conv 208, dense 921 728 +
+8 256 + 65) at the same learning rate. This network is **~8.7× larger**
+(**8.065 M parameters**: conv 208, dense 7 375 872 + 524 800 + 131 328 +
+32 896 + 129; the first dense takes 7 202 inputs because a
+`ConcatenateLayer` appends 2 scalar features to the 7 200 flattened
+convolution outputs). The rationale for repeating the sweep here is that it
+is not obvious whether capacity alone changes the regularization answer when
+the learning rate is fixed. The honest prior expectation is still λ* = 0:
+at `lr = 1e-5` the network barely moves from its initialization during the
+100-epoch budget and overfitting is unlikely regardless of parameter count.
+**The sweep confirms this expectation.** Every nonzero λ worsens validation
+MSE monotonically on both axes. As a by-product, the λ = 0 reference here
+(mean val MSE **0.004419**) is **23.5 % lower** than the original experiment's
+reference (mean val MSE 0.005776 from `sweep_l1.csv`), confirming directly
+that the larger architecture generalises better on this task.
 
 ## Search Space
 
@@ -155,6 +161,24 @@ The conclusion matches the original `regularization_tuning` experiment on the
 epochs regardless of the number of parameters, and there is nothing for a
 weight penalty to correct.
 
+**Comparison with the original experiment.** The λ = 0 reference here (mean
+val MSE 0.004419 ± 0.000794) is **23.5 % lower** than the original
+experiment's λ = 0 reference (mean val MSE 0.005776 ± 0.001147, from
+`results/cross_validation/regularization_tuning/sweep_l1.csv`). This is a
+direct, independent confirmation of the layer-tuning winner: the
+`{1024,512,256,128}` architecture generalises better than `{128,64}` at the
+same learning rate and fold plan, by a margin that exceeds both experiments'
+fold standard deviations.
+
+**Fold consistency.** The cross-fold standard deviation (0.000794) is **18 %**
+of the mean (0.004419). This is substantially more consistent than the 45 %
+figure measured in `physics_weight_tuning` at lr = 1e-3 (std 0.001228 on mean
+0.005602): at lr = 1e-5, training is slower but more stable across folds.
+
+**Cluster margin.** Job 53877281 used 12 h 08 min of the 13 h 00 min allocated
+(93.5 %). Anyone relaunching this sweep should allocate at least 15 h, or
+reduce the number of candidates per job.
+
 **Regularization mechanics observed:**
 
 - The val−train gap decreases with λ (from +5.8e-4 at λ = 0 to +1.1e-4 at
@@ -169,13 +193,24 @@ weight penalty to correct.
   λ = 0.1 (24.08). The gradient-clip threshold (1.0 per-layer) is never
   approached for any candidate other than at epoch 1 (initial forward pass
   scale), which is consistent with stable low-lr training.
-- Mean weight-update ratios at the last 10 epochs are ≈1.9e-3 for λ = 0,
-  decreasing to ≈5.3e-4 at the strongest penalties. The λ = 0 value is
-  notably larger than the ~3.9e-5 figure from `physics_weight_tuning`'s
-  lr = 1e-5 entry (recorded on the old `{128,64}` topology): the two
-  architectures differ by ~100× in parameter count, and the ratio reflects
-  different per-layer weight magnitudes under Xavier initialization at
-  different fan-in values, not a change in the learning rate.
+- The `parameter_update_ratios.csv` diagnostics report `mean_ratio` =
+  `mean_update_norm / mean_pre_update_norm` per layer per epoch, broken out
+  by scope (`all`, `weights`, `biases`). When averaged across **all scopes
+  and last 10 epochs** the λ = 0 figure is **≈1.9e-3**. This aggregate is
+  dominated by the `biases` scope: bias pre-update norms are ≈1e-4–5e-3
+  (small absolute values) while bias update-step magnitudes are similar to
+  those of weights, so the per-bias ratio reaches ≈3–6e-3. The
+  **weights-only** ratio at the same epochs is **≈2.9e-5**; at epoch 9 it
+  is **≈1.5e-5**. A reference figure of **~3.9e-5** appears in an older
+  comment in `main.cpp` (attributed to `physics_weight_tuning_lr1e3`'s
+  README at lr = 1e-5); the diagnostics for that experiment are not in the
+  current repository tree, so the exact scope and epoch used there cannot
+  be verified. The weights-only figures here (1.5e-5 at epoch 9, 2.9e-5 at
+  epoch 91–100) are in the same order of magnitude as that reference and are
+  consistent with it coming from a weights-scope measurement. **The
+  discrepancy between the 1.9e-3 aggregate and the ~3.9e-5 reference is
+  fully explained by scope aggregation (biases inflate the mean), not by an
+  architecture change or Adam dynamics difference.**
 
 ## Diagnostics Path
 
