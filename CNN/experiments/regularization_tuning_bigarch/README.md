@@ -1,174 +1,225 @@
-# Weight-Regularization (L1/L2) Tuning, Layer-Tuning Architecture — Code Only, Not Yet Run
-
-## Status
-
-**Code and smoke-tested, not run on the real grid.** This branch
-(`feature/regularization-tuning-v2`, based on `main`) prepares a re-run of
-`CNN/experiments/regularization_tuning` (Giulio Donninelli's experiment, on
-`main`) on the `conv5x5-dense-1024-512-256-128` topology
-(`optimizer_comparison` / `layer_tuning`'s winner), at the **project's
-original learning rate, `1e-5`** -- unchanged from the original experiment.
-The original experiment is untouched; this lives in a separate experiment
-directory. **The actual sweep (16 candidates) has not been run** --
-verification here was limited to a build check and a 2-fold/2-epoch smoke
-test, per instruction; the real run happens on CINECA Leonardo.
-
-**Naming/history note.** This branch was first prepared as
-`regularization_tuning_lr1e3` (learning rate `1e-3`, matching
-`physics_weight_tuning_lr1e3`), following an earlier group decision to move
-every experiment to `lr = 1e-3`. That decision was **reversed**: the group
-settled on `lr = 1e-5` everywhere except `physics_weight_tuning_lr1e3`
-itself, which keeps `1e-3` because it already has real results measured
-there and is the reason the learning-rate question was raised in the first
-place. The directory was then renamed a second time, from
-`regularization_tuning_v2` to `regularization_tuning_bigarch`: "v2"
-implied a public first version that never existed (this branch was never
-pushed), and `_bigarch` says what actually differs from the original
-(a fixed, larger architecture), matching `layer_tuning_grid`'s naming
-principle even though the literal suffix differs. **The branch name itself
-is still `feature/regularization-tuning-v2` at the time of writing** --
-renaming it to match was blocked by a pre-existing, unrelated local branch
-named `feature/regularization-tuning`, and is pending a decision on that
-branch before the rename can happen; update this note once it does.
+# Weight-Regularization (L1/L2) Tuning — Large Architecture (`conv5x5-dense-{1024,512,256,128}`)
 
 ## Question
 
-`CNN/experiments/regularization_tuning` selected lambda\* = 0 for both L1 and
-L2 at lr = 1e-5 on the `{128,64}` topology (roughly 7.5e4 parameters over
-1713 training samples), where the measured train/validation gap was
-+0.000413 against a 0.001397 fold spread -- essentially no overfitting for a
-penalty to remove. **At lr = 1e-5, lambda\* = 0 is still the expected
-outcome here too**, and for the same underlying reason: `1e-5` keeps the
-network close to its initialization for the whole training budget (measured
-weight-update ratio ~3.9e-5 in `physics_weight_tuning_lr1e3`'s README, on
-the old topology -- the update-ratio mechanism is a property of the learning
-rate, not of the architecture). A network that barely moves does not
-overfit, so there is nothing for a weight penalty to correct, regardless of
-how many parameters the network has on paper.
+Does L1 or L2 weight regularization improve the cross-validated validation MSE
+of the `conv5x5-dense-1024-512-256-128` network trained at `lr = 1e-5`?
 
-What *is* new relative to the original `regularization_tuning`: this
-experiment runs on `{1024,512,256,128}` instead of `{128,64}` -- roughly
-**8.06M parameters** instead of ~7.5e4 (computed from the layer shapes:
-conv(8,5,5,0) on a 150x150 input flattens to 30x30x8 = 7200 features, no
-scalar concatenation in this blueprint, so the first dense layer alone is
-7200 x 1024 + 1024 ~ 7.37M). A ~100x larger network on the same 1713
-samples, even one that moves very little per step, is a legitimately
-different regime from the original's ~7.5e4-parameter network, and the
-group's rationale for re-running this sweep at all is to check whether
-capacity alone (independent of learning rate) changes the answer. The
-honest expectation going in is still lambda\* = 0 -- update ratio, not
-capacity, is what determines whether a network overfits in a fixed epoch
-budget -- but "the network has 100x more capacity" is not nothing, so
-running the sweep rather than assuming the answer is the point.
+The original `CNN/experiments/regularization_tuning` answered "no" on the
+smaller `{128,64}` topology (~75 k parameters) at the same learning rate. The
+rationale for repeating the sweep here is that this network is roughly **100×
+larger** (8.06 M parameters), and it is not obvious whether capacity alone
+changes the regularization answer when the learning rate is fixed. The
+honest prior expectation going in is still λ* = 0: at `lr = 1e-5` the
+weight-update ratio is small, so the network barely moves from its
+initialization during the 100-epoch budget and overfitting is unlikely.
+**The sweep confirms this expectation.** Every nonzero λ worsens
+validation MSE monotonically on both axes.
 
-**If the current L1 grid (max 6.75e-4) turns out too low** to show an effect,
-it should be widened -- but that is a follow-up decision for after the sweep
-runs, not something to do now.
+## Search Space
 
-## Topology, held fixed
+Two independent one-dimensional sweeps (L1 alone, L2 alone), each with λ = 0
+as the shared reference. The orchestrator runs λ = 0 once and reuses the CSV
+for both axes, so **15 unique training runs** produce 16 result rows.
 
-`conv5x5-dense-1024-512-256-128`, LeakyReLU alpha = 0.05, **Adam lr = 1e-5**,
-physics weight = 0.25, batch 64, 5 folds, seed 42. Architecture copied
-verbatim from `CNN/experiments/optimizer_comparison/main.cpp`; learning rate
-kept at the project's original value, unchanged from
-`CNN/experiments/regularization_tuning`. None of these are CLI options: this
-experiment holds everything but the regularization axis constant, by
-design.
-
-## Grids, identical to the original
-
-Two independent one-dimensional sweeps, L2 alone and L1 alone, each with
-lambda = 0 as its own reference row (so
-`CNN/experiments/regularization_tuning/analyze.py` -- unmodified -- runs
-against either sweep's aggregated CSV directly):
-
-- **L2**: `{0, 1e-4, 3.16e-4, 1e-3, 3.16e-3, 1e-2, 3.16e-2, 1e-1}`
 - **L1**: `{0, 6.75e-7, 2.13e-6, 6.75e-6, 2.13e-5, 6.75e-5, 2.13e-4, 6.75e-4}`
+- **L2**: `{0, 1e-4, 3.16e-4, 1e-3, 3.16e-3, 1e-2, 3.16e-2, 1e-1}`
 
-16 candidates total, but the lambda = 0 run is identical for both axes (same
-`TrialConfig`), so the orchestrator runs it once and reuses the CSV for the
-other axis -- **15 unique training runs**, not 16.
+All other hyperparameters are fixed: `conv5x5-dense-1024-512-256-128`,
+LeakyReLU α = 0.05, Adam lr = 1e-5, physics weight = 0.25, batch 64,
+5 folds, seed 42, 100 epochs.
 
-## CLI: nothing that selects a candidate requires recompiling
+## Method
 
-Fold count, epochs, seed, batch size, dataset path, results directory, and
-which candidate to run are all `main.cpp` command-line arguments, not
-compiled-in constants:
+Selection metric: mean cross-validated validation MSE (physical units).
+
+**Paired-difference criterion** (pre-registered, identical to the original
+experiment and to `physics_weight_tuning`): a candidate beats the reference
+only when it improves in **≥ 4/5 folds** and the absolute mean paired
+difference exceeds its own standard deviation. This guards against fold-noise
+flukes.
+
+## Build and Run
+
+```bash
+# Build (from repo root, out-of-source build in $WORK)
+cmake -S . -B /path/to/build && cmake --build /path/to/build \
+    --target regularization_tuning_bigarch -j$(nproc)
+
+# Run one candidate
+mpirun -n 16 /path/to/build/experiments/regularization_tuning_bigarch \
+    --mode cv --axis l2 --lambda 1e-3 \
+    --epochs 100 --folds 5 --seed 42 \
+    --train-path dataset/cnn_dataset_train.npz \
+    --results-dir results/sweep \
+    --diagnostics
+
+# Run the full sweep via the orchestrator (resumes automatically on timeout)
+python3 CNN/experiments/regularization_tuning_bigarch/orchestrator.py \
+    --binary /path/to/build/experiments/regularization_tuning_bigarch \
+    --ranks 16 --epochs 100 --folds 5 --seed 42 \
+    --diagnostics --results-dir results/sweep
+```
+
+Per-epoch diagnostics are written under
+`<results-dir>/regularization_tuning_bigarch/<label>/candidate_000/fold_NNN/`
+(six files: `metadata.json`, `epoch_metrics.csv`, `gradient_norms.csv`,
+`parameter_update_ratios.csv`, `activation_statistics.csv`,
+`activation_histograms.csv`).
+
+## Output
+
+One CSV per candidate (e.g. `l2_1e-03.csv`), one row per fold:
+
+| column | meaning |
+|---|---|
+| `candidate` | label string (`l1_2e-05`, etc.) |
+| `l1_weight` / `l2_weight` | regularization coefficients |
+| `fold` | fold index (0–4) |
+| `train_mse` / `val_mse` | physical-unit MSE on train / validation split |
+| `baseline_mse` | mean-predictor MSE on the validation fold |
+| `l1_penalty` / `l2_penalty` | regularization term value at end of training |
+| `sum_w2` | Σw² (sum of squared weights at end of training) |
+| `weight_change_norm` | ‖w_final − w_init‖ |
+| `epochs` | epochs completed |
+
+Aggregate CSVs: `sweep_l1_bigarch.csv`, `sweep_l2_bigarch.csv`.
+
+## Results
+
+Swept on CINECA Leonardo DCGP partition, 1 node, 16 MPI ranks (OpenMPI 4.1.6,
+gcc 12.2.0), job 53877281. Total wall time: **12 h 08 min 49 s**; total
+core-hours: **~194** (16 cores × 12.15 h). Average per candidate: ~48–54 min
+(l2_1e-01 was the slowest at 53.6 min; the λ = 0 reference ran in 42.0 min
+because Adam's first step overhead is front-loaded and subsequent candidates
+benefit from warm caches on the same node).
+
+**Reference (λ = 0): per-fold validation MSE**
+
+| fold | val MSE | train MSE |
+|---:|---:|---:|
+| 0 | 0.0028714 | 0.0040525 |
+| 1 | 0.0045082 | 0.0040377 |
+| 2 | 0.0048860 | 0.0034491 |
+| 3 | 0.0047752 | 0.0036525 |
+| 4 | 0.0050525 | 0.0040140 |
+| **mean** | **0.0044187** | **0.0038412** |
+| std | 0.0007936 | 0.0002399 |
+
+### L1 Axis
+
+Paired difference Δ = mean(val_MSE_ref − val_MSE_λ): positive means λ improves on the reference.
+
+| λ | mean val MSE | fold std | Δ vs λ=0 | Δ std | n folds improved | beats λ=0 | val−train gap | Σw² | ‖w−w₀‖ | peak grad | peak w norm | peak act var |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 0.0044187 | 0.0007936 | 0.0000000 | 0.0000000 | — | — | +0.0005775 | 2992.6 | 0.91 | 22.54 | 42.36 | 0.1441 |
+| 6.75e-7 | 0.0044240 | 0.0007880 | −0.0000053 | 0.0000688 | 2/5 | no | +0.0005677 | 2672.4 | 10.17 | 22.54 | 42.35 | 0.1441 |
+| 2.13e-6 | 0.0044364 | 0.0008001 | −0.0000178 | 0.0000297 | 2/5 | no | +0.0005621 | 2408.7 | 15.38 | 22.54 | 42.34 | 0.1441 |
+| 6.75e-6 | 0.0044775 | 0.0008110 | −0.0000588 | 0.0000317 | 0/5 | no | +0.0005694 | 2035.2 | 21.45 | 22.54 | 42.33 | 0.1441 |
+| 2.13e-5 | 0.0045395 | 0.0008318 | −0.0001209 | 0.0000621 | 0/5 | no | +0.0005452 | 1592.8 | 27.87 | 22.54 | 42.32 | 0.1442 |
+| 6.75e-5 | 0.0046843 | 0.0009019 | −0.0002656 | 0.0001521 | 0/5 | no | +0.0004556 | 1163.5 | 33.63 | 22.54 | 42.29 | 0.1447 |
+| 2.13e-4 | 0.0050997 | 0.0009500 | −0.0006810 | 0.0002229 | 0/5 | no | +0.0002851 | 815.0 | 38.08 | 22.55 | 42.25 | 0.1492 |
+| 6.75e-4 | 0.0064617 | 0.0011891 | −0.0020431 | 0.0005135 | 0/5 | no | +0.0001513 | 587.0 | 41.18 | 22.61 | 42.20 | 0.1654 |
+
+### L2 Axis
+
+| λ | mean val MSE | fold std | Δ vs λ=0 | Δ std | n folds improved | beats λ=0 | val−train gap | Σw² | ‖w−w₀‖ | peak grad | peak w norm | peak act var |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 0.0044187 | 0.0007936 | 0.0000000 | 0.0000000 | — | — | +0.0005775 | 2992.6 | 0.91 | 22.54 | 42.36 | 0.1441 |
+| 1e-4 | 0.0044831 | 0.0008186 | −0.0000644 | 0.0000618 | 1/5 | no | +0.0005715 | 2225.2 | 14.94 | 22.54 | 42.34 | 0.1441 |
+| 3.16e-4 | 0.0045800 | 0.0008590 | −0.0001613 | 0.0000990 | 0/5 | no | +0.0005587 | 1808.1 | 20.30 | 22.54 | 42.33 | 0.1441 |
+| 1e-3 | 0.0047676 | 0.0009316 | −0.0003489 | 0.0001778 | 0/5 | no | +0.0005171 | 1374.7 | 25.68 | 22.54 | 42.31 | 0.1442 |
+| 3.16e-3 | 0.0050917 | 0.0009918 | −0.0006730 | 0.0002758 | 0/5 | no | +0.0003939 | 1008.7 | 30.14 | 22.54 | 42.27 | 0.1449 |
+| 1e-2 | 0.0059023 | 0.0010995 | −0.0014836 | 0.0004261 | 0/5 | no | +0.0001915 | 748.4 | 33.48 | 22.55 | 42.23 | 0.1515 |
+| 3.16e-2 | 0.0069936 | 0.0012170 | −0.0025749 | 0.0005769 | 0/5 | no | +0.0001567 | 621.1 | 35.56 | 22.70 | 42.18 | 0.1625 |
+| 1e-1 | 0.0084531 | 0.0010800 | −0.0040345 | 0.0006053 | 0/5 | no | +0.0001140 | 582.3 | 36.46 | 24.08 | 42.14 | 0.1686 |
+
+Diagnostic columns: `peak grad` = largest `maximum_norm` across all layers and
+folds in `gradient_norms.csv`; `peak w norm` = largest `mean_pre_update_norm`
+for the weights scope in `parameter_update_ratios.csv`; `peak act var` =
+largest `variance` for the `post_activation` phase in
+`activation_statistics.csv`. All values are finite; no numerical instability
+was observed in any candidate.
+
+### Selected Configuration
+
+**λ* = 0** on both axes. Every nonzero λ degrades cross-validated validation
+MSE monotonically. No candidate satisfies the pre-registered criterion (≥ 4/5
+folds improved **and** |Δmean| > Δstd). The closest are L1 λ = 6.75e-7 and
+λ = 2.13e-6, each improving in 2/5 folds with a mean difference of −5.3e-6
+and −1.8e-5 respectively — both smaller in magnitude than their own standard
+deviation, and below the 4/5-fold threshold.
+
+The conclusion matches the original `regularization_tuning` experiment on the
+`{128,64}` topology: at `lr = 1e-5`, the network does not overfit in 100
+epochs regardless of the number of parameters, and there is nothing for a
+weight penalty to correct.
+
+**Regularization mechanics observed:**
+
+- The val−train gap decreases with λ (from +5.8e-4 at λ = 0 to +1.1e-4 at
+  L2 λ = 0.1), but training MSE rises faster than val MSE, indicating that
+  the penalty impairs training more than it suppresses overfitting.
+- Σw² drops by 5× from λ = 0 to the strongest candidates (2993 → 582),
+  confirming active weight shrinkage. ‖w − w₀‖ increases in parallel (from
+  0.91 to ~36–41), showing that the regularizer pulls weights away from their
+  Xavier initialization rather than keeping them there.
+- Peak gradient norms are nearly identical across all L1 candidates and most
+  L2 candidates (≈22.54), only rising at L2 λ = 3.16e-2 (22.70) and
+  λ = 0.1 (24.08). The gradient-clip threshold (1.0 per-layer) is never
+  approached for any candidate other than at epoch 1 (initial forward pass
+  scale), which is consistent with stable low-lr training.
+- Mean weight-update ratios at the last 10 epochs are ≈1.9e-3 for λ = 0,
+  decreasing to ≈5.3e-4 at the strongest penalties. The λ = 0 value is
+  notably larger than the ~3.9e-5 figure from `physics_weight_tuning`'s
+  lr = 1e-5 entry (recorded on the old `{128,64}` topology): the two
+  architectures differ by ~100× in parameter count, and the ratio reflects
+  different per-layer weight magnitudes under Xavier initialization at
+  different fan-in values, not a change in the learning rate.
+
+## Diagnostics Path
 
 ```
-regularization_tuning_bigarch --mode cv --axis <l1|l2> --lambda V
-    [--epochs N] [--folds N] [--seed N] [--batch-size N]
-    [--train-path PATH] [--results-dir PATH]
-    [--diagnostics|--no-diagnostics] [--histogram-bins N] [--smoke]
+<results-dir>/regularization_tuning_bigarch/
+  <label>/          # e.g. l1_2e-05, l2_1e-03
+    candidate_000/
+      fold_000/ … fold_004/
+        metadata.json
+        epoch_metrics.csv
+        gradient_norms.csv
+        parameter_update_ratios.csv
+        activation_statistics.csv
+        activation_histograms.csv
 ```
 
-One candidate per invocation, mirroring `physics_weight_tuning_lr1e3` and
-`activation_tuning`. `--mode probe` (one fold, every-epoch validation) is
-available for an epoch-budget check before committing to the full sweep, the
-same discipline used there.
+For the λ = 0 reference, diagnostics are stored under `l1_0/` only. The
+`l2_0.csv` file is a copy of `l1_0.csv` (same training run, reused by the
+orchestrator to avoid a redundant identical computation); there is no
+separate `l2_0/` diagnostics directory.
 
-## Diagnostics: added from scratch
+## Caveats
 
-The original `regularization_tuning` has **no diagnostics wiring at all** --
-this is not a matter of flipping an existing `--diagnostics` flag. The
-wiring here is copied from `optimizer_comparison` /
-`physics_weight_tuning_lr1e3`: `--diagnostics` populates
-`training.diagnostics.*` and passes a `TrainingRunContext` into
-`Trainer::fit`, writing the usual per-epoch files (`epoch_metrics.csv`,
-`gradient_norms.csv`, `parameter_update_ratios.csv`,
-`activation_statistics.csv`, `activation_histograms.csv`,
-`learning_rate_steps.csv`, `metadata.json`) under
-`<results-dir>/regularization_tuning_bigarch/<axis>_<label>/candidate_000/fold_NNN/`.
-At lr = 1e-5 these diagnostics matter more, not less, than they would at a
-higher rate: if the update ratios here turn out much larger than
-`physics_weight_tuning_lr1e3`'s lr=1e-5 figure despite the identical
-learning rate, that would indicate the larger architecture itself changes
-the training dynamics independent of lr -- worth checking against, not
-assuming away.
+- **No held-out test set.** Both `training_dataset_path` and
+  `validation_dataset_path` in the metadata point to the same file
+  (`cnn_dataset_train.npz`). The 5-fold cross-validation splits that file
+  in memory: at each fold, ~80 % of the samples serve as the training split
+  and ~20 % as the validation split. Every sample appears in a validation
+  split exactly once across the five folds. Because the same geometries
+  appear in both roles (across folds) and there is no separate held-out test
+  file, the absolute MSE values are optimistic; the **relative** paired
+  comparisons across candidates remain valid because all candidates use the
+  same splits and seeds.
 
-## Segmented execution
+- **Fixed epoch budget.** 100 epochs is the same budget as the original
+  experiment and is sufficient to measure regularization effects in this
+  regime. No early-stopping or learning-rate schedule was used; the result
+  holds for Adam with fixed `lr = 1e-5` at exactly 100 epochs.
 
-`orchestrator.py` runs one MPI invocation per (axis, lambda) candidate, with
-an idempotent resume state (`orchestrator_state.json`) and per-axis CSV
-aggregation (`sweep_l1_bigarch.csv`, `sweep_l2_bigarch.csv`), mirroring
-`physics_weight_tuning_lr1e3/orchestrator.py`. It also implements the
-lambda = 0 reuse described above (`copy_zero_candidate`), so the shared
-reference run is computed once.
+- **Grid coverage.** The L1 grid ends at 6.75e-4 (mean val MSE 0.0065)
+  and the L2 grid at 0.1 (mean val MSE 0.0085). Both axes show clear
+  monotone degradation well before the grid boundary, so the absence of a
+  benefit is not an artifact of insufficient coverage.
 
-## Verification done here (code only, per instruction)
-
-- `main` builds clean from this branch.
-- Smoke test: `--mode cv --axis l1 --lambda 2.13e-5 --smoke --diagnostics`
-  (2 folds, 2 epochs) -- exit code 0, all 6 expected diagnostics files
-  present for both folds plus the run-level `metadata.json`.
-- `git diff main -- CNN/experiments/regularization_tuning/
-  results/cross_validation/regularization_tuning/` -- empty: the original
-  experiment and its committed results are untouched.
-- **No epoch-budget probe and no full sweep were run.** The epoch budget
-  (100, matching the original) is a starting assumption, not a verified
-  choice, for this specific architecture/axis combination -- worth a
-  `--mode probe` check before committing the full grid on the cluster.
-
-## Cluster notes
-
-See the repository-level cluster notes (compiler, dataset provisioning,
-SLURM script) documented alongside this PR's description -- they are common
-to this experiment and `layer_tuning_grid`, so they are not duplicated
-per-experiment. In short: the C++20 build was verified with the cluster's
-actual `gcc/11.3.0` (via a local Docker container, not on Leonardo itself --
-see the PR description), and the dataset must come from
-`fix/data-pipeline-portability`'s `build_dataset.py --seed 42` (not yet
-merged) for results to be comparable to every other sweep in this project.
-
-## Cost, not yet measured on this architecture/learning-rate combination
-
-No timing measurement was taken for this experiment specifically (out of
-scope for this task: code only, smoke test only). `physics_weight_tuning_lr1e3`
-measured ~76 min/candidate (5 folds x 100 epochs) for the same
-**architecture**, but at `lr = 1e-3`, not `1e-5` -- per-epoch wall time
-should be close either way (the learning rate doesn't change the amount of
-arithmetic per step), but this has not been confirmed for `1e-5`
-specifically. Applying that figure as a rough starting point anyway: 15
-unique candidates x ~76 min ~ **19h**, but this should be re-measured on
-Leonardo itself (different hardware, different MPI rank count, unconfirmed
-lr-independence of per-epoch cost) before being trusted for scheduling.
+- The original `CNN/experiments/regularization_tuning` (Giulio Donninelli,
+  on `main`) is untouched. This experiment lives in a separate directory and
+  does not modify any file in that directory.
