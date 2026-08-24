@@ -5,6 +5,6 @@ Folds:                       5
 Epochs:                      100
 Global Batch Size:           64
 Seed:                        42
-Winning Optimizer:           optimizer-trial [optimizer=Adam (lr=1e-3)]
-Cross-Validation MSE:        0.0044153 +/- 0.00144176
-Final Untouched Test MSE:    0.00215538
+Winning Optimizer:           optimizer-trial [optimizer=Adam (lr=1e-5)]
+Cross-Validation MSE:        0.00442673 +/- 0.000793966
+Final Untouched Test MSE:    0.00365482
