@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Generate result plots for the regularization_tuning_bigarch sweep.
+Generate result plots for the regularization_tuning sweep.
 
-Reads diagnostics from RESULTS_DIR (default: $WORK/results/sweep or
-results/cross_validation/regularization_tuning_bigarch relative to the
-repository root) and writes PNG files to OUTDIR (default: plots/ next to
-this script).
+Reads aggregate sweep CSVs and diagnostics from RESULTS_DIR (default:
+$WORK/results/cross_validation/regularization_tuning when WORK is set)
+and writes PNG files to OUTDIR
+(default: plots/ next to this script).
 
 Usage:
     python3 plot_results.py [--results-dir PATH] [--out-dir PATH]
@@ -35,13 +35,8 @@ def fmt_lam(v):
         return "0"
     return f"{v:.2e}"
 
-def label_of(axis, lam):
-    s = "0" if lam == 0.0 else f"{lam:.0e}"
-    return f"{axis}_{s}"
-
 CONFIG_STR = (
-    "conv5x5-dense-{1024,512,256,128}  Adam lr=1e-5  "
-    "5 folds  100 epochs  seed=42"
+    "conv5x5-dense-{1024,512,256,128}  Adam lr=1e-5"
 )
 
 FONT = {"fontsize": 13}
@@ -60,21 +55,44 @@ def std(xs):
     m = mean(xs)
     return math.sqrt(sum((x - m) ** 2 for x in xs) / len(xs))
 
-def read_fold_csv(results_dir, label):
-    path = os.path.join(results_dir, f"{label}.csv")
+def read_fold_csv(results_dir, axis, lam):
+    path = os.path.join(results_dir, f"sweep_{axis}.csv")
+    key = "l1_weight" if axis == "l1" else "l2_weight"
     with open(path) as f:
-        return list(csv.DictReader(f))
+        return [
+            row for row in csv.DictReader(f)
+            if math.isclose(float(row[key]), lam, rel_tol=1e-6, abs_tol=1e-12)
+        ]
 
-def read_epoch_metrics(results_dir, label):
-    """Return {epoch: [val_mse fold 0..4]} averaged over folds."""
-    # for l2_0, diagnostics live under l1_0
-    diag_label = "l1_0" if label == "l2_0" else label
-    diag_base = os.path.join(
-        results_dir, "regularization_tuning_bigarch", diag_label, "candidate_000"
+
+def candidate_index(axis, lam):
+    grid = L1_LAMBDAS if axis == "l1" else L2_LAMBDAS
+    return min(range(len(grid)), key=lambda index: abs(grid[index] - lam))
+
+
+def diagnostics_base(results_dir, axis, lam):
+    return os.path.join(
+        results_dir,
+        "regularization_tuning",
+        axis,
+        "candidate_" + f"{candidate_index(axis, lam):03d}",
     )
+
+
+def diagnostic_folders(base):
+    if not os.path.isdir(base):
+        return []
+    return sorted(
+        name for name in os.listdir(base)
+        if name.startswith("fold_") and os.path.isdir(os.path.join(base, name))
+    )
+
+def read_epoch_metrics(results_dir, axis, lam):
+    """Return {epoch: [val_mse values]} averaged over available folds."""
+    diag_base = diagnostics_base(results_dir, axis, lam)
     epoch_vals = {}
-    for fold in range(5):
-        fpath = os.path.join(diag_base, f"fold_{fold:03d}", "epoch_metrics.csv")
+    for fold in diagnostic_folders(diag_base):
+        fpath = os.path.join(diag_base, fold, "epoch_metrics.csv")
         if not os.path.isfile(fpath):
             continue
         with open(fpath) as f:
@@ -85,15 +103,12 @@ def read_epoch_metrics(results_dir, label):
                     epoch_vals.setdefault(ep, []).append(float(v))
     return epoch_vals
 
-def read_grad_norms(results_dir, label, scope="all"):
+def read_grad_norms(results_dir, axis, lam, scope="all"):
     """Return {epoch: mean_norm_across_folds_and_layers} for gradient_norms.csv."""
-    diag_label = "l1_0" if label == "l2_0" else label
-    diag_base = os.path.join(
-        results_dir, "regularization_tuning_bigarch", diag_label, "candidate_000"
-    )
+    diag_base = diagnostics_base(results_dir, axis, lam)
     epoch_data = {}
-    for fold in range(5):
-        fpath = os.path.join(diag_base, f"fold_{fold:03d}", "gradient_norms.csv")
+    for fold in diagnostic_folders(diag_base):
+        fpath = os.path.join(diag_base, fold, "gradient_norms.csv")
         if not os.path.isfile(fpath):
             continue
         with open(fpath) as f:
@@ -102,17 +117,12 @@ def read_grad_norms(results_dir, label, scope="all"):
                 epoch_data.setdefault(ep, []).append(float(row["mean_norm"]))
     return {ep: mean(vs) for ep, vs in epoch_data.items()}
 
-def read_update_ratios(results_dir, label, scope="weights"):
+def read_update_ratios(results_dir, axis, lam, scope="weights"):
     """Return {epoch: mean_ratio_across_folds_and_layers} for given scope."""
-    diag_label = "l1_0" if label == "l2_0" else label
-    diag_base = os.path.join(
-        results_dir, "regularization_tuning_bigarch", diag_label, "candidate_000"
-    )
+    diag_base = diagnostics_base(results_dir, axis, lam)
     epoch_data = {}
-    for fold in range(5):
-        fpath = os.path.join(
-            diag_base, f"fold_{fold:03d}", "parameter_update_ratios.csv"
-        )
+    for fold in diagnostic_folders(diag_base):
+        fpath = os.path.join(diag_base, fold, "parameter_update_ratios.csv")
         if not os.path.isfile(fpath):
             continue
         with open(fpath) as f:
@@ -134,14 +144,12 @@ def plot_val_mse(results_dir, out_dir):
     fig.suptitle(f"Validation MSE vs regularization strength\n{CONFIG_STR}", **TITLE_FONT)
 
     for ax, axis, lambdas in zip(axes, ["l1", "l2"], [L1_LAMBDAS, L2_LAMBDAS]):
-        ref_label = label_of(axis, 0.0)
-        ref_rows = read_fold_csv(results_dir, ref_label)
+        ref_rows = read_fold_csv(results_dir, axis, 0.0)
         ref_mean = mean([float(r["val_mse"]) for r in ref_rows])
 
         means, stds, xs = [], [], []
         for lam in lambdas:
-            lbl = label_of(axis, lam)
-            rows = read_fold_csv(results_dir, lbl)
+            rows = read_fold_csv(results_dir, axis, lam)
             vals = [float(r["val_mse"]) for r in rows]
             means.append(mean(vals))
             stds.append(std(vals))
@@ -179,16 +187,15 @@ def plot_paired_diff(results_dir, out_dir):
         **TITLE_FONT,
     )
 
-    ref_rows = read_fold_csv(results_dir, "l1_0")
-    ref_vals = [float(r["val_mse"]) for r in ref_rows]
-
     for ax, axis, lambdas in zip(axes, ["l1", "l2"], [L1_LAMBDAS, L2_LAMBDAS]):
+        ref_rows = read_fold_csv(results_dir, axis, 0.0)
+        ref_vals = {int(row["fold"]): float(row["val_mse"]) for row in ref_rows}
         diff_means, diff_stds, xs = [], [], []
         for lam in lambdas[1:]:
-            lbl = label_of(axis, lam)
-            rows = read_fold_csv(results_dir, lbl)
+            rows = read_fold_csv(results_dir, axis, lam)
             vals = [float(r["val_mse"]) for r in rows]
-            diffs = [ref_vals[i] - vals[i] for i in range(5)]
+            diffs = [ref_vals[int(row["fold"])] - float(row["val_mse"])
+                     for row in rows if int(row["fold"]) in ref_vals]
             diff_means.append(mean(diffs))
             diff_stds.append(std(diffs))
             xs.append(lam)
@@ -234,8 +241,7 @@ def plot_val_curves(results_dir, out_dir):
         colors = [cmap(0.35 + 0.65 * i / max(n - 1, 1)) for i in range(n)]
 
         for i, lam in enumerate(lambdas):
-            lbl = label_of(axis, lam)
-            epoch_vals = read_epoch_metrics(results_dir, lbl)
+            epoch_vals = read_epoch_metrics(results_dir, axis, lam)
             if not epoch_vals:
                 continue
             epochs = sorted(epoch_vals.keys())
@@ -274,7 +280,7 @@ def plot_sum_w2(results_dir, out_dir):
         **TITLE_FONT,
     )
 
-    ref_rows = read_fold_csv(results_dir, "l1_0")
+    ref_rows = read_fold_csv(results_dir, "l1", 0.0)
     ref_sw2 = mean([float(r["sum_w2"]) for r in ref_rows])
 
     for axis, lambdas, color, marker in [
@@ -283,8 +289,7 @@ def plot_sum_w2(results_dir, out_dir):
     ]:
         xs, ys, errs = [], [], []
         for lam in lambdas[1:]:
-            lbl = label_of(axis, lam)
-            rows = read_fold_csv(results_dir, lbl)
+            rows = read_fold_csv(results_dir, axis, lam)
             sw2s = [float(r["sum_w2"]) for r in rows]
             xs.append(lam)
             ys.append(mean(sw2s))
@@ -331,9 +336,10 @@ def plot_diagnostics_over_epochs(results_dir, out_dir):
         ax_ratio = axes[1][col]
 
         for i, lam in enumerate(lambdas):
-            lbl = label_of(axis, lam)
-            grad_data = read_grad_norms(results_dir, lbl)
-            ratio_data = read_update_ratios(results_dir, lbl, scope="weights")
+            grad_data = read_grad_norms(results_dir, axis, lam)
+            ratio_data = read_update_ratios(
+                results_dir, axis, lam, scope="weights"
+            )
 
             if grad_data:
                 eps_g = sorted(grad_data.keys())
@@ -376,13 +382,18 @@ def main():
         "--results-dir",
         default=os.environ.get(
             "REG_RESULTS_DIR",
-            os.path.join(os.environ.get("WORK", ""), "results", "sweep")
+            os.path.join(
+                os.environ["WORK"],
+                "results",
+                "cross_validation",
+                "regularization_tuning",
+            )
             if os.environ.get("WORK")
-            else None,
+            else "results/cross_validation/regularization_tuning",
         ),
         help=(
             "Directory containing the sweep CSVs and diagnostics sub-tree. "
-            "Defaults to $WORK/results/sweep if $WORK is set, or $REG_RESULTS_DIR."
+            "Defaults to the C++ experiment output path or $REG_RESULTS_DIR."
         ),
     )
     parser.add_argument(

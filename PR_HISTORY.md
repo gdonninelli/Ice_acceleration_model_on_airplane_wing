@@ -17,6 +17,30 @@ entry per pull request, newest first.
 - **Implementation:** Main technical decisions and affected components.
 - **Validation:** Builds, tests, reviews, or manual checks completed.
 
+## Feature/regularization tuning
+
+- **Status:** Pending merge
+- **Implementation dates:** 2026-08-22 to 2026-08-24
+- **Review date:** 2026-08-25
+- **Authors:** AleVerri-03 (`verrengia.ale@gmail.com`) - `056a970`,
+  `934c258`, `b75cdc7`; Alessandro Ferdinando Verrengia
+  (`alessandro.verrengia@mail.polimi.it`) - `25b1f5c`, `992df90`,
+  `e48f0ec`, `f00d64f`
+- **Branch:** `feature/regularization-tuning`
+- **Base:** `main`
+- **Reviewed head:** `056a9706f7b512a4536a0d30e50908ab7a3e3f16`
+- **PR:** https://github.com/gdonninelli/Ice_acceleration_model_on_airplane_wing/pull/10
+- **Summary:** Added a large-architecture C++ L1/L2 regularization sweep with deterministic cross-validation, diagnostics plotting, cluster run documentation, and committed plot artifacts.
+- **Implementation:**
+  - Added the canonical `regularization_tuning` executable with deterministic fold seeding, scalar-fused 1024/512/256/128 topology, physical-MSE fold records, histories, and optional training diagnostics.
+  - Added in-process C++ `ParameterGrid` searches with aggregate CSV/history output, plot generation, a SLURM starting-point script, and the direct `<cstddef>` Tensor dependency fix.
+- **Validation:**
+  - CMake configured and built all targets; serial and MPI-2 CTest suites passed.
+  - Serial two-fold/two-epoch and two-rank MPI two-fold/two-epoch real-dataset smoke runs passed; Python and shell syntax checks passed.
+  - `git diff --check` passed. The full 100-epoch sweep and regeneration of the committed plots were not repeated because raw big-architecture result inputs are not in the checkout.
+- **Per-PR report:** `PR_REVIEWS/feature-regularization-tuning.md`
+- **Review outcome:** No critical findings; the follow-up resolves the prior execution, build-documentation, CLI, and comment-consistency findings. A low plot-metadata follow-up remains.
+
 ## Dropout, Makefile, and physics-weight tuning
 
 - **Status:** Pending merge

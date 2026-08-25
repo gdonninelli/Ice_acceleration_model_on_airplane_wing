@@ -1,288 +1,274 @@
-# Weight-Regularization Tuning Experiment
+# Weight-Regularization (L1/L2) Tuning — Large Architecture (`conv5x5-dense-{1024,512,256,128}`)
 
-Cross-validation experiment that tunes the L1 (Lasso) and L2 (Ridge) penalties
-added on `feature/l1-l2-regularization`, built on the typed `CrossValidator` /
-`ParameterGrid` API documented in
-[`cross_validation.md`](../../../cross_validation.md).
+## Question
 
-## Scientific Question
+Does L1 or L2 weight regularization improve the cross-validated validation MSE
+of the `conv5x5-dense-1024-512-256-128` network trained at `lr = 1e-5`?
 
-Holding architecture, optimizer, learning rate, physics weight and schedule
-fixed, **does penalizing the weights improve generalization, and at which
-lambda?**
+The earlier small-topology experiment answered "no" on the
+smaller `{128,64}` topology (**930 k parameters**: conv 208, dense 921 728 +
+8 256 + 65) at the same learning rate. This network is **~8.7× larger**
+(**8.065 M parameters**: conv 208, dense 7 375 872 + 524 800 + 131 328 +
+32 896 + 129; the first dense takes 7 202 inputs because a
+`ConcatenateLayer` appends 2 scalar features to the 7 200 flattened
+convolution outputs). The rationale for repeating the sweep here is that it
+is not obvious whether capacity alone changes the regularization answer when
+the learning rate is fixed. The honest prior expectation is still λ* = 0:
+at `lr = 1e-5` the network barely moves from its initialization during the
+100-epoch budget and overfitting is unlikely regardless of parameter count.
+**The reference sweep confirms this expectation.** Every nonzero λ worsens validation
+MSE monotonically on both axes. As a by-product, the λ = 0 reference here
+(mean val MSE **0.004419**) is **23.5 % lower** than the earlier experiment's
+reference (mean val MSE 0.005776), confirming directly
+that the larger architecture generalises better on this task.
 
-The expected answer was stated before running: **probably lambda\* = 0**. The
-train/validation gap measured on this dataset is `+0.000413` against a
-`0.001397` spread across folds, positive in only 3 folds of 5 — there is no
-overfitting for a penalty to remove. That is a result, not a failed experiment.
+## Search Space
 
-## Design
+Two independent one-dimensional sweeps (L1 alone, L2 alone), each with λ = 0
+as its reference. The C++ executable builds one `ParameterGrid` per axis and
+evaluates both grids through `CrossValidator::tune()` in a single MPI process.
+There are **16 candidate configurations** in total: 8 L1 choices and 8 L2
+choices. The zero-regularization candidate is intentionally present in both
+grids so each axis has an independent `CandidateResult` and diagnostics tree.
 
-### Two one-dimensional sweeps, not a 2D grid
+- **L1**: `{0, 6.75e-7, 2.13e-6, 6.75e-6, 2.13e-5, 6.75e-5, 2.13e-4, 6.75e-4}`
+- **L2**: `{0, 1e-4, 3.16e-4, 1e-3, 3.16e-3, 1e-2, 3.16e-2, 1e-1}`
 
-A Cartesian L1 x L2 grid would require 64 candidates, compared with 16 total
-across the two one-dimensional sweeps, and would measure an interaction term
-that cannot matter when neither main effect has room to act. Sweep A varies L2
-with `l1_weight = 0`; sweep B varies L1 with `l2_weight = 0`. A 2D grid is
-justified only if one of the two shows a real effect.
+All other hyperparameters are fixed: `conv5x5-dense-1024-512-256-128`,
+LeakyReLU α = 0.05, Adam lr = 1e-5, physics weight = 0.25, batch 64,
+5 folds, seed 42, 100 epochs.
 
-### Paired analysis, not a comparison of means
+## Method
 
-This is the point the experiment turns on. The fold-to-fold spread is ~0.0014,
-larger than any effect expected here, so comparing `mean +/- std` between
-candidates cannot conclude anything. Every candidate is evaluated on the **same
-fold plan with the same seeds**, so the correct comparison is paired: for each
-fold, `val_mse(lambda) - val_mse(0)`, then analyse the five differences.
+Selection metric: mean cross-validated validation MSE (physical units).
 
-Decision rule, fixed before looking at any result:
+**Paired-difference criterion** (pre-registered, identical to the original
+experiment and to `physics_weight_tuning`): a candidate beats the reference
+only when it improves in **≥ 4/5 folds** and the absolute mean paired
+difference exceeds its own standard deviation. This guards against fold-noise
+flukes.
 
-> A lambda beats 0 only if it improves in **at least 4 folds out of 5** and the
-> mean paired difference is larger in magnitude than its own standard
-> deviation. Otherwise lambda\* = 0.
+## Build and Run
 
-### Fixed baseline
+```bash
+# Build and run from the repository root.
+cmake -S CNN -B build/CNN -DCMAKE_BUILD_TYPE=Release
+cmake --build build/CNN --target regularization_tuning --parallel
 
-| Setting | Value |
+# Run both complete ParameterGrid sweeps in one C++ process.
+mpirun -n 16 build/CNN/experiments/regularization_tuning \
+    --epochs 100 --folds 5 --seed 42 \
+    --train-path dataset/cnn_dataset_train.npz \
+    --results-dir results/cross_validation/regularization_tuning \
+    --diagnostics
+```
+
+For a short validation run, `--smoke` uses two folds, two epochs, validation
+after every epoch, and the first two lambda choices on each axis. The normal
+invocation above evaluates all eight choices on both axes.
+
+Per-epoch diagnostics are written under
+`<results-dir>/regularization_tuning/<axis>/candidate_NNN/fold_MMM/`
+(seven files: `metadata.json`, `epoch_metrics.csv`, `gradient_norms.csv`,
+`parameter_update_ratios.csv`, `learning_rate_steps.csv`,
+`activation_statistics.csv`, `activation_histograms.csv`).
+
+## Output
+
+One aggregate CSV per axis, one row per candidate and fold:
+
+- `sweep_l1.csv`
+- `sweep_l2.csv`
+
+| column | meaning |
 |---|---|
-| Architecture | `conv2d(8, 5, stride 5)` -> leakyrelu -> flatten -> dense 128 -> 64 -> 1 |
-| Optimizer | Adam, learning rate `1e-5`, Adam's own `weight_decay` left at 0 |
-| Loss | SIMM physics loss, weight `0.25` (itself a regularizer, so it is held fixed) |
-| Folds | 5 (`RandomKFold`, shuffle, seed 42) |
-| Epochs | 100 |
-| Global batch size | 64 (~22 Adam steps per epoch on a 1370-sample fold) |
-| Seed | 42 |
-| Selection metric | paired difference of physical-unit validation MSE against lambda = 0 |
-| Training NPZ | `dataset/cnn_dataset_train.npz` (1713 samples) |
+| `candidate` | `ParameterGrid` candidate name |
+| `l1_weight` / `l2_weight` | regularization coefficients |
+| `fold` | zero-based fold index |
+| `train_mse` / `val_mse` | physical-unit MSE on train / validation split |
+| `baseline_mse` | mean-predictor MSE on the validation fold |
+| `l1_penalty` / `l2_penalty` | regularization term value at end of training |
+| `sum_w2` | Σw² (sum of squared weights at end of training) |
+| `weight_change_norm` | ‖w_final − w_init‖ |
+| `epochs` | epochs completed |
 
-The test NPZ is never read: this experiment compares candidates, and the
-absolute number would come from a refit outside it.
-
-## Epoch budget: 100, and why
-
-Measured on the regenerated dataset, 8 MPI ranks: **1.16 s per fold-epoch**,
-plus ~7.4 s to load the NPZ (the loader shells out to Python per array).
-16 ranks was *slower* than 8 on this machine (oversubscription), so 8 is used
-throughout.
-
-A 500-epoch convergence probe on fold 0 with lambda = 0
-([`convergence_fold0.csv`](../../../results/cross_validation/regularization_tuning/convergence_fold0.csv))
-shows that **the model has not converged even at 500 epochs**:
-
-| epoch | 10 | 50 | 100 | 200 | 300 | 400 | 500 |
-|---|---|---|---|---|---|---|---|
-| val MSE | 0.005094 | 0.003979 | 0.003675 | 0.003233 | 0.002696 | 0.003395 | 0.002413 |
-
-Validation MSE is lower at epoch 500 than at epoch 100, despite noisy
-intermediate increases. There is no sustained overfitting trend or clear
-plateau to anchor the budget to in this single fold. 100 epochs was chosen
-because:
-
-- it is the budget every other experiment in this repository uses
-  (`layer_tuning`, `activation_tuning`, `CNN/main.cpp` default), which keeps
-  the numbers comparable;
-- the paired design makes the lambda comparison valid at **any** fixed budget,
-  since all candidates share it;
-- at 100 epochs, the compute-only estimate is 8 candidates x 5 folds x 100
-  epochs x 1.16 s = **~77 min per sweep**, before process and I/O overhead. At
-  500 epochs the corresponding estimate is ~6.4 h per sweep, which is not
-  proportionate to a question whose expected answer is zero.
-
-**Caveat this creates**: if regularization only helps in a regime the model
-reaches after 100 epochs, this experiment cannot see it. The 500-epoch probe
-does not show a sustained overfitting onset, but it is a single noisy fold with
-lambda = 0.
-
-## Candidates
-
-### Sweep A — L2 (Ridge), `l1_weight = 0`
-
-Log-spaced at sqrt(10) over `[1e-4, 1e-1]`, plus 0 as reference. The band
-brackets the measured balancing lambda2, the value at which the penalty
-gradient `2*lambda2*|w|` equals the median data gradient: **0.0762 at
-initialization, settling to 7e-4 - 1e-3** after epoch 10.
-
-| label | lambda2 |
-|---|---|
-| `0` | 0 (reference) |
-| `1e-04` | 1e-4 |
-| `3e-04` | 3.16e-4 |
-| `1e-03` | 1e-3 |
-| `3e-03` | 3.16e-3 |
-| `1e-02` | 1e-2 |
-| `3e-02` | 3.16e-2 |
-| `1e-01` | 1e-1 |
-
-### Sweep B — L1 (Lasso), `l2_weight = 0`
-
-**The L1 range is not the L2 range.** The L1 penalty gradient is
-`lambda1*sign(w)`, independent of `|w|`, so the balancing value is the median
-data gradient itself rather than `grad/(2|w|)`:
-
-```
-lambda1* = median|grad_data| = 2.13e-5   (measured at epoch 100 over all 930312 weights)
-```
-
-Centred there, with the same 3-decade width as sweep A, so the extremes sit at
-1/30 and 30x the data gradient. Centring on the *late-training* gradient rather
-than the initial one (2.19e-3) is deliberate: early on the data gradient
-dominates by 100x regardless of lambda, so the penalty can only change the
-outcome late.
-
-| label | lambda1 |
-|---|---|
-| `0` | 0 (reference) |
-| `7e-07` | 6.75e-7 |
-| `2e-06` | 2.13e-6 |
-| `7e-06` | 6.75e-6 |
-| `2e-05` | 2.13e-5 (= lambda1\*) |
-| `7e-05` | 6.75e-5 |
-| `2e-04` | 2.13e-4 |
-| `7e-04` | 6.75e-4 |
-
-## Requirements
-
-- MPI toolchain (OpenMPI `mpicxx` / `mpirun`). On this machine:
-  `export PATH=/usr/lib64/openmpi/bin:$PATH`.
-- A C++20 compiler.
-- `dataset/cnn_dataset_train.npz` present — regenerate it with the runbook in
-  [`dataset/README.md`](../../../dataset/README.md) if missing.
-- All commands are run **from the repository root**.
-
-## Build
+Aggregate CSVs: `sweep_l1.csv`, `sweep_l2.csv`.
+Per-checkpoint histories are written to `training_history_l1.csv` and
+`training_history_l2.csv`. To generate the committed plot set after a
+run, use:
 
 ```bash
-export PATH=/usr/lib64/openmpi/bin:$PATH
-mkdir -p build/experiments
-mpicxx -std=c++20 -O3 -ICNN/src \
-  CNN/experiments/regularization_tuning/main.cpp \
-  CNN/src/core/*.cpp CNN/src/data/*.cpp CNN/src/layers/*.cpp \
-  CNN/src/model/*.cpp CNN/src/optimizers/*.cpp \
-  CNN/src/training/*.cpp CNN/src/tuning/*.cpp \
-  -o build/experiments/regularization_tuning
+python3 CNN/experiments/regularization_tuning/plot_results.py \
+    --results-dir results/cross_validation/regularization_tuning
 ```
 
-## Run
+## Reference Results
 
-> **Dataset prerequisite.** The reported results were obtained from a dataset
-> regenerated with `python3 build_dataset.py --seed 42`. The pipeline correction
-> (repository-relative paths, deterministic ordering, and an explicit seed) is
-> a separate pull request and is not yet on `main`. The `.npz` files currently
-> committed on `main` contain invalid data (Gaussian noise instead of Signed
-> Distance Function values), so running this experiment without that correction
-> produces meaningless results.
+The tables below are retained from the CINECA Leonardo DCGP run on 1 node and
+16 MPI ranks (OpenMPI 4.1.6, gcc 12.2.0), job 53877281. That run used the same
+model, grids, and fixed hyperparameters. The current executable intentionally
+evaluates the λ = 0 candidate independently on each axis, so its full-run wall
+time should be measured separately. The recorded reference run took **12 h
+08 min 49 s** and used **~194** core-hours (16 cores × 12.15 h).
 
-Smoke test first:
+Its historical per-candidate times were ~48–54 min (l2_1e-01 was the slowest at
+53.6 min; the λ = 0 reference ran in 42.0 min).
 
-```bash
-mpirun -n 8 --oversubscribe build/experiments/regularization_tuning converge 20
+**Reference (λ = 0): per-fold validation MSE**
+
+| fold | val MSE | train MSE |
+|---:|---:|---:|
+| 0 | 0.0028714 | 0.0040525 |
+| 1 | 0.0045082 | 0.0040377 |
+| 2 | 0.0048860 | 0.0034491 |
+| 3 | 0.0047752 | 0.0036525 |
+| 4 | 0.0050525 | 0.0040140 |
+| **mean** | **0.0044187** | **0.0038412** |
+| std | 0.0007936 | 0.0002399 |
+
+### L1 Axis
+
+Paired difference Δ = mean(val_MSE_ref − val_MSE_λ): positive means λ improves on the reference.
+
+| λ | mean val MSE | fold std | Δ vs λ=0 | Δ std | n folds improved | beats λ=0 | val−train gap | Σw² | ‖w−w₀‖ | peak grad | peak w norm | peak act var |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 0.0044187 | 0.0007936 | 0.0000000 | 0.0000000 | — | — | +0.0005775 | 2992.6 | 0.91 | 22.54 | 42.36 | 0.1441 |
+| 6.75e-7 | 0.0044240 | 0.0007880 | −0.0000053 | 0.0000688 | 2/5 | no | +0.0005677 | 2672.4 | 10.17 | 22.54 | 42.35 | 0.1441 |
+| 2.13e-6 | 0.0044364 | 0.0008001 | −0.0000178 | 0.0000297 | 2/5 | no | +0.0005621 | 2408.7 | 15.38 | 22.54 | 42.34 | 0.1441 |
+| 6.75e-6 | 0.0044775 | 0.0008110 | −0.0000588 | 0.0000317 | 0/5 | no | +0.0005694 | 2035.2 | 21.45 | 22.54 | 42.33 | 0.1441 |
+| 2.13e-5 | 0.0045395 | 0.0008318 | −0.0001209 | 0.0000621 | 0/5 | no | +0.0005452 | 1592.8 | 27.87 | 22.54 | 42.32 | 0.1442 |
+| 6.75e-5 | 0.0046843 | 0.0009019 | −0.0002656 | 0.0001521 | 0/5 | no | +0.0004556 | 1163.5 | 33.63 | 22.54 | 42.29 | 0.1447 |
+| 2.13e-4 | 0.0050997 | 0.0009500 | −0.0006810 | 0.0002229 | 0/5 | no | +0.0002851 | 815.0 | 38.08 | 22.55 | 42.25 | 0.1492 |
+| 6.75e-4 | 0.0064617 | 0.0011891 | −0.0020431 | 0.0005135 | 0/5 | no | +0.0001513 | 587.0 | 41.18 | 22.61 | 42.20 | 0.1654 |
+
+### L2 Axis
+
+| λ | mean val MSE | fold std | Δ vs λ=0 | Δ std | n folds improved | beats λ=0 | val−train gap | Σw² | ‖w−w₀‖ | peak grad | peak w norm | peak act var |
+|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|
+| 0 | 0.0044187 | 0.0007936 | 0.0000000 | 0.0000000 | — | — | +0.0005775 | 2992.6 | 0.91 | 22.54 | 42.36 | 0.1441 |
+| 1e-4 | 0.0044831 | 0.0008186 | −0.0000644 | 0.0000618 | 1/5 | no | +0.0005715 | 2225.2 | 14.94 | 22.54 | 42.34 | 0.1441 |
+| 3.16e-4 | 0.0045800 | 0.0008590 | −0.0001613 | 0.0000990 | 0/5 | no | +0.0005587 | 1808.1 | 20.30 | 22.54 | 42.33 | 0.1441 |
+| 1e-3 | 0.0047676 | 0.0009316 | −0.0003489 | 0.0001778 | 0/5 | no | +0.0005171 | 1374.7 | 25.68 | 22.54 | 42.31 | 0.1442 |
+| 3.16e-3 | 0.0050917 | 0.0009918 | −0.0006730 | 0.0002758 | 0/5 | no | +0.0003939 | 1008.7 | 30.14 | 22.54 | 42.27 | 0.1449 |
+| 1e-2 | 0.0059023 | 0.0010995 | −0.0014836 | 0.0004261 | 0/5 | no | +0.0001915 | 748.4 | 33.48 | 22.55 | 42.23 | 0.1515 |
+| 3.16e-2 | 0.0069936 | 0.0012170 | −0.0025749 | 0.0005769 | 0/5 | no | +0.0001567 | 621.1 | 35.56 | 22.70 | 42.18 | 0.1625 |
+| 1e-1 | 0.0084531 | 0.0010800 | −0.0040345 | 0.0006053 | 0/5 | no | +0.0001140 | 582.3 | 36.46 | 24.08 | 42.14 | 0.1686 |
+
+Diagnostic columns: `peak grad` = largest `maximum_norm` across all layers and
+folds in `gradient_norms.csv`; `peak w norm` = largest `mean_pre_update_norm`
+for the weights scope in `parameter_update_ratios.csv`; `peak act var` =
+largest `variance` for the `post_activation` phase in
+`activation_statistics.csv`. All values are finite; no numerical instability
+was observed in any candidate.
+
+### Selected Configuration
+
+**λ* = 0** on both axes. Every nonzero λ degrades cross-validated validation
+MSE monotonically. No candidate satisfies the pre-registered criterion (≥ 4/5
+folds improved **and** |Δmean| > Δstd). The closest are L1 λ = 6.75e-7 and
+λ = 2.13e-6, each improving in 2/5 folds with a mean difference of −5.3e-6
+and −1.8e-5 respectively — both smaller in magnitude than their own standard
+deviation, and below the 4/5-fold threshold.
+
+The conclusion matches the earlier small-topology experiment on the
+`{128,64}` topology: at `lr = 1e-5`, the network does not overfit in 100
+epochs regardless of the number of parameters, and there is nothing for a
+weight penalty to correct.
+
+**Comparison with the earlier experiment.** The λ = 0 reference here (mean
+val MSE 0.004419 ± 0.000794) is **23.5 % lower** than its λ = 0 reference
+(mean val MSE 0.005776 ± 0.001147). This is a
+direct, independent confirmation of the layer-tuning winner: the
+`{1024,512,256,128}` architecture generalises better than `{128,64}` at the
+same learning rate and fold plan, by a margin that exceeds both experiments'
+fold standard deviations.
+
+**Fold consistency.** The cross-fold standard deviation (0.000794) is **18 %**
+of the mean (0.004419). This is substantially more consistent than the 45 %
+figure measured in `physics_weight_tuning` at lr = 1e-3 (std 0.001228 on mean
+0.005602): at lr = 1e-5, training is slower but more stable across folds.
+
+**Cluster margin.** Job 53877281 used 12 h 08 min of the 13 h 00 min allocated
+(93.5 %). Anyone relaunching this sweep should allocate at least 15 h, or
+reduce the number of candidates per job.
+
+**Regularization mechanics observed:**
+
+- The val−train gap decreases with λ (from +5.8e-4 at λ = 0 to +1.1e-4 at
+  L2 λ = 0.1), but training MSE rises faster than val MSE, indicating that
+  the penalty impairs training more than it suppresses overfitting.
+- Σw² drops by 5× from λ = 0 to the strongest candidates (2993 → 582),
+  confirming active weight shrinkage. ‖w − w₀‖ increases in parallel (from
+  0.91 to ~36–41), showing that the regularizer pulls weights away from their
+  Xavier initialization rather than keeping them there.
+- Peak gradient norms are nearly identical across all L1 candidates and most
+  L2 candidates (≈22.54), only rising at L2 λ = 3.16e-2 (22.70) and
+  λ = 0.1 (24.08). The gradient-clip threshold (1.0 per-layer) is never
+  approached for any candidate other than at epoch 1 (initial forward pass
+  scale), which is consistent with stable low-lr training.
+- The `parameter_update_ratios.csv` diagnostics report `mean_ratio` =
+  `mean_update_norm / mean_pre_update_norm` per layer per epoch, broken out
+  by scope (`all`, `weights`, `biases`). When averaged across **all scopes
+  and last 10 epochs** the λ = 0 figure is **≈1.9e-3**. This aggregate is
+  dominated by the `biases` scope: bias pre-update norms are ≈1e-4–5e-3
+  (small absolute values) while bias update-step magnitudes are similar to
+  those of weights, so the per-bias ratio reaches ≈3–6e-3. The
+  **weights-only** ratio at the same epochs is **≈2.9e-5**; at epoch 9 it
+  is **≈1.5e-5**. A reference figure of **~3.9e-5** appears in an older
+  comment in `main.cpp` (attributed to `physics_weight_tuning_lr1e3`'s
+  README at lr = 1e-5); the diagnostics for that experiment are not in the
+  current repository tree, so the exact scope and epoch used there cannot
+  be verified. The weights-only figures here (1.5e-5 at epoch 9, 2.9e-5 at
+  epoch 91–100) are in the same order of magnitude as that reference and are
+  consistent with it coming from a weights-scope measurement. **The
+  discrepancy between the 1.9e-3 aggregate and the ~3.9e-5 reference is
+  fully explained by scope aggregation (biases inflate the mean), not by an
+  architecture change or Adam dynamics difference.**
+
+## Diagnostics Path
+
+```
+<results-dir>/regularization_tuning/
+  l1/
+    candidate_000/ … candidate_007/
+      fold_000/ … fold_004/
+  l2/
+    candidate_000/ … candidate_007/
+      fold_000/ … fold_004/
+        metadata.json
+        epoch_metrics.csv
+        gradient_norms.csv
+        parameter_update_ratios.csv
+        learning_rate_steps.csv
+        activation_statistics.csv
+        activation_histograms.csv
 ```
 
-Then the convergence probe and the two sweeps. The sweeps are independent and
-can run concurrently on a machine with enough cores:
+The λ = 0 reference has `candidate_000` under both `l1/` and `l2/`, because
+each `ParameterGrid` produces its own complete `SearchResult`.
 
-```bash
-mkdir -p results/cross_validation/regularization_tuning
-mpirun -n 8 --oversubscribe build/experiments/regularization_tuning converge 500 \
-  > results/cross_validation/regularization_tuning/convergence_fold0.csv
-mpirun -n 8 --oversubscribe build/experiments/regularization_tuning sweep-l2 100
-mpirun -n 8 --oversubscribe build/experiments/regularization_tuning sweep-l1 100
-```
+## Caveats
 
-Each sweep writes one row per (candidate, fold) to
-`results/cross_validation/regularization_tuning/sweep_{l1,l2}.csv`, with
-columns `candidate, l1_weight, l2_weight, fold, train_mse, val_mse,
-baseline_mse, l1_penalty, l2_penalty, sum_w2, weight_change_norm, epochs`.
+- **No held-out test set.** Both `training_dataset_path` and
+  `validation_dataset_path` in the metadata point to the same file
+  (`cnn_dataset_train.npz`). The 5-fold cross-validation splits that file
+  in memory: at each fold, ~80 % of the samples serve as the training split
+  and ~20 % as the validation split. Every sample appears in a validation
+  split exactly once across the five folds. Because the same geometries
+  appear in both roles (across folds) and there is no separate held-out test
+  file, the absolute MSE values are optimistic; the **relative** paired
+  comparisons across candidates remain valid because all candidates use the
+  same splits and seeds.
 
-Then run the paired analysis, which applies the decision rule:
+- **Fixed epoch budget.** 100 epochs is the same budget as the original
+  experiment and is sufficient to measure regularization effects in this
+  regime. No early-stopping or learning-rate schedule was used; the result
+  holds for Adam with fixed `lr = 1e-5` at exactly 100 epochs.
 
-```bash
-python3 CNN/experiments/regularization_tuning/analyze.py \
-  results/cross_validation/regularization_tuning/sweep_l2.csv l2
-python3 CNN/experiments/regularization_tuning/analyze.py \
-  results/cross_validation/regularization_tuning/sweep_l1.csv l1
-```
+- **Grid coverage.** The L1 grid ends at 6.75e-4 (mean val MSE 0.0065)
+  and the L2 grid at 0.1 (mean val MSE 0.0085). Both axes show clear
+  monotone degradation well before the grid boundary, so the absence of a
+  benefit is not an artifact of insufficient coverage.
 
-## Results
-
-Both sweeps ran on 8 MPI ranks, concurrently, ~123 min each under the reported
-machine conditions. This is longer than the compute-only estimate because of
-process, loading, and other wall-clock overhead.
-`lambda = 0` reproduces the value measured independently in the diagnostics
-(`0.00577535 +/- 0.00114692`), which confirms the fold plan and the seeds are
-identical and the pairing is legitimate.
-
-### Sweep A — L2 (Ridge)
-
-| lambda2 | val MSE | std | val/baseline | **paired diff vs 0** | std | improved | L2 penalty | sum(w^2) | \|dw\| |
-|---|---|---|---|---|---|---|---|---|---|
-| **0** | **0.005776** | 0.001282 | 0.01161 | — | — | — | 0 | 341.47 | 0.48 |
-| 1e-4 | 0.005812 | 0.001309 | 0.01168 | +0.0000360 | 0.0000709 | 3/5 | 0.030 | 301.99 | 2.85 |
-| 3.16e-4 | 0.005826 | 0.001302 | 0.01171 | +0.0000496 | 0.0000535 | 2/5 | 0.085 | 269.40 | 4.37 |
-| 1e-3 | 0.005817 | 0.001302 | 0.01170 | +0.0000411 | 0.0000492 | 2/5 | 0.226 | 225.64 | 6.16 |
-| 3.16e-3 | 0.005896 | 0.001340 | 0.01185 | +0.0001196 | 0.0000646 | 0/5 | 0.562 | 177.73 | 8.04 |
-| 1e-2 | 0.005937 | 0.001325 | 0.01194 | +0.0001612 | 0.0001245 | 0/5 | 1.352 | 135.18 | 9.69 |
-| 3.16e-2 | 0.006206 | 0.001358 | 0.01248 | +0.0004300 | 0.0001845 | 0/5 | 3.269 | 103.43 | 10.97 |
-| 1e-1 | 0.006730 | 0.001274 | 0.01353 | +0.0009543 | 0.0002532 | 0/5 | 8.576 | 85.76 | 11.85 |
-
-**lambda2\* = 0.** All 7 non-zero values have a positive observed mean paired
-difference, and none improves in 4 folds or more. The largest degradation is at
-the largest lambda, but the intermediate values are noisy rather than strictly
-monotonic.
-
-### Sweep B — L1 (Lasso)
-
-| lambda1 | val MSE | std | val/baseline | **paired diff vs 0** | std | improved | L1 penalty | sum(w^2) | \|dw\| |
-|---|---|---|---|---|---|---|---|---|---|
-| **0** | **0.005776** | 0.001282 | 0.01161 | — | — | — | 0 | 341.47 | 0.48 |
-| 6.75e-7 | 0.005805 | 0.001294 | 0.01167 | +0.0000290 | 0.0000451 | 2/5 | 0.009 | 329.13 | 1.58 |
-| 2.13e-6 | 0.005812 | 0.001297 | 0.01168 | +0.0000357 | 0.0000363 | 1/5 | 0.027 | 313.93 | 2.74 |
-| 6.75e-6 | 0.005803 | 0.001305 | 0.01167 | +0.0000269 | 0.0000303 | 2/5 | 0.079 | 287.35 | 4.41 |
-| 2.13e-5 | 0.005823 | 0.001312 | 0.01171 | +0.0000468 | 0.0000537 | 0/5 | 0.215 | 248.35 | 6.44 |
-| 6.75e-5 | 0.005874 | 0.001376 | 0.01181 | +0.0000977 | 0.0001159 | 1/5 | 0.532 | 199.57 | 8.71 |
-| 2.13e-4 | 0.005846 | 0.001427 | 0.01175 | +0.0000696 | 0.0001770 | 2/5 | 1.198 | 151.41 | 10.83 |
-| 6.75e-4 | 0.006023 | 0.001434 | 0.01211 | +0.0002468 | 0.0001863 | 0/5 | 2.484 | 110.83 | 12.54 |
-
-**lambda1\* = 0.** Same picture: all 7 non-zero values have a positive observed
-mean paired difference, and none reaches 4 improving folds.
-
-### Did lambda do anything? Yes
-
-This is the control that stops the sweep from measuring the same run eight
-times. `sum(w^2)` falls from 341.47 to 85.76 across the L2 grid (a 74.9%
-spread) and to 110.83 across the L1 grid (67.5%), and `||w - w0||` grows from
-0.48 to 11.85. The penalties are firmly in the active region — the grid is not
-too low, so there was no reason to extend it upward.
-
-If anything the opposite holds: even the smallest lambda tested already moves
-`||w - w0||` by 6x. The whole grid is on the far side of the point where the
-penalty starts to dominate, and the overall trend points toward 0 being the
-optimum rather than toward a minimum inside the range.
-
-### Verdict
-
-**Regularization does not show a reliable benefit on this problem, and no
-lambda is worth carrying into the group's final grid search.** The 14 non-zero
-candidates all have positive observed mean paired differences versus lambda =
-0, but none meets the predefined improvement rule. This matches what was
-predicted from the diagnostics before running: with a train/validation gap of
-+0.000413 against a 0.001397 fold spread, and validation MSE lower at epoch 500
-than at epoch 100 without a sustained overfitting trend, there was no clear
-excess capacity for a penalty to remove.
-
-The 2D L1 x L2 grid is **not** justified and was not run.
-
-A caveat on how small these effects are: the largest degradation measured, at
-lambda2 = 0.1, is +0.00095 on a validation MSE of 0.0058 — about 0.7 times the
-fold spread. Even the *harm* from over-regularizing is comparable with the
-noise floor. The honest reading of both sweeps is that regularization is
-irrelevant here, not that it is catastrophic.
-
-
-## Caveat on absolute values
-
-> I risultati sono ottenuti con lo split train/test casuale (seed 42), in cui la stessa
-> geometria (profilo, angolo) compare in entrambi i set con Reynolds diverso. Poiché il
-> Reynolds non influenza il target in modo misurabile, questi campioni sono di fatto
-> duplicati fra train e test e le MSE di validazione riportate sono ottimistiche. I
-> confronti *relativi* fra candidati restano validi perché tutti condividono lo stesso
-> split; i valori *assoluti* andranno rimisurati se il gruppo adotterà uno split raggruppato.
+- The earlier small-topology source and result CSVs were removed when this
+  larger topology became the canonical `regularization_tuning` experiment.

@@ -1,24 +1,29 @@
-// Weight-regularization tuning experiment.
+// Weight-regularization (L1/L2) tuning on the optimizer_comparison /
+// layer_tuning winning topology, at the project's original lr = 1e-5.
 //
-// Scientific question: does penalizing the weights improve generalization on
-// this problem, and at which lambda? Two one-dimensional sweeps are run, L2
-// alone and L1 alone, rather than a 2D grid: the measured train/validation gap
-// is +0.000413 against a 0.001397 spread across folds, so there is no
-// overfitting for the penalty to remove and an interaction term is not worth
-// its cost.
+// Scientific question: the earlier small {128,64} topology selected
+// lambda* = 0 for both L1 and L2 at lr = 1e-5
+// (~930k parameters over 1713 samples), where the measured train/validation
+// gap was +0.000413 against a 0.001397 fold spread -- essentially no
+// overfitting for a penalty to remove. At lr = 1e-5 lambda* = 0 is still the
+// expected answer here too. What changed is the architecture: {1024,512,256,128}
+// is ~8.06M parameters, about 8.7x larger, on the same 1713 samples. This is a
+// legitimately different regime even if it still moves very little per step.
 //
-// Selection metric: sample-weighted physical-unit validation MSE, but the
-// conclusion is drawn from the PAIRED difference against lambda = 0, because
-// the fold-to-fold spread is larger than any effect expected here. All
-// candidates share one fold plan and one seed, which is what makes the pairing
-// valid.
+// The experiment runs two independent one-dimensional ParameterGrid searches
+// in one C++ process: L2 alone and L1 alone, with lambda = 0 as the reference
+// in each grid. CrossValidator::tune evaluates every candidate on the same
+// fold plan and returns all fold metrics in SearchResult. No external driver
+// is needed to launch one process per lambda.
 //
-// Everything except lambda is held fixed: architecture, learning rate,
-// physics weight, batch size, folds, epochs, seed.
+// Every quantity that must vary per run (fold count, epochs, seed, dataset
+// path, results directory, and batch size) remains a CLI argument, so the
+// search can be rebuilt and launched on the cluster without source edits.
 //
-// See CNN/experiments/regularization_tuning/README.md and cross_validation.md.
+// See CNN/experiments/regularization_tuning/README.md.
 
 #include "core/Loss.hpp"
+#include "core/Tensor.hpp"
 #include "data/Dataset.hpp"
 #include "model/ModelFactory.hpp"
 #include "training/Trainer.hpp"
@@ -28,56 +33,64 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <cstdint>
 #include <exception>
+#include <filesystem>
 #include <fstream>
 #include <iomanip>
 #include <iostream>
+#include <limits>
 #include <map>
 #include <memory>
 #include <mpi.h>
 #include <span>
 #include <sstream>
+#include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace {
 
-constexpr size_t kFoldCount = 5;
-constexpr size_t kGlobalBatchSize = 64;
-constexpr uint64_t kSeed = 42;
+constexpr size_t kDefaultFolds = 5;
+constexpr size_t kDefaultEpochs = 100;
+constexpr size_t kDefaultGlobalBatchSize = 64;
+constexpr uint64_t kDefaultSeed = 42;
 constexpr float kLearningRate = 1e-5f;
 constexpr float kPhysicsWeight = 0.25f;
+constexpr float kLeakyAlpha = 0.05f;
 constexpr size_t kEvaluationChunk = 256;
 
-// Baseline topology, identical to make_single_trial() in CNN/main.cpp.
+// Winning CNN topology from optimizer_comparison / activation_tuning /
+// physics_weight_tuning_lr1e3: conv5x5-dense-1024-512-256-128.
 ModelBlueprint make_blueprint() {
     ModelBlueprint blueprint;
     blueprint.feature_layers.push_back(Recipes::conv2d(8, 5, 5, 0));
-    blueprint.feature_layers.push_back(Recipes::activation("leakyrelu", 0.05f));
+    blueprint.feature_layers.push_back(Recipes::activation("leakyrelu", kLeakyAlpha));
     blueprint.feature_layers.push_back(Recipes::flatten());
-    for (int width : {128, 64}) {
+    for (int width : {1024, 512, 256, 128}) {
         blueprint.head_layers.push_back(Recipes::dense(width));
-        blueprint.head_layers.push_back(Recipes::activation("leakyrelu", 0.05f));
+        blueprint.head_layers.push_back(Recipes::activation("leakyrelu", kLeakyAlpha));
     }
     blueprint.head_layers.push_back(Recipes::dense(1));
     return blueprint;
 }
 
-TrialConfig make_config(const std::string& name,
-                        float l1_weight,
-                        float l2_weight,
-                        size_t epochs) {
-    return TrialConfig{name,
-                       make_blueprint(),
-                       Recipes::adam(kLearningRate),
-                       LossConfig{kPhysicsWeight, l1_weight, l2_weight},
-                       TrainingConfig{epochs, kGlobalBatchSize, 1.0f, kSeed, true},
-                       {}};
+// Fixed grids for the lr=1e-5 regularization sweep.
+const std::vector<float>& l2_grid() {
+    static const std::vector<float> grid = {0.0f,   1e-4f,  3.16e-4f, 1e-3f,
+                                            3.16e-3f, 1e-2f, 3.16e-2f, 1e-1f};
+    return grid;
 }
 
-// Replicated from the anonymous namespace of CrossValidator.cpp so this runner
-// seeds each fold exactly like CNNTrialRunner does and the numbers stay
-// comparable with the other experiments.
+const std::vector<float>& l1_grid() {
+    static const std::vector<float> grid = {0.0f,    6.75e-7f, 2.13e-6f, 6.75e-6f,
+                                            2.13e-5f, 6.75e-5f, 2.13e-4f, 6.75e-4f};
+    return grid;
+}
+
+// Fold seed derivation matching the CrossValidator convention, so a fold run
+// here trains from exactly the same initialization as the same fold elsewhere.
 uint64_t fold_seed(uint64_t base_seed, size_t fold_index) {
     constexpr uint64_t golden_ratio = 0x9e3779b97f4a7c15ULL;
     return base_seed ^ (golden_ratio + static_cast<uint64_t>(fold_index) +
@@ -88,9 +101,51 @@ bool is_weight_tensor(const LayerParameter& parameter) {
     return parameter.tensor && parameter.name == "weights";
 }
 
-// Physical-unit data MSE over an arbitrary index set, evaluated in chunks so a
-// 1370-sample fold does not materialize as one 123 MB tensor. Run identically
-// on every rank, so no reduction is needed.
+// Identical formatting to the original experiment's format_lambda:
+// scientific, zero decimals, and plain "0" for the reference candidate.
+std::string format_lambda(float value) {
+    std::ostringstream text;
+    text << std::scientific << std::setprecision(0) << value;
+    return value == 0.0f ? std::string("0") : text.str();
+}
+
+size_t parse_size_value(const std::string& text, const std::string& option) {
+    if (text.empty() || text.front() == '-') {
+        throw std::invalid_argument("Invalid value for " + option + ": " + text);
+    }
+    size_t consumed = 0;
+    unsigned long long value = 0;
+    try {
+        value = std::stoull(text, &consumed);
+    } catch (const std::exception&) {
+        throw std::invalid_argument("Invalid value for " + option + ": " + text);
+    }
+    if (consumed != text.size() ||
+        value > static_cast<unsigned long long>(std::numeric_limits<size_t>::max())) {
+        throw std::invalid_argument("Invalid value for " + option + ": " + text);
+    }
+    return static_cast<size_t>(value);
+}
+
+uint64_t parse_seed_value(const std::string& text) {
+    if (text.empty() || text.front() == '-') {
+        throw std::invalid_argument("Invalid value for --seed: " + text);
+    }
+    size_t consumed = 0;
+    unsigned long long value = 0;
+    try {
+        value = std::stoull(text, &consumed);
+    } catch (const std::exception&) {
+        throw std::invalid_argument("Invalid value for --seed: " + text);
+    }
+    if (consumed != text.size()) {
+        throw std::invalid_argument("Invalid value for --seed: " + text);
+    }
+    return static_cast<uint64_t>(value);
+}
+
+// Physical-unit data MSE over an arbitrary index set, evaluated in chunks so
+// a fold never materializes as one giant tensor.
 double evaluate_physical_mse(CNNModel& model,
                              const Dataset& dataset,
                              const std::vector<size_t>& indices,
@@ -111,11 +166,7 @@ double evaluate_physical_mse(CNNModel& model,
     return seen > 0 ? sum / static_cast<double>(seen) : 0.0;
 }
 
-// MSE of the predictor that always answers with the training-fold mean,
-// scored on the validation fold, in the same physical units as
-// Loss::physical_mse. make_batch standardizes by the training mean, so a
-// prediction of zero in standardized space IS the training mean, and
-// physical_mse against zeros is exactly mean((y - mean_train)^2).
+// MSE of the predictor that always answers with the training-fold mean.
 double baseline_mse(const Dataset& dataset,
                     const std::vector<size_t>& validation,
                     const NormalizationStats& normalization) {
@@ -186,10 +237,8 @@ struct FoldRecord {
     size_t epochs = 0;
 };
 
-// Mirrors CNNTrialRunner, and additionally records everything the paired
-// analysis needs: the mean-predictor baseline, the physical-unit training MSE,
-// the penalty actually reached, and the weight-norm evidence that lambda did
-// something at all.
+// Trains one fold and records the paired-analysis inputs: the mean-predictor
+// baseline, physical-unit training MSE, reached penalty, and weight movement.
 class RecordingRunner : public TrialRunner {
 public:
     RecordingRunner(MPI_Comm communicator,
@@ -202,19 +251,41 @@ public:
                     const Dataset& dataset,
                     const FoldIndices& fold,
                     size_t fold_index) const override {
+        return run(config, dataset, fold, fold_index,
+                   Context{0, 1, fold_index + 1});
+    }
+
+    FoldMetrics run(const TrialConfig& config,
+                    const Dataset& dataset,
+                    const FoldIndices& fold,
+                    size_t fold_index,
+                    const Context& context) const override {
         const uint64_t seed = fold_seed(config.training.seed, fold_index);
         const NormalizationStats normalization =
             dataset.fit_normalization(fold.training);
 
-        auto model = _model_factory.build(config, dataset.sdf_height(),
-                                          dataset.sdf_width(),
-                                          dataset.scalar_features(), seed,
-                                          _communicator);
+        ModelFactory factory;
+        auto model = factory.build(config, dataset.sdf_height(),
+                                   dataset.sdf_width(), dataset.scalar_features(),
+                                   seed, _communicator);
         const auto initial = snapshot_parameters(*model);
+
+        TrainingRunContext run_context;
+        run_context.mode = "cross_validation";
+        run_context.candidate_index = context.candidate_index;
+        run_context.candidate_count = context.candidate_count;
+        run_context.fold_index = fold_index;
+        run_context.fold_count = context.fold_count;
+        run_context.random_seed = seed;
+        run_context.training_dataset_path =
+            config.training.diagnostics.training_dataset_path;
+        run_context.validation_dataset_path =
+            config.training.diagnostics.training_dataset_path;
 
         const TrainingResult result = _trainer.fit(
             *model, dataset, fold.training, dataset, fold.validation,
-            normalization, config.loss, config.training, seed, false);
+            normalization, config.loss, config.training, seed, false,
+            run_context, &config);
 
         FoldRecord record;
         record.candidate = config.name;
@@ -253,16 +324,16 @@ public:
 
 private:
     MPI_Comm _communicator;
-    ModelFactory _model_factory;
     Trainer _trainer;
     std::shared_ptr<std::vector<FoldRecord>> _records;
     mutable std::map<size_t, double> _baseline_by_fold;
 };
 
-void write_csv(const std::string& path, const std::vector<FoldRecord>& records) {
+void write_fold_csv(const std::string& path,
+                    const std::vector<FoldRecord>& records) {
     std::ofstream csv(path);
     if (!csv) {
-        throw std::runtime_error("Cannot open " + path);
+        throw std::runtime_error("Cannot open " + path + " for writing.");
     }
     csv << std::setprecision(10)
         << "candidate,l1_weight,l2_weight,fold,train_mse,val_mse,baseline_mse,"
@@ -277,80 +348,220 @@ void write_csv(const std::string& path, const std::vector<FoldRecord>& records) 
     }
 }
 
-std::string format_lambda(float value) {
-    std::ostringstream text;
-    text << std::scientific << std::setprecision(0) << value;
-    return value == 0.0f ? std::string("0") : text.str();
-}
-
-// Convergence probe: one fold, no penalty, long run. Used only to size the
-// epoch budget; it touches no test data.
-int run_convergence(const Dataset& dataset, size_t epochs, int rank) {
-    RandomKFold splitter(kFoldCount, true, kSeed);
-    const auto folds = splitter.split(dataset.num_samples());
-    const FoldIndices& fold = folds.front();
-    const uint64_t seed = fold_seed(kSeed, 0);
-    const NormalizationStats normalization =
-        dataset.fit_normalization(fold.training);
-
-    const TrialConfig config = make_config("convergence", 0.0f, 0.0f, epochs);
-    ModelFactory factory;
-    auto model = factory.build(config, dataset.sdf_height(), dataset.sdf_width(),
-                               dataset.scalar_features(), seed, MPI_COMM_WORLD);
-    Trainer trainer(MPI_COMM_WORLD);
-    const TrainingResult result =
-        trainer.fit(*model, dataset, fold.training, dataset, fold.validation,
-                    normalization, config.loss, config.training, seed, false);
-
-    if (rank == 0) {
-        std::cout << std::setprecision(8)
-                  << "epoch,train_objective,val_mse\n";
-        for (const EpochMetrics& point : result.history) {
-            std::cout << point.epoch << ',' << point.training_objective << ','
-                      << point.validation_mse << '\n';
-        }
-        std::cout << "# final validation MSE: " << result.validation_mse
-                  << std::endl;
+void write_history_csv(const std::string& path,
+                       const SearchResult& search) {
+    std::ofstream csv(path);
+    if (!csv) {
+        throw std::runtime_error("Cannot open " + path + " for writing.");
     }
-    return 0;
+    csv << std::setprecision(10)
+        << "candidate,fold,epoch,training_objective,validation_mse\n";
+    for (const CandidateResult& candidate : search.candidates) {
+        if (!candidate.success) {
+            continue;
+        }
+        for (const FoldMetrics& fold : candidate.folds) {
+            for (const EpochMetrics& point : fold.history) {
+                csv << candidate.config.name << ',' << fold.fold << ','
+                    << point.epoch << ',' << point.training_objective << ','
+                    << point.validation_mse << '\n';
+            }
+        }
+    }
 }
 
-int run_sweep(const Dataset& dataset,
-              const std::string& axis,
-              const std::vector<float>& values,
-              size_t epochs,
-              const std::string& csv_path,
-              int rank) {
-    const bool l2_axis = axis == "l2";
-    auto records = std::make_shared<std::vector<FoldRecord>>();
+struct ProgramOptions {
+    size_t epochs = kDefaultEpochs;
+    size_t folds = kDefaultFolds;
+    size_t global_batch_size = kDefaultGlobalBatchSize;
+    uint64_t seed = kDefaultSeed;
+    size_t validation_interval = 10;
+    std::string train_path = "dataset/cnn_dataset_train.npz";
+    std::string results_dir =
+        "results/cross_validation/regularization_tuning";
+    bool diagnostics = false;
+    size_t histogram_bins = 64;
+    bool smoke = false;
+    bool help = false;
+};
 
-    TrialConfig base = make_config("reg", 0.0f, 0.0f, epochs);
-    ParameterGrid grid(base);
+void validate_options(const ProgramOptions& options) {
+    if (options.epochs == 0) {
+        throw std::invalid_argument("--epochs must be positive.");
+    }
+    if (options.folds < 2) {
+        throw std::invalid_argument("--folds must be at least 2.");
+    }
+    if (options.global_batch_size == 0) {
+        throw std::invalid_argument("--batch-size must be positive.");
+    }
+    if (options.validation_interval == 0) {
+        throw std::invalid_argument("--validation-interval must be positive.");
+    }
+    if (options.validation_interval > options.epochs) {
+        throw std::invalid_argument(
+            "--validation-interval cannot exceed --epochs.");
+    }
+    if (options.histogram_bins == 0) {
+        throw std::invalid_argument("--histogram-bins must be positive.");
+    }
+    if (options.train_path.empty()) {
+        throw std::invalid_argument("--train-path cannot be empty.");
+    }
+    if (options.results_dir.empty()) {
+        throw std::invalid_argument("--results-dir cannot be empty.");
+    }
+}
+
+ProgramOptions parse_options(int argc, char** argv) {
+    ProgramOptions options;
+    for (int i = 1; i < argc; ++i) {
+        const std::string arg = argv[i];
+        auto next_value = [&]() -> std::string {
+            if (i + 1 >= argc) {
+                throw std::invalid_argument("Missing value for " + arg);
+            }
+            return argv[++i];
+        };
+
+        if (arg == "--epochs") {
+            options.epochs = parse_size_value(next_value(), "--epochs");
+        } else if (arg == "--folds") {
+            options.folds = parse_size_value(next_value(), "--folds");
+        } else if (arg == "--batch-size") {
+            options.global_batch_size =
+                parse_size_value(next_value(), "--batch-size");
+        } else if (arg == "--seed") {
+            options.seed = parse_seed_value(next_value());
+        } else if (arg == "--validation-interval") {
+            options.validation_interval =
+                parse_size_value(next_value(), "--validation-interval");
+        } else if (arg == "--train-path") {
+            options.train_path = next_value();
+        } else if (arg == "--results-dir") {
+            options.results_dir = next_value();
+        } else if (arg == "--diagnostics") {
+            options.diagnostics = true;
+        } else if (arg == "--no-diagnostics") {
+            options.diagnostics = false;
+        } else if (arg == "--histogram-bins") {
+            options.histogram_bins =
+                parse_size_value(next_value(), "--histogram-bins");
+        } else if (arg == "--smoke") {
+            options.smoke = true;
+            options.epochs = 2;
+            options.folds = 2;
+            options.validation_interval = 1;
+        } else if (arg == "--help" || arg == "-h") {
+            options.help = true;
+        } else {
+            throw std::invalid_argument("Unknown argument: " + arg);
+        }
+    }
+    return options;
+}
+
+void print_help() {
+    std::cout
+        << "Regularization (L1/L2) Tuning, layer_tuning architecture (lr=1e-5)\n\n"
+        << "Usage: regularization_tuning [options]\n\n"
+        << "Runs the complete L1 and L2 ParameterGrid searches in one C++ process.\n\n"
+        << "Options:\n"
+        << "  --epochs N               Epochs per fold (default: 100)\n"
+        << "  --folds N                Number of CV folds (default: 5)\n"
+        << "  --batch-size N           Global batch size (default: 64)\n"
+        << "  --seed N                 Split/shuffle/initialization seed (default: 42)\n"
+        << "  --validation-interval N  Validation frequency (default: 10)\n"
+        << "  --train-path PATH        Training NPZ (default: dataset/cnn_dataset_train.npz)\n"
+        << "  --results-dir PATH       Output directory\n"
+        << "  --diagnostics            Write per-epoch training diagnostics\n"
+        << "  --no-diagnostics         Disable diagnostics (default)\n"
+        << "  --histogram-bins N       Activation histogram bins (default: 64)\n"
+        << "  --smoke                  Run two candidates per axis, 2 folds, 2 epochs,\n"
+        << "                           validating every epoch\n"
+        << "  --help, -h               Show this message\n\n"
+        << "The topology (conv5x5-dense-1024-512-256-128), learning rate (1e-5, Adam),\n"
+        << "LeakyReLU alpha (0.05), and physics weight (0.25) are fixed.\n";
+}
+
+TrialConfig make_base_config(const std::string& axis,
+                             const ProgramOptions& options) {
+    TrainingConfig training;
+    training.epochs = options.epochs;
+    training.global_batch_size = options.global_batch_size;
+    training.gradient_clip = 1.0f;
+    training.seed = options.seed;
+    training.shuffle = true;
+    training.validation_interval = options.validation_interval;
+    if (options.diagnostics) {
+        training.diagnostics.enabled = true;
+        training.diagnostics.results_root = options.results_dir;
+        training.diagnostics.experiment_name =
+            "regularization_tuning";
+        training.diagnostics.run_name = axis;
+        training.diagnostics.histogram_bins = options.histogram_bins;
+        training.diagnostics.training_dataset_path = options.train_path;
+        training.diagnostics.validation_dataset_path = options.train_path;
+    }
+
+    return TrialConfig{"regularization-" + axis,
+                       make_blueprint(),
+                       Recipes::adam(kLearningRate),
+                       LossConfig{kPhysicsWeight, 0.0f, 0.0f},
+                       training,
+                       {}};
+}
+
+void add_regularization_axis(ParameterGrid& grid,
+                             const std::string& axis,
+                             const std::vector<float>& values) {
     std::vector<NamedChoice<float>> choices;
     choices.reserve(values.size());
     for (float value : values) {
         choices.push_back(NamedChoice<float>{format_lambda(value), value});
     }
-    if (l2_axis) {
-        grid.add_choice<float>("l2", choices,
-                               [](TrialConfig& trial, const float& value) {
-                                   trial.loss.l2_weight = value;
-                               });
+
+    if (axis == "l1") {
+        grid.add_choice<float>(
+            "l1", std::move(choices),
+            [](TrialConfig& trial, const float& value) {
+                trial.loss.l1_weight = value;
+            });
+    } else if (axis == "l2") {
+        grid.add_choice<float>(
+            "l2", std::move(choices),
+            [](TrialConfig& trial, const float& value) {
+                trial.loss.l2_weight = value;
+            });
     } else {
-        grid.add_choice<float>("l1", choices,
-                               [](TrialConfig& trial, const float& value) {
-                                   trial.loss.l1_weight = value;
-                               });
+        throw std::invalid_argument("Unknown regularization axis: " + axis);
     }
+}
 
-    auto splitter = std::make_shared<RandomKFold>(kFoldCount, true, kSeed);
+SearchResult run_sweep(const Dataset& dataset,
+                       const ProgramOptions& options,
+                       const std::string& axis,
+                       const std::vector<float>& values,
+                       int rank) {
+    auto records = std::make_shared<std::vector<FoldRecord>>();
+    ParameterGrid grid(make_base_config(axis, options));
+    add_regularization_axis(grid, axis, values);
+
+    auto splitter =
+        std::make_shared<RandomKFold>(options.folds, true, options.seed);
     auto runner = std::make_shared<RecordingRunner>(MPI_COMM_WORLD, records);
-    CrossValidator validator(dataset, splitter, runner, MPI_COMM_WORLD, true);
-
-    const SearchResult result = validator.tune(grid);
+    CrossValidator validator(dataset, splitter, runner, MPI_COMM_WORLD,
+                             rank == 0);
+    SearchResult result = validator.tune(grid);
 
     if (rank == 0) {
-        write_csv(csv_path, *records);
+        std::filesystem::create_directories(options.results_dir);
+        const std::string prefix = options.results_dir + "/sweep_" + axis;
+        write_fold_csv(prefix + ".csv", *records);
+        write_history_csv(options.results_dir + "/training_history_" + axis +
+                              ".csv",
+                          result);
+
         std::cout << "\n==================== " << axis
                   << " SWEEP RESULTS ====================\n";
         for (const CandidateResult& candidate : result.candidates) {
@@ -362,15 +573,25 @@ int run_sweep(const Dataset& dataset,
             std::cout << "val MSE " << candidate.mean_validation_mse << " +/- "
                       << candidate.validation_stddev << '\n';
         }
-        std::cout << "Best by mean validation MSE: "
-                  << result.best().config.name << " ("
-                  << result.best().mean_validation_mse << ")\n"
-                  << "NOTE: ranking by the mean is reported for continuity only.\n"
+        if (result.best_index < result.candidates.size()) {
+            const CandidateResult& best = result.best();
+            std::cout << "Best by mean validation MSE: " << best.config.name
+                      << " (" << best.mean_validation_mse << ")\n";
+        }
+        std::cout << "NOTE: ranking by the mean is reported for continuity only.\n"
                   << "The conclusion comes from the paired analysis of "
-                  << csv_path << ".\n"
-                  << "CSV written to " << csv_path << std::endl;
+                  << prefix << ".csv\n"
+                  << "CSV written to " << prefix << ".csv\n";
     }
-    return 0;
+    return result;
+}
+
+std::vector<float> selected_grid(const std::vector<float>& full_grid,
+                                 bool smoke) {
+    if (!smoke) {
+        return full_grid;
+    }
+    return {full_grid[0], full_grid[1]};
 }
 
 } // namespace
@@ -378,50 +599,54 @@ int run_sweep(const Dataset& dataset,
 int main(int argc, char** argv) {
     MPI_Init(&argc, &argv);
     int rank = 0;
+    int world_size = 1;
     MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &world_size);
+
     int status = 0;
-
     try {
-        const std::string mode = argc > 1 ? argv[1] : "help";
-        const size_t epochs = argc > 2 ? std::stoul(argv[2]) : 100;
-        Dataset dataset("dataset/cnn_dataset_train.npz");
-
-        if (mode == "converge") {
-            status = run_convergence(dataset, epochs, rank);
-        } else if (mode == "sweep-l2") {
-            // Log-spaced over the band where the measured balancing lambda2
-            // sits (0.0762 at init, 7e-4 to 1e-3 later), plus 0 as reference.
-            status = run_sweep(dataset, "l2",
-                               {0.0f, 1e-4f, 3.16e-4f, 1e-3f, 3.16e-3f, 1e-2f,
-                                3.16e-2f, 1e-1f},
-                               epochs,
-                               "results/cross_validation/regularization_tuning/"
-                               "sweep_l2.csv",
-                               rank);
-        } else if (mode == "sweep-l1") {
-            // Centred on the measured median |grad_data| rather than reused
-            // from L2: the L1 gradient is lambda1*sign(w), independent of |w|,
-            // so lambda1* IS the median |grad_data| (2.13e-5 at epoch 100)
-            // rather than grad/(2|w|). Same 3-decade width as the L2 sweep, so
-            // the extremes sit at 1/30 and 30x the data gradient.
-            status = run_sweep(dataset, "l1",
-                               {0.0f, 6.75e-7f, 2.13e-6f, 6.75e-6f, 2.13e-5f,
-                                6.75e-5f, 2.13e-4f, 6.75e-4f},
-                               epochs,
-                               "results/cross_validation/regularization_tuning/"
-                               "sweep_l1.csv",
-                               rank);
-        } else if (rank == 0) {
-            std::cout << "Usage: regularization_tuning <mode> <epochs>\n"
-                      << "  converge <epochs>   one fold, lambda = 0, prints the "
-                         "train/val curve\n"
-                      << "  sweep-l2 <epochs>   L2 sweep, lambda1 = 0\n"
-                      << "  sweep-l1 <epochs>   L1 sweep, lambda2 = 0\n";
+        const ProgramOptions options = parse_options(argc, argv);
+        if (options.help) {
+            if (rank == 0) {
+                print_help();
+            }
+            MPI_Finalize();
+            return 0;
         }
+        validate_options(options);
+
+        if (rank == 0) {
+            std::cout << "========================================================\n"
+                      << "  REGULARIZATION TUNING, LAYER_TUNING ARCHITECTURE (lr=1e-5)\n"
+                      << "========================================================\n"
+                      << "Search:          L1 and L2 ParameterGrid sweeps\n"
+                      << "Topology:        conv5x5-dense-1024-512-256-128\n"
+                      << "Optimizer:       Adam (lr = " << kLearningRate << ", fixed)\n"
+                      << "Folds:           " << options.folds << "\n"
+                      << "Epochs:          " << options.epochs << "\n"
+                      << "Batch size:      " << options.global_batch_size << "\n"
+                      << "Seed:            " << options.seed << "\n"
+                      << "Diagnostics:     "
+                      << (options.diagnostics ? "on" : "off") << "\n"
+                      << "MPI ranks:       " << world_size << "\n"
+                      << "Results dir:     " << options.results_dir << "\n"
+                      << "--------------------------------------------------------\n";
+        }
+
+        Dataset training_dataset(options.train_path);
+        const std::vector<float> l1_values =
+            selected_grid(l1_grid(), options.smoke);
+        const std::vector<float> l2_values =
+            selected_grid(l2_grid(), options.smoke);
+        run_sweep(training_dataset, options, "l1", l1_values, rank);
+        run_sweep(training_dataset, options, "l2", l2_values, rank);
     } catch (const std::exception& error) {
-        std::cerr << "Regularization tuning failed on rank " << rank << ": "
-                  << error.what() << '\n';
-        MPI_Abort(MPI_COMM_WORLD, 1);
+        std::cerr << "regularization_tuning failed on rank " << rank
+                  << ": " << error.what() << '\n';
+        if (world_size > 1) {
+            MPI_Abort(MPI_COMM_WORLD, 1);
+        }
+        status = 1;
     }
 
     MPI_Finalize();
