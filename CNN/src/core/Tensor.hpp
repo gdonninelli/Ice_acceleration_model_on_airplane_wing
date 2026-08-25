@@ -8,6 +8,7 @@
 #ifndef TENSOR_HPP
 #define TENSOR_HPP
 
+#include <cstddef>
 #include <vector>
 
 /**
