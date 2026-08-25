@@ -311,7 +311,7 @@ int run_sweep(const Dataset& dataset,
     // Per-epoch gradient/update/activation statistics for stability analysis
     // (requested by the group); disable with --no-diagnostics.
     base.training.diagnostics.enabled = diagnostics;
-    base.training.diagnostics.results_root = "results";
+    base.training.diagnostics.results_root = "results/cross_validation";
     base.training.diagnostics.experiment_name = "physics_weight_tuning";
     base.training.diagnostics.run_name = "sweep";
     base.training.diagnostics.training_dataset_path = kDatasetPath;
@@ -397,7 +397,8 @@ int main(int argc, char** argv) {
                 << "  sweep [epochs]   7-value lambda sweep, 5-fold CV "
                    "(default epochs: 100)\n"
                 << "  Per-epoch gradient/weight diagnostics are written to\n"
-                << "  results/physics_weight_tuning/sweep/ by default; disable\n"
+                << "  results/cross_validation/physics_weight_tuning/sweep/ by "
+                   "default; disable\n"
                 << "  with --no-diagnostics.\n";
         }
     } catch (const std::exception& error) {

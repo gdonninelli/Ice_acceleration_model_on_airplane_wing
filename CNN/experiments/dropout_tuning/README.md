@@ -53,13 +53,13 @@ python3 CNN/experiments/dropout_tuning/analyze.py \
 
 Per-epoch gradient, weight-update, and activation statistics (for stability
 analysis) are recorded **by default** under
-`results/dropout_tuning/sweep/candidate_NNN/fold_NNN/`; disable with
+`results/cross_validation/dropout_tuning/sweep/candidate_NNN/fold_NNN/`; disable with
 `--no-diagnostics` as the last argument. Plots:
 
 ```bash
 python3 CNN/analysis/plot_training_diagnostics.py \
-    --input results/dropout_tuning/sweep \
-    --output-dir results/dropout_tuning/sweep/plots
+    --input results/cross_validation/dropout_tuning/sweep \
+    --output-dir results/cross_validation/dropout_tuning/sweep/plots
 ```
 
 > ⚠️ **Dataset prerequisite.** Results are only meaningful on the dataset
