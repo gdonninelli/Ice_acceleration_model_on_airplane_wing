@@ -81,16 +81,6 @@ mpirun -n 4 ./build/experiments/optimizer_comparison \
   --results-dir results/cross_validation/optimizer_comparison
 ```
 
-### 3. Full Learning-Rate Sweep Grid
-```bash
-mpirun -n 4 ./build/experiments/optimizer_comparison \
-  --mode grid \
-  --folds 5 \
-  --epochs 100 \
-  --batch-size 64 \
-  --results-dir results/cross_validation/optimizer_comparison_grid
-```
-
 ## Generated Outputs
 
 The experiment writes results to the specified output directory:
@@ -101,27 +91,26 @@ The experiment writes results to the specified output directory:
 ## Results
 
 The recorded comparison used 5 folds, 100 epochs per fold, global batch size 64,
-and seed 42. The ranking below uses the sample-weighted physical-unit validation
+learning rate $10^{-5}$, and seed 42. The ranking below uses the sample-weighted physical-unit validation
 MSE reported in [`run/cv_summary.csv`](../../../results/cross_validation/optimizer_comparison/run/cv_summary.csv).
 The fold ranges are included to show the variability between validation splits.
 
 | Rank | Optimizer | Mean validation MSE +/- SD | Fold range |
 |---:|---|---:|---:|
-| **1** | **Adam (lr = 1e-3)** | **0.004415 +/- 0.001442** | 0.002511 - 0.006408 |
-| 2 | SGD + Momentum (lr = 1e-3, m = 0.9) | 0.005140 +/- 0.001052 | 0.003532 - 0.006811 |
-| 3 | AdaGrad (lr = 1e-3) | 0.005875 +/- 0.001290 | 0.003646 - 0.007472 |
-| 4 | SGD (lr = 1e-3) | 0.006216 +/- 0.001322 | 0.004143 - 0.008247 |
-| 5 | RMSprop (lr = 1e-3) | 0.009091 +/- 0.004407 | 0.004967 - 0.016515 |
+| **1** | **Adam (lr = 1e-5)** | **0.004427 +/- 0.000887** | 0.002879 - 0.005044 |
+| 2 | RMSprop (lr = 1e-5) | 0.005216 +/- 0.000653 | 0.004518 - 0.006173 |
+| 3 | AdaGrad (lr = 1e-5) | 0.006185 +/- 0.001238 | 0.004239 - 0.007439 |
+| 4 | SGD + Momentum (lr = 1e-5, m = 0.9) | 0.007151 +/- 0.001412 | 0.004791 - 0.008473 |
+| 5 | SGD (lr = 1e-5) | 0.017927 +/- 0.006229 | 0.013063 - 0.028647 |
 
 Adam was selected for the final refit. It achieved the lowest mean validation
-error, approximately 14.1% lower than SGD with momentum and 51.4% lower than
-RMSprop. RMSprop was also the least consistent optimizer, with the largest fold
-spread. The simpler SGD variants performed competitively, but neither matched
-Adam's average validation error.
+error with strong fold consistency, approximately 15.1% lower than RMSprop and
+38.1% lower than SGD with momentum. Plain SGD struggled at this learning rate,
+yielding the highest validation error and fold variance.
 
 After selecting Adam using cross-validation, the model was refit on all training
 data and evaluated once on the untouched test set. The resulting physical-unit
-test MSE was **0.00215538**. The complete recorded summary is available in
+test MSE was **0.00365482**. The complete recorded summary is available in
 [`summary.txt`](../../../results/cross_validation/optimizer_comparison/summary.txt),
 with comparison plots in
 [`plots/`](../../../results/cross_validation/optimizer_comparison/plots/).

@@ -281,9 +281,8 @@ void print_help() {
         << "Optimizer Comparison Experiment for CNN Wing Ice Model\n\n"
         << "Usage: optimizer_comparison [options]\n\n"
         << "Options:\n"
-        << "  --mode <compare|grid|smoke> Comparison mode (default: compare)\n"
-        << "                                compare: compares 5 optimizers at standard tuned LRs\n"
-        << "                                grid:    evaluates 5 optimizers x multiple LRs\n"
+        << "  --mode <compare|smoke>      Comparison mode (default: compare)\n"
+        << "                                compare: compares 5 optimizers at lr = 1e-5\n"
         << "                                smoke:   fast 2-fold 2-epoch sanity run\n"
         << "  --epochs <N>                Training epochs per fold (default: 100)\n"
         << "  --folds <N>                 Number of CV folds (default: 5)\n"
@@ -313,7 +312,7 @@ TrialConfig make_base_config(const ProgramOptions& options) {
     return TrialConfig{
         "optimizer-trial",
         make_blueprint(0.05f),
-        Recipes::adam(), // default placeholder replaced by grid
+        Recipes::adam(1e-5f), // default placeholder replaced by grid
         LossConfig{options.physics_weight, 0.0f, 0.0f},
         training_cfg,
         {}};
@@ -323,59 +322,22 @@ ParameterGrid build_comparison_grid(const ProgramOptions& options) {
     TrialConfig base = make_base_config(options);
     ParameterGrid grid(base);
 
-    // Standard comparison across all 5 optimizers using their class default parameters (lr = 1e-3):
-    // 1. SGD (lr = 1e-3)
-    // 2. SGD with Momentum (lr = 1e-3, momentum = 0.9)
-    // 3. AdaGrad (lr = 1e-3, eps = 1e-8)
-    // 4. RMSprop (lr = 1e-3, decay = 0.9, eps = 1e-8)
-    // 5. Adam (lr = 1e-3, beta1 = 0.9, beta2 = 0.999, eps = 1e-8)
+    // Standard comparison across all 5 optimizers at learning rate 1e-5:
+    // 1. SGD (lr = 1e-5)
+    // 2. SGD with Momentum (lr = 1e-5, momentum = 0.9)
+    // 3. AdaGrad (lr = 1e-5, eps = 1e-8)
+    // 4. RMSprop (lr = 1e-5, decay = 0.9, eps = 1e-8)
+    // 5. Adam (lr = 1e-5, beta1 = 0.9, beta2 = 0.999, eps = 1e-8)
     std::vector<NamedChoice<OptimizerRecipe>> choices = {
-        {"SGD (lr=1e-3)", Recipes::sgd()},
-        {"SGD+Momentum (lr=1e-3, m=0.9)", Recipes::sgd_momentum()},
-        {"AdaGrad (lr=1e-3)", Recipes::adagrad()},
-        {"RMSprop (lr=1e-3)", Recipes::rmsprop()},
-        {"Adam (lr=1e-3)", Recipes::adam()}
+        {"SGD (lr=1e-5)", Recipes::sgd(1e-5f, 0.0f)},
+        {"SGD+Momentum (lr=1e-5, m=0.9)", Recipes::sgd_momentum(1e-5f, 0.9f)},
+        {"AdaGrad (lr=1e-5)", Recipes::adagrad(1e-5f)},
+        {"RMSprop (lr=1e-5)", Recipes::rmsprop(1e-5f)},
+        {"Adam (lr=1e-5)", Recipes::adam(1e-5f)}
     };
 
     grid.add_choice<OptimizerRecipe>(
         "optimizer", choices,
-        [](TrialConfig& trial, const OptimizerRecipe& opt) {
-            trial.optimizer = opt;
-        });
-
-    return grid;
-}
-
-ParameterGrid build_sweep_grid(const ProgramOptions& options) {
-    TrialConfig base = make_base_config(options);
-    ParameterGrid grid(base);
-
-    // Sweep: all 5 optimizers over learning rate scales
-    std::vector<NamedChoice<OptimizerRecipe>> choices = {
-        // SGD
-        {"SGD_1e-4", Recipes::sgd(1e-4f, 0.0f)},
-        {"SGD_1e-3", Recipes::sgd(1e-3f, 0.0f)},
-        {"SGD_1e-2", Recipes::sgd(1e-2f, 0.0f)},
-        // SGD with Momentum
-        {"SGDM_1e-4", Recipes::sgd_momentum(1e-4f, 0.9f)},
-        {"SGDM_1e-3", Recipes::sgd_momentum(1e-3f, 0.9f)},
-        {"SGDM_1e-2", Recipes::sgd_momentum(1e-2f, 0.9f)},
-        // AdaGrad
-        {"AdaGrad_1e-3", Recipes::adagrad(1e-3f)},
-        {"AdaGrad_1e-2", Recipes::adagrad(1e-2f)},
-        {"AdaGrad_1e-1", Recipes::adagrad(1e-1f)},
-        // RMSprop
-        {"RMSprop_1e-5", Recipes::rmsprop(1e-5f)},
-        {"RMSprop_1e-4", Recipes::rmsprop(1e-4f)},
-        {"RMSprop_1e-3", Recipes::rmsprop(1e-3f)},
-        // Adam
-        {"Adam_1e-5", Recipes::adam(1e-5f)},
-        {"Adam_1e-4", Recipes::adam(1e-4f)},
-        {"Adam_1e-3", Recipes::adam(1e-3f)},
-    };
-
-    grid.add_choice<OptimizerRecipe>(
-        "optimizer_candidate", choices,
         [](TrialConfig& trial, const OptimizerRecipe& opt) {
             trial.optimizer = opt;
         });
@@ -422,9 +384,7 @@ int main(int argc, char** argv) {
         // Load training dataset for CV
         Dataset training_dataset(options.train_path);
 
-        ParameterGrid grid = (options.mode == "grid")
-                                 ? build_sweep_grid(options)
-                                 : build_comparison_grid(options);
+        ParameterGrid grid = build_comparison_grid(options);
 
         auto splitter = std::make_shared<RandomKFold>(options.folds, true, options.seed);
         auto records = std::make_shared<std::vector<FoldRecord>>();
