@@ -3,7 +3,7 @@
 # Replace site-specific placeholders before submitting with sbatch.
 
 #SBATCH --job-name=activation-tuning
-#SBATCH --account=EUHPC_D35_025
+#SBATCH --account=ACCOUNT_HERE
 #SBATCH --partition=dcgp_usr_prod
 #SBATCH --nodes=1
 #SBATCH --ntasks=64
