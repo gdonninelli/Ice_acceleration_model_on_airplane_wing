@@ -1,0 +1,4 @@
+Activation-function tuning
+Best candidate: activation-function-search [activation=leakyrelu-alpha-0.05]
+Cross-validation physical MSE: 0.00442742 +/- 0.000865257
+Final untouched-test physical MSE: 0.00273892

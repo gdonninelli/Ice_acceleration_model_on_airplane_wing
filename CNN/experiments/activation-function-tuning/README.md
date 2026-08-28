@@ -84,3 +84,61 @@ With diagnostics enabled, the standard recorder additionally writes
 `<results-dir>/activation-function-tuning/search/` with one directory per
 candidate and fold, plus `cv_summary.csv`. Final-refit diagnostics are written
 under `.../search/final/`.
+
+## Recorded Results
+
+The completed run used source revision `8aada70b492a`, 64 MPI ranks, five
+folds, and 100 epochs. The candidate ranking below is by mean physical-unit
+validation MSE; the value after `+/-` is the fold standard deviation.
+
+| Rank | Activation | Mean validation MSE | Fold stddev |
+|---:|---|---:|---:|
+| 1 | `leakyrelu-alpha-0.05` | **0.00442742** | 0.000865257 |
+| 2 | `leakyrelu-alpha-0.01` | 0.00444772 | 0.000876077 |
+| 3 | `relu` | 0.00445429 | 0.000875881 |
+| 4 | `leakyrelu-alpha-0.1` | 0.00454457 | 0.000965707 |
+| 5 | `tanh` | 0.00546562 | 0.00104545 |
+| 6 | `sigmoid` | 0.00897140 | 0.00125009 |
+
+## Stability Analysis and Selection
+
+Selection considered both validation performance and training stability. The
+stability checks used the five fold diagnostics over all 100 epochs:
+
+| Activation | CV fold stddev | Mean checkpoint fold stddev | Peak gradient norm | Peak weight update ratio | Non-finite metrics |
+|---|---:|---:|---:|---:|---:|
+| `tanh` | 0.00104545 | 0.00120968 | 111.51 | 3.01e-4 | No |
+| `sigmoid` | 0.00125009 | 0.02918695 | 18.22 | 6.15e-4 | No |
+| `relu` | 0.000875881 | 0.00109799 | 20.81 | 3.31e-4 | No |
+| `leakyrelu-alpha-0.01` | 0.000876077 | 0.00104997 | 20.64 | 4.47e-4 | No |
+| `leakyrelu-alpha-0.05` | **0.000865257** | 0.00105385 | **20.14** | 4.50e-4 | No |
+| `leakyrelu-alpha-0.1` | 0.000965707 | 0.00109082 | 20.79 | 4.42e-4 | No |
+
+The correct choice is therefore `LeakyReLU(alpha=0.05)`: it has the lowest
+mean validation MSE, the smallest final fold-to-fold dispersion, and the
+lowest peak gradient among the ReLU-family candidates. Its update ratios stay
+small and comparable to the neighboring LeakyReLU settings, indicating that
+the result is not caused by an unstable optimizer trajectory. Tanh has a
+large transient gradient spike, and Sigmoid has substantially higher
+checkpoint variability caused by slow early convergence. All metrics remained
+finite, so no candidate exhibited numerical divergence.
+
+The final refit on the complete training set, evaluated once on the untouched
+test NPZ, achieved a physical-unit MSE of **0.00273892**. The test result was
+not used for selection.
+
+## Plots
+
+Generate the plots from the recorded aggregate CSVs and per-fold diagnostics:
+
+```bash
+python3 CNN/experiments/activation-function-tuning/plot_results.py \
+    --results-dir results/cross_validation/activation-function-tuning
+```
+
+PNG files are written to `CNN/experiments/activation-function-tuning/plots/`:
+
+- `plot1_val_mse_by_activation.png`: mean validation MSE with fold error bars
+- `plot2_val_mse_by_fold.png`: validation MSE for every fold and candidate
+- `plot3_val_curves_epoch.png`: validation MSE at ten-epoch checkpoints
+- `plot4_diagnostics_over_epochs.png`: gradient norms and weight update ratios
