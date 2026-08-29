@@ -97,12 +97,13 @@ mpirun -n 2 ./build/CNN/experiments/learning_rate_tuning --smoke
 
 ### 2. Standard 5-Fold Tuning Run (100 epochs per fold)
 ```bash
-mpirun -n 4 ./build/CNN/experiments/learning_rate_tuning \
+mpirun -n 64 ./build/CNN/experiments/learning_rate_tuning \
   --mode tune \
   --folds 5 \
   --epochs 100 \
   --batch-size 64 \
   --seed 42 \
+  --physics-weight 0.25 \
   --results-dir results/cross_validation/learning_rate_tuning
 ```
 
