@@ -67,6 +67,8 @@ public:
     void set_activation_observer(ActivationObserver observer);
     void clear_activation_observer() noexcept;
     OptimizerMetadata optimizer_metadata() const;
+    void set_learning_rate(float lr);
+    float learning_rate() const;
     float gradient_clip() const { return _gradient_clip; }
     void export_weights(const std::string& filepath) const;
     void import_weights(const std::string& filepath);

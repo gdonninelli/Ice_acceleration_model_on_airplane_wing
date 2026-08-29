@@ -764,6 +764,107 @@ void test_optimizer_recipes() {
     // Verify fresh instance creation
     auto opt1_second = sgd_recipe.build();
     require(opt1.get() != opt1_second.get(), "Optimizer recipe must construct distinct instances");
+
+    // Verify set_learning_rate and get_learning_rate
+    for (auto* opt : {opt1.get(), opt2.get(), opt3.get(), opt4.get(), opt5.get()}) {
+        opt->set_learning_rate(0.05f);
+        require_close(opt->get_learning_rate(), 0.05f, 1e-6,
+                      "Optimizer get_learning_rate must reflect set value");
+        require_close(opt->metadata().effective_learning_rate, 0.05f, 1e-6,
+                      "Optimizer metadata must reflect updated learning rate");
+        require_throws([&] { opt->set_learning_rate(-0.01f); },
+                       "Negative learning rate must throw");
+        require_throws([&] { opt->set_learning_rate(0.0f); },
+                       "Zero learning rate must throw");
+        require_throws(
+            [&] { opt->set_learning_rate(std::numeric_limits<float>::quiet_NaN()); },
+            "NaN learning rate must throw");
+    }
+}
+
+void test_lr_schedulers() {
+    // ConstantLR
+    ConstantLR constant_lr(1e-3f);
+    require_close(constant_lr.get_rate(0, 100), 1e-3f, 1e-7, "ConstantLR at epoch 0");
+    require_close(constant_lr.get_rate(50, 100), 1e-3f, 1e-7, "ConstantLR at epoch 50");
+    require_close(constant_lr.get_rate(99, 100), 1e-3f, 1e-7, "ConstantLR at epoch 99");
+    require_throws([] { ConstantLR invalid(-1e-3f); }, "ConstantLR negative rate must throw");
+
+    // StepLR
+    StepLR step_lr(1e-1f, 15, 0.5f);
+    require_close(step_lr.get_rate(0, 100), 0.1f, 1e-7, "StepLR epoch 0");
+    require_close(step_lr.get_rate(14, 100), 0.1f, 1e-7, "StepLR epoch 14");
+    require_close(step_lr.get_rate(15, 100), 0.05f, 1e-7, "StepLR epoch 15");
+    require_close(step_lr.get_rate(29, 100), 0.05f, 1e-7, "StepLR epoch 29");
+    require_close(step_lr.get_rate(30, 100), 0.025f, 1e-7, "StepLR epoch 30");
+    require_close(step_lr.get_rate(45, 100), 0.0125f, 1e-7, "StepLR epoch 45");
+
+    require_throws([] { StepLR invalid(0.1f, 0, 0.5f); }, "StepLR step_size 0 must throw");
+    require_throws([] { StepLR invalid(0.1f, 15, 0.0f); }, "StepLR gamma 0 must throw");
+    require_throws([] { StepLR invalid(0.1f, 15, 1.5f); }, "StepLR gamma > 1 must throw");
+
+    // CosineAnnealingLR
+    CosineAnnealingLR cosine_lr(1e-5f, 1e-1f);
+    require_close(cosine_lr.get_rate(0, 100), 0.1f, 1e-6, "CosineAnnealingLR epoch 0");
+    require_close(cosine_lr.get_rate(99, 100), 1e-5f, 1e-7, "CosineAnnealingLR epoch 99");
+    const float mid_rate = cosine_lr.get_rate(49, 100);
+    require(mid_rate < 0.1f && mid_rate > 1e-5f, "CosineAnnealingLR mid epoch range");
+    require_throws([] { CosineAnnealingLR invalid(-1e-5f, 1e-1f); },
+                   "CosineAnnealingLR negative min_lr must throw");
+    require_throws([] { CosineAnnealingLR invalid(1e-1f, 1e-5f); },
+                   "CosineAnnealingLR min_lr > max_lr must throw");
+
+    // WarmupCosineLR
+    WarmupCosineLR warmup_lr(1e-5f, 1e-1f, 1e-5f, 5);
+    require_close(warmup_lr.get_rate(0, 100), 1e-5f, 1e-7, "WarmupCosineLR epoch 0");
+    const float warmup_step2 = warmup_lr.get_rate(2, 100);
+    const float expected_step2 = 1e-5f + (2.0f / 5.0f) * (0.1f - 1e-5f);
+    require_close(warmup_step2, expected_step2, 1e-6, "WarmupCosineLR epoch 2");
+    require_close(warmup_lr.get_rate(5, 100), 0.1f, 1e-6, "WarmupCosineLR peak epoch 5");
+    require_close(warmup_lr.get_rate(99, 100), 1e-5f, 1e-7, "WarmupCosineLR epoch 99");
+
+    require_throws([] { WarmupCosineLR invalid(0.0f, 1e-1f, 1e-5f, 5); },
+                   "WarmupCosineLR zero start must throw");
+    require_throws([] { WarmupCosineLR invalid(1e-1f, 1e-3f, 1e-5f, 5); },
+                   "WarmupCosineLR peak < start must throw");
+}
+
+void test_lr_scheduler_recipes_and_training() {
+    auto c_recipe = Recipes::constant_lr(1e-3f);
+    auto s_recipe = Recipes::step_lr(1e-1f, 15, 0.5f);
+    auto cos_recipe = Recipes::cosine_lr(1e-5f, 1e-1f);
+    auto w_recipe = Recipes::warmup_cosine_lr(1e-5f, 1e-1f, 1e-5f, 5);
+
+    require(c_recipe.has_scheduler() && c_recipe.build() != nullptr, "ConstantLR recipe build");
+    require(s_recipe.has_scheduler() && s_recipe.build() != nullptr, "StepLR recipe build");
+    require(cos_recipe.has_scheduler() && cos_recipe.build() != nullptr, "CosineLR recipe build");
+    require(w_recipe.has_scheduler() && w_recipe.build() != nullptr, "WarmupCosineLR recipe build");
+
+    const Dataset dataset = tiny_dataset(12);
+    const auto indices = dataset.all_indices();
+    const NormalizationStats normalization = dataset.fit_normalization(indices);
+
+    ModelBlueprint blueprint;
+    blueprint.feature_layers = {Recipes::flatten()};
+    blueprint.head_layers = {Recipes::dense(4), Recipes::dense(1)};
+
+    TrialConfig trial{"lr-schedule-test", blueprint, Recipes::adam(1e-3f),
+                      LossConfig{0.25f}, TrainingConfig{5, 4, 1.0f, 7, false},
+                      {}, cos_recipe};
+
+    ModelFactory factory;
+    auto model = factory.build(trial, dataset.sdf_height(), dataset.sdf_width(),
+                               dataset.scalar_features(), trial.training.seed,
+                               MPI_COMM_WORLD);
+    const Trainer trainer(MPI_COMM_WORLD);
+    const TrainingResult result =
+        trainer.fit(*model, dataset, indices, dataset, indices, normalization,
+                    trial.loss, trial.training, trial.training.seed, false, {},
+                    &trial);
+
+    require(std::isfinite(result.training_objective), "Scheduled training objective must be finite");
+    require(std::isfinite(result.validation_mse), "Scheduled validation MSE must be finite");
+    require(model->learning_rate() > 0.0f, "Model learning rate must be positive");
 }
 } // namespace
 
@@ -960,6 +1061,8 @@ int main(int argc, char** argv) {
         test_training_diagnostics_artifacts();
         test_cross_validator_selection();
         test_optimizer_recipes();
+        test_lr_schedulers();
+        test_lr_scheduler_recipes_and_training();
         std::cout << "All cross-validation tests passed." << std::endl;
     } catch (const std::exception& error) {
         std::cerr << "Test failure: " << error.what() << std::endl;

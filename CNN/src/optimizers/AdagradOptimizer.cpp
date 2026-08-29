@@ -52,6 +52,17 @@ void AdagradOptimizer::apply_gradients(float* weights, float* grads, size_t size
     }
 }
 
+void AdagradOptimizer::set_learning_rate(float lr) {
+    if (!std::isfinite(lr) || lr <= 0.0f) {
+        throw std::invalid_argument("Adagrad learning_rate must be finite and positive.");
+    }
+    _learning_rate = lr;
+}
+
+float AdagradOptimizer::get_learning_rate() const {
+    return _learning_rate;
+}
+
 OptimizerMetadata AdagradOptimizer::metadata() const {
     return OptimizerMetadata{
         "adagrad",

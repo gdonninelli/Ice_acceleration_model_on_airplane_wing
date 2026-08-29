@@ -59,6 +59,8 @@ class AdamOptimizer : public Optimizer {
      * @param size The total number of elements in the weights and grads arrays.
      */
     void apply_gradients(float* weights, float* grads, size_t size) override;
+    void set_learning_rate(float lr) override;
+    float get_learning_rate() const override;
     OptimizerMetadata metadata() const override;
 };
 

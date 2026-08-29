@@ -61,12 +61,22 @@ void SGDOptimizer::apply_gradients(float* weights, float* grads, size_t size) {
     }
 }
 
+void SGDOptimizer::set_learning_rate(float lr) {
+    if (!std::isfinite(lr) || lr <= 0.0f) {
+        throw std::invalid_argument("SGD learning_rate must be finite and positive.");
+    }
+    _learning_rate = lr;
+}
+
+float SGDOptimizer::get_learning_rate() const {
+    return _learning_rate;
+}
+
 OptimizerMetadata SGDOptimizer::metadata() const {
     return OptimizerMetadata{
         "sgd",
         _learning_rate,
         _learning_rate,
         false,
-        {{"momentum", _momentum},
-         {"weight_decay", _weight_decay}}};
+        {{"momentum", _momentum}, {"weight_decay", _weight_decay}}};
 }

@@ -294,6 +294,16 @@ OptimizerMetadata CNNModel::optimizer_metadata() const {
     return _optimizer->metadata();
 }
 
+void CNNModel::set_learning_rate(float lr) {
+    if (_optimizer) {
+        _optimizer->set_learning_rate(lr);
+    }
+}
+
+float CNNModel::learning_rate() const {
+    return _optimizer ? _optimizer->get_learning_rate() : 0.0f;
+}
+
 void CNNModel::zero_grad() {
     for (const auto& parameter : parameters()) {
         if (parameter.tensor) {

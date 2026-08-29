@@ -1,5 +1,6 @@
 #include "Trainer.hpp"
 #include "core/Loss.hpp"
+#include "optimizers/LRScheduler.hpp"
 #include "training/TrainingDiagnostics.hpp"
 #include <algorithm>
 #include <bit>
@@ -296,6 +297,11 @@ TrainingResult Trainer::fit(CNNModel& model,
     double final_training_objective = 0.0;
     std::vector<EpochMetrics> history;
 
+    std::unique_ptr<LRScheduler> scheduler;
+    if (trial_config && trial_config->scheduler.has_scheduler()) {
+        scheduler = trial_config->scheduler.build();
+    }
+
     auto evaluate_validation = [&]() {
         double local_validation_sum = 0.0;
         unsigned long long local_validation_seen = 0;
@@ -347,6 +353,11 @@ TrainingResult Trainer::fit(CNNModel& model,
     };
 
     for (size_t epoch = 0; epoch < training_config.epochs; ++epoch) {
+        if (scheduler) {
+            const float scheduled_lr =
+                scheduler->get_rate(epoch, training_config.epochs);
+            model.set_learning_rate(scheduled_lr);
+        }
         const size_t completed_epoch = epoch + 1;
         if (diagnostics) {
             diagnostics->begin_epoch(completed_epoch);

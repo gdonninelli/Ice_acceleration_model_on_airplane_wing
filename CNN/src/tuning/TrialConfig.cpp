@@ -6,6 +6,7 @@
 #include "layers/FlattenLayer.hpp"
 #include "optimizers/AdagradOptimizer.hpp"
 #include "optimizers/AdamOptimizer.hpp"
+#include "optimizers/LRScheduler.hpp"
 #include "optimizers/RMSpropOptimizer.hpp"
 #include "optimizers/SGDOptimizer.hpp"
 #include <iomanip>
@@ -73,6 +74,24 @@ std::unique_ptr<Optimizer> OptimizerRecipe::build() const {
         throw std::runtime_error("Optimizer recipe returned a null optimizer.");
     }
     return optimizer;
+}
+
+LRSchedulerRecipe::LRSchedulerRecipe(std::string description, BuildFunction build)
+    : _description(std::move(description)), _build(std::move(build)) {
+    if (_description.empty() || !_build) {
+        throw std::invalid_argument("LRSchedulerRecipe requires a description and builder.");
+    }
+}
+
+std::unique_ptr<LRScheduler> LRSchedulerRecipe::build() const {
+    if (!_build) {
+        return nullptr;
+    }
+    auto scheduler = _build();
+    if (!scheduler) {
+        throw std::runtime_error("LRScheduler recipe returned a null scheduler.");
+    }
+    return scheduler;
 }
 
 namespace Recipes {
@@ -253,6 +272,48 @@ OptimizerRecipe adam(float learning_rate,
     return OptimizerRecipe(description.str(), [=] {
         return std::make_unique<AdamOptimizer>(learning_rate, beta1, beta2,
                                                epsilon, weight_decay);
+    });
+}
+
+LRSchedulerRecipe constant_lr(float learning_rate) {
+    std::ostringstream description;
+    description << std::setprecision(std::numeric_limits<float>::max_digits10);
+    description << "constant(lr=" << learning_rate << ")";
+    return LRSchedulerRecipe(description.str(), [=] {
+        return std::make_unique<ConstantLR>(learning_rate);
+    });
+}
+
+LRSchedulerRecipe step_lr(float initial_lr, size_t step_size, float gamma) {
+    std::ostringstream description;
+    description << std::setprecision(std::numeric_limits<float>::max_digits10);
+    description << "step(lr0=" << initial_lr << ",step=" << step_size
+                << ",gamma=" << gamma << ")";
+    return LRSchedulerRecipe(description.str(), [=] {
+        return std::make_unique<StepLR>(initial_lr, step_size, gamma);
+    });
+}
+
+LRSchedulerRecipe cosine_lr(float min_lr, float max_lr) {
+    std::ostringstream description;
+    description << std::setprecision(std::numeric_limits<float>::max_digits10);
+    description << "cosine(min=" << min_lr << ",max=" << max_lr << ")";
+    return LRSchedulerRecipe(description.str(), [=] {
+        return std::make_unique<CosineAnnealingLR>(min_lr, max_lr);
+    });
+}
+
+LRSchedulerRecipe warmup_cosine_lr(float start_lr,
+                                   float peak_lr,
+                                   float min_lr,
+                                   size_t warmup_epochs) {
+    std::ostringstream description;
+    description << std::setprecision(std::numeric_limits<float>::max_digits10);
+    description << "warmup_cosine(start=" << start_lr << ",peak=" << peak_lr
+                << ",min=" << min_lr << ",warmup=" << warmup_epochs << ")";
+    return LRSchedulerRecipe(description.str(), [=] {
+        return std::make_unique<WarmupCosineLR>(start_lr, peak_lr, min_lr,
+                                                warmup_epochs);
     });
 }
 

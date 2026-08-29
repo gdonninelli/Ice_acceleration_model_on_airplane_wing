@@ -57,6 +57,17 @@ void RMSpropOptimizer::apply_gradients(float* weights, float* grads, size_t size
     }
 }
 
+void RMSpropOptimizer::set_learning_rate(float lr) {
+    if (!std::isfinite(lr) || lr <= 0.0f) {
+        throw std::invalid_argument("RMSprop learning_rate must be finite and positive.");
+    }
+    _learning_rate = lr;
+}
+
+float RMSpropOptimizer::get_learning_rate() const {
+    return _learning_rate;
+}
+
 OptimizerMetadata RMSpropOptimizer::metadata() const {
     return OptimizerMetadata{
         "rmsprop",
