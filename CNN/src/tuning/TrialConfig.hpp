@@ -48,6 +48,24 @@ private:
     BuildFunction _build;
 };
 
+class LRScheduler;
+
+class LRSchedulerRecipe {
+public:
+    using BuildFunction = std::function<std::unique_ptr<LRScheduler>()>;
+
+    LRSchedulerRecipe() = default;
+    LRSchedulerRecipe(std::string description, BuildFunction build);
+
+    const std::string& description() const { return _description; }
+    std::unique_ptr<LRScheduler> build() const;
+    bool has_scheduler() const { return static_cast<bool>(_build); }
+
+private:
+    std::string _description = "none";
+    BuildFunction _build;
+};
+
 struct ModelBlueprint {
     std::vector<LayerRecipe> feature_layers;
     std::vector<LayerRecipe> head_layers;
@@ -78,6 +96,7 @@ struct TrialConfig {
     LossConfig loss;
     TrainingConfig training;
     std::map<std::string, std::string> selected_parameters;
+    LRSchedulerRecipe scheduler;
 };
 
 namespace Recipes {
@@ -90,24 +109,32 @@ LayerRecipe flatten();
 LayerRecipe dense(int output_features);
 LayerRecipe dropout(float rate);
 
-OptimizerRecipe sgd(float learning_rate = 1e-3f,
+OptimizerRecipe sgd(float learning_rate = 1e-5f,
                     float momentum = 0.0f,
                     float weight_decay = 0.0f);
-OptimizerRecipe sgd_momentum(float learning_rate = 1e-3f,
+OptimizerRecipe sgd_momentum(float learning_rate = 1e-5f,
                              float momentum = 0.9f,
                              float weight_decay = 0.0f);
-OptimizerRecipe adagrad(float learning_rate = 1e-3f,
+OptimizerRecipe adagrad(float learning_rate = 1e-5f,
                         float epsilon = 1e-8f,
                         float weight_decay = 0.0f);
-OptimizerRecipe rmsprop(float learning_rate = 1e-3f,
+OptimizerRecipe rmsprop(float learning_rate = 1e-5f,
                         float decay_rate = 0.9f,
                         float epsilon = 1e-8f,
                         float weight_decay = 0.0f);
-OptimizerRecipe adam(float learning_rate = 1e-3f,
+OptimizerRecipe adam(float learning_rate = 1e-5f,
                      float beta1 = 0.9f,
                      float beta2 = 0.999f,
                      float epsilon = 1e-8f,
                      float weight_decay = 0.0f);
+
+LRSchedulerRecipe constant_lr(float learning_rate);
+LRSchedulerRecipe step_lr(float initial_lr, size_t step_size, float gamma = 0.1f);
+LRSchedulerRecipe cosine_lr(float min_lr, float max_lr);
+LRSchedulerRecipe warmup_cosine_lr(float start_lr,
+                                   float peak_lr,
+                                   float min_lr,
+                                   size_t warmup_epochs);
 } // namespace Recipes
 
 #endif // TRIALCONFIG_HPP

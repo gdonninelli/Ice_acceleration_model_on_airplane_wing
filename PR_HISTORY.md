@@ -17,6 +17,27 @@ entry per pull request, newest first.
 - **Implementation:** Main technical decisions and affected components.
 - **Validation:** Builds, tests, reviews, or manual checks completed.
 
+## Feature/learning rate tuning
+
+- **Status:** Pending merge
+- **Implementation dates:** 2026-08-29 to 2026-08-30
+- **Review date:** 2026-08-30
+- **Authors:** Alessia Rigoni (`a.rigoni5@campus.unimib.it`) - `2dbdd7b`, `d29bd6a`, `c9936cf`, `547e0bc`, `c2f72df`, `ed302b1`
+- **Branch:** `feature/learning_rate_tuning`
+- **Base:** `main`
+- **Reviewed head:** `ed302b12e2bcc268c81de0c69825ff04bec1321d`
+- **PR:** https://github.com/gdonninelli/Ice_acceleration_model_on_airplane_wing/pull/13
+- **Summary:** Added an 11-candidate Adam learning-rate schedule sweep with deterministic cross-validation, final untouched-test evaluation, scheduler APIs, diagnostics, and committed results.
+- **Implementation:**
+  - Added constant, step, cosine, and warmup-cosine schedulers and mutable optimizer learning-rate APIs.
+  - Added the learning-rate tuning executable, aggregate result writers, diagnostic plots, documentation, and experiment artifacts.
+- **Validation:**
+  - CMake configured; core, applications, and experiment targets built, and the experiment help command passed.
+  - Python compilation passed; artifact inspection confirmed the reported CV winner and exposed incomplete scheduled metadata.
+  - Full build/test validation is blocked by a missing scheduler include in `CNN/tests/test_cross_validation.cpp`; `git diff --check` also reports README whitespace errors.
+- **Per-PR report:** `PR_REVIEWS/feature-learning_rate_tuning.md`
+- **Review outcome:** High finding: the CMake test target cannot compile; Medium non-blocking scheduled-diagnostics metadata finding. Request changes before approval.
+
 ## Feature/regularization tuning
 
 - **Status:** Pending merge

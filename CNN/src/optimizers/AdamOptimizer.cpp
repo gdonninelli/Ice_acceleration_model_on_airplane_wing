@@ -79,6 +79,17 @@ void AdamOptimizer::apply_gradients(float* weights, float* grads, size_t size) {
     }
 }
 
+void AdamOptimizer::set_learning_rate(float lr) {
+    if (!std::isfinite(lr) || lr <= 0.0f) {
+        throw std::invalid_argument("Adam learning_rate must be finite and positive.");
+    }
+    _learning_rate = lr;
+}
+
+float AdamOptimizer::get_learning_rate() const {
+    return _learning_rate;
+}
+
 OptimizerMetadata AdamOptimizer::metadata() const {
     return OptimizerMetadata{
         "adam",

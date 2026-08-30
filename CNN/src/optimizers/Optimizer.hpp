@@ -40,6 +40,9 @@ class Optimizer {
      */
     virtual void apply_gradients(float* weights, float* grads, size_t size) = 0;
 
+    virtual void set_learning_rate(float lr) {}
+    virtual float get_learning_rate() const { return 0.0f; }
+
     virtual OptimizerMetadata metadata() const { return {}; }
 };
 
