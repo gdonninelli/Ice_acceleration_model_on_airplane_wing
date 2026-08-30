@@ -116,3 +116,66 @@ Results are written to the specified `--results-dir`:
 - `training_history.csv`: History at every 10-epoch validation checkpoint per fold.
 - `cv_summary.csv`: Summary statistics (mean, stddev, min, max validation MSE) across all candidates.
 - `summary.txt`: Human-readable summary of cross-validation ranking and untouched test MSE.
+
+---
+
+## Results
+
+The recorded experiment evaluated all 11 learning rate schedule candidates across 5 folds and 100 epochs per fold with batch size 64, physics weight 0.25, and seed 42.
+
+### Cross-Validation Summary Table
+
+| Rank | Candidate ID | Schedule Type | Base $\eta$ | Mean Validation MSE $\pm$ SD | Fold Range ($\text{MSE}_{\text{val}}$) | Status |
+|:---:|:---|:---|:---:|:---:|:---:|:---:|
+| **1** | **`const_1e-3`** | **Constant** | **$10^{-3}$** | **$0.003609 \pm 0.001335$** | **0.002092 – 0.006094** | **Selected Winner** |
+| 2 | `step_s15_1e-3` | Step Decay ($S=15, \gamma=0.5$) | $10^{-3}$ | $0.004005 \pm 0.000704$ | 0.002826 – 0.004779 | Stable |
+| 3 | `step_s30_1e-3` | Step Decay ($S=30, \gamma=0.1$) | $10^{-3}$ | $0.004072 \pm 0.000785$ | 0.002865 – 0.004955 | Stable |
+| 4 | `const_1e-5` | Constant (Baseline) | $10^{-5}$ | $0.004419 \pm 0.000790$ | 0.002880 – 0.005001 | Stable |
+| 5 | `step_s30_1e-5` | Step Decay ($S=30, \gamma=0.1$) | $10^{-5}$ | $0.005034 \pm 0.000901$ | 0.003434 – 0.005786 | Stable |
+| 6 | `step_s15_1e-5` | Step Decay ($S=15, \gamma=0.5$) | $10^{-5}$ | $0.005094 \pm 0.000905$ | 0.003484 – 0.005861 | Stable |
+| 7 | `cosine_1e-1` | Cosine Annealing | $10^{-1}$ | $5.58 \times 10^{8} \pm 2.25 \times 10^{8}$ | $2.09 \times 10^8$ – $7.95 \times 10^8$ | Diverged |
+| 8 | `warmup_cosine_1e-1` | Warmup + Cosine | $10^{-1}$ | $9.05 \times 10^{8} \pm 8.87 \times 10^{8}$ | $1.21 \times 10^8$ – $2.51 \times 10^9$ | Diverged |
+| 9 | `step_s15_1e-1` | Step Decay ($S=15, \gamma=0.5$) | $10^{-1}$ | $5.01 \times 10^{9} \pm 2.96 \times 10^{9}$ | $1.53 \times 10^9$ – $9.32 \times 10^9$ | Diverged |
+| 10 | `step_s30_1e-1` | Step Decay ($S=30, \gamma=0.1$) | $10^{-1}$ | $9.45 \times 10^{9} \pm 4.73 \times 10^{9}$ | $3.20 \times 10^9$ – $1.63 \times 10^{10}$ | Diverged |
+| 11 | `const_1e-1` | Constant | $10^{-1}$ | $2.13 \times 10^{17} \pm 3.12 \times 10^{17}$ | $1.84 \times 10^{16}$ – $8.31 \times 10^{17}$ | Diverged |
+
+---
+
+## Scientific Analysis & Model Selection
+
+1. **Optimal Learning Rate Magnitude ($\eta = 10^{-3}$):**
+   - Constant Adam at $\eta = 10^{-3}$ achieved the best overall cross-validation performance ($0.003609$), representing an **18.3% error reduction** over the initial baseline $\eta = 10^{-5}$ ($0.004419$).
+   - The larger step size facilitates rapid descent across the non-convex SIMM physics-regularized loss surface without sacrificing convergence precision.
+
+2. **Impact of Dynamic Schedules:**
+   - For $\eta_0 = 10^{-3}$, decaying the learning rate too early (`step_s15` or `step_s30`) slightly increased validation error ($0.004005$ and $0.004072$). Within a 100-epoch budget, early rate drops prematurely stall parameter updates before reaching the optimal basin.
+   - For $\eta_0 = 10^{-5}$, further decay worsened performance ($>0.0050$), as the step size became negligibly small ($\le 10^{-6}$).
+
+3. **Numerical Instability at $\eta \ge 10^{-1}$:**
+   - All schedules operating at or ramping to $10^{-1}$ suffered catastrophic gradient explosion within the first 1–6 epochs, causing validation MSE to exceed $10^8 - 10^{17}$.
+   - Even linear warmup over 5 epochs failed to stabilize $\eta_{\text{peak}} = 10^{-1}$, confirming that $10^{-1}$ exceeds the maximum stable Lipschitz-bounded step size for this CNN architecture and batch size.
+
+---
+
+## Final Untouched Test Set Evaluation
+
+Following cross-validation model selection, the winning configuration (**`const_1e-3`**) was refit on the full training set (1,713 samples) and evaluated strictly once on the untouched test dataset (`dataset/cnn_dataset_test.npz`):
+
+- **Selected Schedule:** `const_1e-3` (Adam, $\eta = 10^{-3}$, $\beta_1=0.9, \beta_2=0.999, \epsilon=10^{-8}$)
+- **Cross-Validation Validation MSE:** **`0.00360884` $\pm$ `0.00133457`**
+- **Final Untouched Test Physical MSE:** **`0.00325384`**
+
+---
+
+## Diagnostic Plotting
+
+To render diagnostic plots (effective learning rate schedules, gradient depth profiles, parameter update ratios, and activation heatmaps) for representative folds and epochs:
+
+```bash
+python3 CNN/analysis/plot_training_diagnostics.py \
+  --input results/cross_validation/learning_rate_tuning/learning_rate_tuning/run \
+  --output-dir results/cross_validation/learning_rate_tuning/plots \
+  --fold 0 \
+  --epoch 1 --epoch 10 --epoch 25 --epoch 50 --epoch 100
+```
+
