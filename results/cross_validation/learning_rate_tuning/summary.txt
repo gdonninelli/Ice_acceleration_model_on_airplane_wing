@@ -1,0 +1,10 @@
+LEARNING RATE SCHEDULE TUNING EXPERIMENT SUMMARY
+=================================================
+Mode:                        tune
+Folds:                       5
+Epochs:                      100
+Global Batch Size:           64
+Seed:                        42
+Winning Schedule:            lr-trial [schedule=const_1e-3]
+Cross-Validation MSE:        0.00360884 +/- 0.00133457
+Final Untouched Test MSE:    0.00325384

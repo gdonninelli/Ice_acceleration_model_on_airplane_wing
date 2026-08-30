@@ -1,0 +1,7 @@
+{
+  "format_version": 1,
+  "mode": "cross_validation",
+  "experiment_name": "learning_rate_tuning",
+  "run_name": "run",
+  "candidate_count": 11
+}
