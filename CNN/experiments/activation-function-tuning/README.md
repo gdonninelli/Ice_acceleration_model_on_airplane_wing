@@ -52,9 +52,11 @@ mpicxx -std=c++20 -O3 -ICNN/src \
   -o build/experiments/activation-function-tuning
 ```
 
-The supplied `slurm.sh` contains the same direct build and the cluster launch
-command. Account, partition, modules, and wall time are intentionally left as
-site-specific values.
+The direct commands above build and launch the activation sweep. Account,
+partition, modules, and wall time are intentionally left as site-specific
+values. The supplied `slurm.sh` is reserved for the configured ordinary CNN
+training from `CNN/main.cpp`; use the commands above when submitting this
+activation sweep.
 
 ## Run
 

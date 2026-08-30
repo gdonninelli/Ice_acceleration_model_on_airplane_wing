@@ -165,6 +165,9 @@ uint64_t trial_config_hash(const TrialConfig& config) {
     append_integer(config.training.seed);
     append_integer(config.training.shuffle ? 1 : 0);
     append_integer(config.training.validation_interval);
+    append_integer(config.training.early_stopping ? 1 : 0);
+    append_integer(std::bit_cast<uint64_t>(config.training.max_overfit_ratio));
+    append_integer(config.training.restore_best_weights ? 1 : 0);
     append_integer(config.training.diagnostics.enabled ? 1 : 0);
     append_string(config.training.diagnostics.results_root);
     append_string(config.training.diagnostics.experiment_name);

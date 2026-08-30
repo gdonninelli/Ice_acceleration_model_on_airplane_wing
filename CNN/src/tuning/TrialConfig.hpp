@@ -87,6 +87,9 @@ struct TrainingConfig {
     bool shuffle = true;
     size_t validation_interval = 10;
     TrainingDiagnosticsConfig diagnostics;
+    bool early_stopping = false;
+    double max_overfit_ratio = 0.15;
+    bool restore_best_weights = true;
 };
 
 struct TrialConfig {

@@ -133,6 +133,9 @@ void verify_diagnostics_agreement(const TrainingConfig& config,
     append_string(config.diagnostics.run_name);
     append_string(config.diagnostics.training_dataset_path);
     append_string(config.diagnostics.validation_dataset_path);
+    append(config.early_stopping ? 1 : 0);
+    append(std::bit_cast<uint64_t>(config.max_overfit_ratio));
+    append(config.restore_best_weights ? 1 : 0);
 
     const unsigned long long local_hash = hash;
     unsigned long long minimum_hash = 0;
@@ -252,6 +255,11 @@ TrainingResult Trainer::fit(CNNModel& model,
         throw std::invalid_argument(
             "Training epochs, global batch size, and validation interval must be positive.");
     }
+    if (!std::isfinite(training_config.max_overfit_ratio) ||
+        training_config.max_overfit_ratio < 0.0) {
+        throw std::invalid_argument(
+            "Maximum overfitting ratio must be finite and non-negative.");
+    }
     verify_diagnostics_agreement(training_config, _communicator);
     if (!std::isfinite(loss_config.l1_weight) ||
         loss_config.l1_weight < 0.0f ||
@@ -295,24 +303,34 @@ TrainingResult Trainer::fit(CNNModel& model,
     ActivationObserverGuard observer_guard(model);
     std::vector<size_t> ordered_training(training_indices.begin(), training_indices.end());
     double final_training_objective = 0.0;
+    double final_training_mse = 0.0;
     std::vector<EpochMetrics> history;
+    std::vector<std::vector<float>> best_parameters;
+    double best_training_objective = std::numeric_limits<double>::infinity();
+    double best_training_mse = std::numeric_limits<double>::infinity();
+    double best_validation_mse = std::numeric_limits<double>::infinity();
+    size_t best_epoch = 0;
+    size_t epochs_completed = 0;
+    bool stopped_early = false;
 
     std::unique_ptr<LRScheduler> scheduler;
     if (trial_config && trial_config->scheduler.has_scheduler()) {
         scheduler = trial_config->scheduler.build();
     }
 
-    auto evaluate_validation = [&]() {
-        double local_validation_sum = 0.0;
-        unsigned long long local_validation_seen = 0;
-        std::string validation_error;
+    auto evaluate_mse = [&](const Dataset& dataset,
+                            std::span<const size_t> indices,
+                            const std::string& phase) {
+        double local_mse_sum = 0.0;
+        unsigned long long local_seen = 0;
+        std::string evaluation_error;
         try {
             for (size_t batch_offset = 0;
-                 batch_offset < validation_indices.size();
+                 batch_offset < indices.size();
                  batch_offset += training_config.global_batch_size) {
                 const size_t global_count = std::min(
                     training_config.global_batch_size,
-                    validation_indices.size() - batch_offset);
+                    indices.size() - batch_offset);
                 const Partition local = partition_batch(
                     global_count, distributed.rank, distributed.size);
                 if (local.count == 0) {
@@ -320,36 +338,39 @@ TrainingResult Trainer::fit(CNNModel& model,
                 }
 
                 const std::span<const size_t> local_indices(
-                    validation_indices.data() + batch_offset + local.offset,
+                    indices.data() + batch_offset + local.offset,
                     local.count);
                 const DataBatch batch =
-                    validation_dataset.make_batch(local_indices, normalization);
+                    dataset.make_batch(local_indices, normalization);
                 const auto predictions = model.predict(batch.sdf, batch.scalars);
                 const float mse = Loss::physical_mse(
                     predictions, batch.targets,
                     static_cast<float>(normalization.target_std));
-                local_validation_sum += static_cast<double>(mse) * local.count;
-                local_validation_seen +=
-                    static_cast<unsigned long long>(local.count);
+                local_mse_sum += static_cast<double>(mse) * local.count;
+                local_seen += static_cast<unsigned long long>(local.count);
             }
         } catch (const std::exception& error) {
-            validation_error = error.what();
+            evaluation_error = error.what();
         } catch (...) {
-            validation_error = "unknown local validation error";
+            evaluation_error = "unknown local MSE evaluation error";
         }
-        throw_if_distributed_failure(validation_error, "Validation",
-                                     _communicator);
+        throw_if_distributed_failure(evaluation_error, phase, _communicator);
 
-        double global_validation_sum = 0.0;
-        unsigned long long global_validation_seen = 0;
-        reduce_sum(local_validation_sum, local_validation_seen,
-                   global_validation_sum, global_validation_seen,
+        double global_mse_sum = 0.0;
+        unsigned long long global_seen = 0;
+        reduce_sum(local_mse_sum, local_seen, global_mse_sum, global_seen,
                    _communicator);
-        if (global_validation_seen == 0) {
-            throw std::runtime_error("Validation processed no samples.");
+        if (global_seen == 0) {
+            throw std::runtime_error(phase + " processed no samples.");
         }
-        return global_validation_sum /
-               static_cast<double>(global_validation_seen);
+        return global_mse_sum / static_cast<double>(global_seen);
+    };
+
+    auto evaluate_training = [&]() {
+        return evaluate_mse(training_dataset, training_indices, "Training MSE");
+    };
+    auto evaluate_validation = [&]() {
+        return evaluate_mse(validation_dataset, validation_indices, "Validation");
     };
 
     for (size_t epoch = 0; epoch < training_config.epochs; ++epoch) {
@@ -488,17 +509,59 @@ TrainingResult Trainer::fit(CNNModel& model,
         }
         final_training_objective =
             global_loss_sum / static_cast<double>(global_seen);
+        final_training_mse = evaluate_training();
+        if (!std::isfinite(final_training_objective) ||
+            !std::isfinite(final_training_mse)) {
+            throw std::runtime_error("Training produced a non-finite loss.");
+        }
         const bool history_checkpoint =
             completed_epoch % training_config.validation_interval == 0;
         double checkpoint_validation_mse =
             std::numeric_limits<double>::quiet_NaN();
-        if (history_checkpoint) {
+        const bool evaluate_epoch =
+            history_checkpoint || training_config.early_stopping;
+        if (evaluate_epoch) {
+            const double checkpoint_training_mse = final_training_mse;
             checkpoint_validation_mse = evaluate_validation();
-            history.push_back(EpochMetrics{
-                completed_epoch,
-                final_training_objective,
-                checkpoint_validation_mse});
+            if (!std::isfinite(checkpoint_validation_mse)) {
+                throw std::runtime_error("Validation produced a non-finite loss.");
+            }
+            if (history_checkpoint) {
+                history.push_back(EpochMetrics{
+                    completed_epoch,
+                    final_training_objective,
+                    checkpoint_validation_mse});
+            }
+
+            bool overfit = false;
+            if (training_config.early_stopping) {
+                if (checkpoint_training_mse == 0.0) {
+                    overfit = checkpoint_validation_mse > 0.0;
+                } else {
+                    overfit = checkpoint_validation_mse >
+                              checkpoint_training_mse *
+                                  (1.0 + training_config.max_overfit_ratio);
+                }
+
+                if (checkpoint_validation_mse < best_validation_mse) {
+                    best_validation_mse = checkpoint_validation_mse;
+                    best_training_objective = final_training_objective;
+                    best_training_mse = checkpoint_training_mse;
+                    best_epoch = completed_epoch;
+                    best_parameters.clear();
+                    for (const auto& parameter : model.parameters()) {
+                        const float* values = parameter.tensor->get_data();
+                        best_parameters.emplace_back(
+                            values, values + parameter.tensor->size());
+                    }
+                }
+            }
+
+            if (training_config.early_stopping && overfit) {
+                stopped_early = true;
+            }
         }
+        epochs_completed = completed_epoch;
 
         EpochDiagnosticsSummary diagnostics_summary;
         std::string epoch_diagnostics_error;
@@ -509,6 +572,7 @@ TrainingResult Trainer::fit(CNNModel& model,
                     training_config.global_batch_size;
                 diagnostics_summary = diagnostics->finish_epoch(
                     completed_epoch, final_training_objective,
+                    final_training_mse,
                     checkpoint_validation_mse,
                     static_cast<size_t>(global_seen), batches);
             }
@@ -528,7 +592,8 @@ TrainingResult Trainer::fit(CNNModel& model,
                       << ((ordered_training.size() +
                            training_config.global_batch_size - 1) /
                           training_config.global_batch_size)
-                      << " | train=" << final_training_objective;
+                      << " | train=" << final_training_objective
+                      << " | train_mse=" << final_training_mse;
             // Reported separately from the training objective so that the
             // objective stays comparable across regularization strengths.
             if (loss_config.l2_weight != 0.0f) {
@@ -541,7 +606,7 @@ TrainingResult Trainer::fit(CNNModel& model,
                           << l1_penalty(model.parameters(),
                                         loss_config.l1_weight);
             }
-            if (history_checkpoint) {
+            if (evaluate_epoch) {
                 std::cout << " | validation_mse="
                           << checkpoint_validation_mse;
             } else {
@@ -559,18 +624,54 @@ TrainingResult Trainer::fit(CNNModel& model,
             }
             std::cout << std::endl;
         }
+
+        if (stopped_early) {
+            if (distributed.rank == 0 && verbose) {
+                std::cout << "Early stopping at epoch " << completed_epoch
+                          << ": validation MSE exceeded training MSE by more than "
+                          << training_config.max_overfit_ratio * 100.0
+                          << "%." << std::endl;
+            }
+            break;
+        }
     }
 
-    const bool final_epoch_is_checkpoint =
-        training_config.epochs % training_config.validation_interval == 0;
-    const double final_validation_mse = final_epoch_is_checkpoint
-        ? history.back().validation_mse
-        : evaluate_validation();
+    bool restored_best_weights = false;
+    if (training_config.early_stopping && training_config.restore_best_weights &&
+        !best_parameters.empty()) {
+        const auto& parameters = model.parameters();
+        if (parameters.size() != best_parameters.size()) {
+            throw std::runtime_error("Best model snapshot has an incompatible parameter count.");
+        }
+        for (size_t parameter_index = 0;
+             parameter_index < parameters.size(); ++parameter_index) {
+            auto& parameter = parameters[parameter_index];
+            if (parameter.tensor->size() != best_parameters[parameter_index].size()) {
+                throw std::runtime_error(
+                    "Best model snapshot has an incompatible parameter shape.");
+            }
+            std::copy(best_parameters[parameter_index].begin(),
+                      best_parameters[parameter_index].end(),
+                      parameter.tensor->get_data());
+            parameter.tensor->zero_grad();
+        }
+        model.broadcast_initial_weights(0);
+        final_training_objective = best_training_objective;
+        final_training_mse = best_training_mse;
+        restored_best_weights = true;
+    }
+
+    const double final_validation_mse =
+        restored_best_weights ? best_validation_mse : evaluate_validation();
 
     return TrainingResult{
         final_training_objective,
         final_validation_mse,
         training_indices.size(),
         validation_indices.size(),
-        std::move(history)};
+        std::move(history),
+        final_training_mse,
+        epochs_completed,
+        best_epoch,
+        stopped_early};
 }

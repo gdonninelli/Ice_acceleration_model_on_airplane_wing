@@ -393,7 +393,7 @@ struct TrainingDiagnosticsRecorder::Impl {
         require_output(activation_file, activation_path);
         require_output(histogram_file, histogram_path);
         require_output(learning_rate_step_file, learning_rate_step_path);
-        epoch_file << "epoch,train_objective,validation_physical_mse,samples,batches,configured_learning_rate,effective_learning_rate\n";
+        epoch_file << "epoch,train_objective,training_physical_mse,validation_physical_mse,samples,batches,configured_learning_rate,effective_learning_rate\n";
         gradient_file << "epoch,layer_index,layer_name,parameter_scope,mean_norm,rms_norm,maximum_norm,last_norm,optimizer_steps\n";
         update_file << "epoch,layer_index,layer_name,parameter_scope,mean_pre_update_norm,mean_update_norm,mean_ratio,rms_ratio,maximum_ratio,last_ratio,near_zero_denominator_steps,optimizer_steps,epsilon\n";
         activation_file << "epoch,layer_index,layer_name,phase,count,mean,variance,minimum,maximum\n";
@@ -412,7 +412,7 @@ struct TrainingDiagnosticsRecorder::Impl {
             ? config.validation_dataset_path : context.validation_dataset_path;
 
         output << "{\n"
-               << "  \"format_version\": 1,\n"
+               << "  \"format_version\": 2,\n"
                << "  \"mode\": " << json_string(context.mode) << ",\n"
                << "  \"experiment_name\": " << json_string(config.experiment_name) << ",\n"
                << "  \"run_name\": " << json_string(config.run_name) << ",\n"
@@ -428,10 +428,22 @@ struct TrainingDiagnosticsRecorder::Impl {
                << ",\n  \"random_seed\": " << context.random_seed
                << ",\n  \"epoch_count\": " << trial.training.epochs
                << ",\n  \"global_batch_size\": " << trial.training.global_batch_size
+               << ",\n  \"shuffle\": "
+               << (trial.training.shuffle ? "true" : "false")
                << ",\n  \"validation_interval\": " << trial.training.validation_interval
                << ",\n  \"gradient_clip\": " << json_number(model.gradient_clip())
+               << ",\n  \"early_stopping\": "
+               << (trial.training.early_stopping ? "true" : "false")
+               << ",\n  \"max_overfit_ratio\": "
+               << json_number(trial.training.max_overfit_ratio)
+               << ",\n  \"restore_best_weights\": "
+               << (trial.training.restore_best_weights ? "true" : "false")
                << ",\n  \"physics_weight\": "
                << json_number(trial.loss.physics_weight)
+               << ",\n  \"l1_weight\": "
+               << json_number(trial.loss.l1_weight)
+               << ",\n  \"l2_weight\": "
+               << json_number(trial.loss.l2_weight)
                << ",\n  \"mpi_world_size\": " << world_size
                << ",\n  \"training_dataset_path\": " << json_string(training_path)
                << ",\n  \"validation_dataset_path\": " << json_string(validation_path)
@@ -633,6 +645,7 @@ void TrainingDiagnosticsRecorder::after_optimizer_step(const CNNModel&) {
 EpochDiagnosticsSummary TrainingDiagnosticsRecorder::finish_epoch(
     size_t epoch,
     double training_objective,
+    double training_mse,
     double validation_mse,
     size_t samples,
     size_t batches) {
@@ -696,6 +709,10 @@ EpochDiagnosticsSummary TrainingDiagnosticsRecorder::finish_epoch(
             _impl->optimizer.configured_learning_rate;
         _impl->epoch_file << epoch << ',' << std::setprecision(17)
                           << training_objective << ',';
+        if (std::isfinite(training_mse)) {
+            _impl->epoch_file << training_mse;
+        }
+        _impl->epoch_file << ',';
         if (std::isfinite(validation_mse)) {
             _impl->epoch_file << validation_mse;
         }

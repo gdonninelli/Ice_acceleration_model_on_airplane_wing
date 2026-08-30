@@ -1,34 +1,48 @@
 #include "src/data/Dataset.hpp"
 #include "src/model/ModelFactory.hpp"
 #include "src/training/Trainer.hpp"
+#include "src/training/TrainingDiagnostics.hpp"
 #include "src/tuning/CrossValidator.hpp"
 #include "src/tuning/SearchSpace.hpp"
 #include "src/tuning/TrialConfig.hpp"
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
+#include <filesystem>
+#include <fstream>
+#include <iomanip>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <mpi.h>
+#include <numbers>
+#include <random>
+#include <span>
 #include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
 
 namespace {
+constexpr double kValidationFraction = 0.10;
+constexpr double kOverfitRatio = 0.15;
+constexpr double kAoAThresholdRadians =
+    10.0 * std::numbers::pi / 180.0;
+
 struct CommandLineOptions {
     bool cross_validate = false;
     bool show_help = false;
-    bool diagnostics = false;
+    bool diagnostics = true;
     bool verbose_final = true;
     std::string activation = "leakyrelu";
     float leaky_alpha = 0.05f;
     float dropout = 0.0f;
-    float learning_rate = 1e-5f;
-    float physics_weight = 0.25f;
+    float learning_rate = 1e-3f;
+    float physics_weight = 0.10f;
     float l1_weight = 0.0f;
     float l2_weight = 0.0f;
     float gradient_clip = 1.0f;
-    size_t epochs = 100;
+    size_t epochs = 200;
     size_t global_batch_size = 64;
     size_t folds = 5;
     size_t validation_interval = 0;
@@ -40,6 +54,189 @@ struct CommandLineOptions {
     std::string experiment_name = "cnn";
     std::string run_name = "run";
 };
+
+struct DatasetSplit {
+    std::vector<size_t> training;
+    std::vector<size_t> validation;
+};
+
+struct BatchPartition {
+    size_t offset = 0;
+    size_t count = 0;
+};
+
+struct TestMetrics {
+    double overall_mse = std::numeric_limits<double>::quiet_NaN();
+    double low_angle_mse = std::numeric_limits<double>::quiet_NaN();
+    double high_angle_mse = std::numeric_limits<double>::quiet_NaN();
+    size_t overall_samples = 0;
+    size_t low_angle_samples = 0;
+    size_t high_angle_samples = 0;
+};
+
+struct TrainedRun {
+    std::unique_ptr<CNNModel> model;
+    TrainingResult result;
+};
+
+DatasetSplit make_training_validation_split(const Dataset& dataset,
+                                            uint64_t seed) {
+    std::vector<size_t> shuffled = dataset.all_indices();
+    if (shuffled.size() < 2) {
+        throw std::invalid_argument(
+            "Training dataset must contain at least two samples for validation.");
+    }
+
+    std::mt19937_64 generator(seed);
+    std::shuffle(shuffled.begin(), shuffled.end(), generator);
+    const size_t validation_count = std::max(
+        size_t{1}, static_cast<size_t>(shuffled.size() * kValidationFraction));
+    if (validation_count >= shuffled.size()) {
+        throw std::invalid_argument(
+            "Validation split would leave no training samples.");
+    }
+
+    return DatasetSplit{
+        std::vector<size_t>(shuffled.begin() + validation_count,
+                            shuffled.end()),
+        std::vector<size_t>(shuffled.begin(),
+                            shuffled.begin() + validation_count)};
+}
+
+BatchPartition partition_batch(size_t batch_size, int rank, int world_size) {
+    const size_t processes = static_cast<size_t>(world_size);
+    const size_t base = batch_size / processes;
+    const size_t remainder = batch_size % processes;
+    const size_t rank_index = static_cast<size_t>(rank);
+    return BatchPartition{
+        rank_index * base + std::min(rank_index, remainder),
+        base + (rank_index < remainder ? 1 : 0)};
+}
+
+TestMetrics evaluate_test_metrics(CNNModel& model,
+                                  const Dataset& dataset,
+                                  std::span<const size_t> indices,
+                                  const NormalizationStats& normalization,
+                                  size_t global_batch_size,
+                                  MPI_Comm communicator) {
+    int rank = 0;
+    int world_size = 1;
+    MPI_Comm_rank(communicator, &rank);
+    MPI_Comm_size(communicator, &world_size);
+
+    double local_sums[3]{0.0, 0.0, 0.0};
+    unsigned long long local_counts[3]{0, 0, 0};
+    std::string local_error;
+    try {
+        if (global_batch_size == 0) {
+            throw std::invalid_argument("Test evaluation batch size must be positive.");
+        }
+        for (size_t batch_offset = 0;
+             batch_offset < indices.size();
+             batch_offset += global_batch_size) {
+            const size_t global_count = std::min(global_batch_size,
+                                                 indices.size() - batch_offset);
+            const BatchPartition local =
+                partition_batch(global_count, rank, world_size);
+            if (local.count == 0) {
+                continue;
+            }
+
+            const std::span<const size_t> local_indices(
+                indices.data() + batch_offset + local.offset, local.count);
+            const DataBatch batch = dataset.make_batch(local_indices, normalization);
+            const auto predictions = model.predict(batch.sdf, batch.scalars);
+            const float* prediction_values = predictions->get_data();
+            const float* target_values = batch.targets->get_data();
+            const float* alpha_values = batch.alpha_radians->get_data();
+
+            for (size_t sample = 0; sample < local.count; ++sample) {
+                const double error =
+                    (static_cast<double>(prediction_values[sample]) -
+                     static_cast<double>(target_values[sample])) *
+                    normalization.target_std;
+                const double squared_error = error * error;
+                local_sums[0] += squared_error;
+                ++local_counts[0];
+
+                const bool high_angle =
+                    std::abs(static_cast<double>(alpha_values[sample])) >
+                    kAoAThresholdRadians;
+                const size_t bucket = high_angle ? 2 : 1;
+                local_sums[bucket] += squared_error;
+                ++local_counts[bucket];
+            }
+        }
+    } catch (const std::exception& error) {
+        local_error = error.what();
+    } catch (...) {
+        local_error = "unknown local test metric evaluation error";
+    }
+
+    int local_failed = local_error.empty() ? 0 : 1;
+    int any_failed = local_failed;
+    MPI_Allreduce(&local_failed, &any_failed, 1, MPI_INT, MPI_MAX,
+                  communicator);
+    if (any_failed != 0) {
+        if (!local_error.empty()) {
+            throw std::runtime_error("Test metric evaluation: " + local_error);
+        }
+        throw std::runtime_error(
+            "Test metric evaluation failed on another MPI rank.");
+    }
+
+    double global_sums[3]{0.0, 0.0, 0.0};
+    unsigned long long global_counts[3]{0, 0, 0};
+    MPI_Allreduce(local_sums, global_sums, 3, MPI_DOUBLE, MPI_SUM,
+                  communicator);
+    MPI_Allreduce(local_counts, global_counts, 3, MPI_UNSIGNED_LONG_LONG,
+                  MPI_SUM, communicator);
+
+    const auto mean = [&](size_t bucket) {
+        return global_counts[bucket] == 0
+            ? std::numeric_limits<double>::quiet_NaN()
+            : global_sums[bucket] / static_cast<double>(global_counts[bucket]);
+    };
+    return TestMetrics{
+        mean(0),
+        mean(1),
+        mean(2),
+        static_cast<size_t>(global_counts[0]),
+        static_cast<size_t>(global_counts[1]),
+        static_cast<size_t>(global_counts[2])};
+}
+
+void write_test_metrics(const std::filesystem::path& output_directory,
+                        const TestMetrics& metrics) {
+    std::filesystem::create_directories(output_directory);
+    const auto path = output_directory / "test_metrics.csv";
+    std::ofstream output(path, std::ios::trunc);
+    if (!output) {
+        throw std::runtime_error("Failed to write test metrics: " + path.string());
+    }
+
+    output << "subset,samples,mse\n" << std::setprecision(17)
+           << "overall," << metrics.overall_samples << ','
+           << metrics.overall_mse << '\n'
+           << "abs_aoa_le_10_deg," << metrics.low_angle_samples << ','
+           << metrics.low_angle_mse << '\n'
+           << "abs_aoa_gt_10_deg," << metrics.high_angle_samples << ','
+           << metrics.high_angle_mse << '\n';
+    if (!output) {
+        throw std::runtime_error("Failed to flush test metrics: " + path.string());
+    }
+}
+
+void print_test_metrics(const TestMetrics& metrics) {
+    std::cout << "Final test physical MSE: " << metrics.overall_mse
+              << " (samples=" << metrics.overall_samples << ")\n"
+              << "Test physical MSE | abs(AoA) <= 10 deg: "
+              << metrics.low_angle_mse << " (samples="
+              << metrics.low_angle_samples << ")\n"
+              << "Test physical MSE | abs(AoA) > 10 deg: "
+              << metrics.high_angle_mse << " (samples="
+              << metrics.high_angle_samples << ")" << std::endl;
+}
 
 size_t parse_size(const std::string& option, const std::string& value) {
     size_t consumed = 0;
@@ -148,18 +345,18 @@ void print_help() {
     std::cout
         << "Usage: cnn_executable [options]\n"
         << "  --cross-validate       Evaluate the configured model with random K-fold CV\n"
-        << "  --diagnostics          Write structured per-epoch training diagnostics\n"
-        << "  --no-diagnostics       Disable diagnostics (default)\n"
+        << "  --diagnostics          Write structured per-epoch training diagnostics (default)\n"
+        << "  --no-diagnostics       Disable diagnostics\n"
         << "  --folds N              Number of CV folds (default: 5)\n"
         << "  --validation-interval N Validation frequency (CV default: 10, final default: 1)\n"
         << "  --histogram-bins N     Fixed activation histogram bins (default: 64)\n"
-        << "  --epochs N             Epochs per fold/training run (default: 100)\n"
+        << "  --epochs N             Epochs per fold/training run (default: 200)\n"
         << "  --batch-size N         Global MPI batch size (default: 64)\n"
         << "  --activation NAME      leakyrelu, relu, tanh, or sigmoid\n"
         << "  --alpha VALUE          LeakyReLU negative slope\n"
         << "  --dropout VALUE        Dropout rate in [0, 1) for the dense head (default: 0)\n"
-        << "  --learning-rate VALUE  Adam learning rate for ordinary training\n"
-        << "  --physics-weight VALUE SIMM physics weight\n"
+        << "  --learning-rate VALUE  Adam learning rate (default: 1e-3)\n"
+        << "  --physics-weight VALUE SIMM physics weight (default: 0.10)\n"
         << "  --l1-weight VALUE      L1 (Lasso) penalty weight on weight tensors\n"
         << "  --l2-weight VALUE      L2 (Ridge) penalty weight on weight tensors\n"
         << "  --gradient-clip VALUE  Element-wise gradient clipping threshold\n"
@@ -199,7 +396,8 @@ ModelBlueprint make_blueprint(int kernel_size,
     return blueprint;
 }
 
-TrainingConfig make_training_config(const CommandLineOptions& options) {
+TrainingConfig make_training_config(const CommandLineOptions& options,
+                                    bool early_stopping) {
     TrainingConfig config;
     config.epochs = options.epochs;
     config.global_batch_size = options.global_batch_size;
@@ -215,40 +413,52 @@ TrainingConfig make_training_config(const CommandLineOptions& options) {
     config.diagnostics.run_name = options.run_name;
     config.diagnostics.histogram_bins = options.histogram_bins;
     config.diagnostics.training_dataset_path = options.train_path;
-    config.diagnostics.validation_dataset_path = options.test_path;
+    config.diagnostics.validation_dataset_path = options.train_path;
+    config.early_stopping = early_stopping;
+    config.max_overfit_ratio = kOverfitRatio;
+    config.restore_best_weights = true;
     return config;
 }
 
-TrialConfig make_single_trial(const CommandLineOptions& options) {
-    return TrialConfig{
+TrialConfig make_single_trial(const CommandLineOptions& options,
+                              bool early_stopping) {
+    TrialConfig trial{
         "single-training",
         make_blueprint(5, 5, 8, options.activation, options.leaky_alpha,
                        {128, 64}, options.dropout),
-        Recipes::adam(options.learning_rate),
+        Recipes::adam(options.learning_rate, 0.9f, 0.999f, 1e-8f, 0.0f),
         LossConfig{options.physics_weight, options.l1_weight, options.l2_weight},
-        make_training_config(options),
+        make_training_config(options, early_stopping),
         {}};
+    if (early_stopping) {
+        trial.selected_parameters["validation_fraction"] = "0.10";
+    }
+    trial.selected_parameters["early_stopping"] = early_stopping ? "true" : "false";
+    trial.selected_parameters["max_overfit_ratio"] = "0.15";
+    trial.selected_parameters["restore_best_weights"] = "true";
+    return trial;
 }
 
-TrainingResult train_and_test(const TrialConfig& config,
+TrainedRun train_and_validate(const TrialConfig& config,
                               const Dataset& training_dataset,
-                               const Dataset& test_dataset,
-                               MPI_Comm communicator,
-                               bool verbose,
-                               const TrainingRunContext& run_context) {
-    const auto training_indices = training_dataset.all_indices();
-    const auto test_indices = test_dataset.all_indices();
-    const NormalizationStats normalization =
-        training_dataset.fit_normalization(training_indices);
+                              std::span<const size_t> training_indices,
+                              const Dataset& validation_dataset,
+                              std::span<const size_t> validation_indices,
+                              const NormalizationStats& normalization,
+                              MPI_Comm communicator,
+                              bool verbose,
+                              const TrainingRunContext& run_context) {
     ModelFactory factory;
     auto model = factory.build(config, training_dataset.sdf_height(),
                                training_dataset.sdf_width(),
                                training_dataset.scalar_features(),
                                config.training.seed, communicator);
     Trainer trainer(communicator);
-    return trainer.fit(*model, training_dataset, training_indices, test_dataset,
-                       test_indices, normalization, config.loss, config.training,
-                       config.training.seed, verbose, run_context, &config);
+    TrainingResult result = trainer.fit(
+        *model, training_dataset, training_indices, validation_dataset,
+        validation_indices, normalization, config.loss, config.training,
+        config.training.seed, verbose, run_context, &config);
+    return TrainedRun{std::move(model), std::move(result)};
 }
 } // namespace
 
@@ -269,18 +479,39 @@ int main(int argc, char** argv) {
 
         Dataset training_dataset(options.train_path);
         if (!options.cross_validate) {
-            Dataset test_dataset(options.test_path);
-            const TrialConfig config = make_single_trial(options);
+            const DatasetSplit split =
+                make_training_validation_split(training_dataset, options.seed);
+            const TrialConfig config = make_single_trial(options, true);
+            const NormalizationStats normalization =
+                training_dataset.fit_normalization(split.training);
             TrainingRunContext run_context;
             run_context.random_seed = config.training.seed;
             run_context.training_dataset_path = options.train_path;
-            run_context.validation_dataset_path = options.test_path;
-            const TrainingResult result = train_and_test(
-                config, training_dataset, test_dataset, MPI_COMM_WORLD,
+            run_context.validation_dataset_path = options.train_path;
+            TrainedRun trained = train_and_validate(
+                config, training_dataset, split.training, training_dataset,
+                split.validation, normalization, MPI_COMM_WORLD,
                 options.verbose_final, run_context);
+            Dataset test_dataset(options.test_path);
+            const auto test_indices = test_dataset.all_indices();
+            const TestMetrics test_metrics = evaluate_test_metrics(
+                *trained.model, test_dataset, test_indices,
+                normalization, config.training.global_batch_size,
+                MPI_COMM_WORLD);
             if (rank == 0) {
-                std::cout << "Final test physical MSE: "
-                          << result.validation_mse << std::endl;
+                write_test_metrics(
+                    diagnostics_run_directory(config.training.diagnostics,
+                                              run_context),
+                    test_metrics);
+                std::cout << "Best validation physical MSE: "
+                          << trained.result.validation_mse << "\n"
+                          << "Best validation training physical MSE: "
+                          << trained.result.training_mse << "\n";
+                if (trained.result.best_epoch != 0) {
+                    std::cout << "Selected validation epoch: "
+                              << trained.result.best_epoch << "\n";
+                }
+                print_test_metrics(test_metrics);
             }
         } else {
             auto splitter = std::make_shared<RandomKFold>(
@@ -288,7 +519,7 @@ int main(int argc, char** argv) {
             auto runner = std::make_shared<CNNTrialRunner>(MPI_COMM_WORLD);
             CrossValidator validator(training_dataset, splitter, runner,
                                      MPI_COMM_WORLD, true);
-            const TrialConfig config = make_single_trial(options);
+            const TrialConfig config = make_single_trial(options, false);
             const CandidateResult result = validator.evaluate(config);
 
             if (rank == 0) {
@@ -307,22 +538,33 @@ int main(int argc, char** argv) {
                 }
             }
 
-            Dataset test_dataset(options.test_path);
             TrialConfig final_config = config;
             if (options.validation_interval == 0) {
                 final_config.training.validation_interval = 1;
             }
+            const auto training_indices = training_dataset.all_indices();
+            const NormalizationStats normalization =
+                training_dataset.fit_normalization(training_indices);
             TrainingRunContext final_context;
             final_context.final_subdirectory = options.diagnostics;
             final_context.random_seed = final_config.training.seed;
             final_context.training_dataset_path = options.train_path;
-            final_context.validation_dataset_path = options.test_path;
-            const TrainingResult final_result = train_and_test(
-                final_config, training_dataset, test_dataset, MPI_COMM_WORLD,
+            final_context.validation_dataset_path = options.train_path;
+            TrainedRun final_trained = train_and_validate(
+                final_config, training_dataset, training_indices,
+                training_dataset, training_indices, normalization, MPI_COMM_WORLD,
                 options.verbose_final, final_context);
+            Dataset test_dataset(options.test_path);
+            const auto test_indices = test_dataset.all_indices();
+            const TestMetrics test_metrics = evaluate_test_metrics(
+                *final_trained.model, test_dataset, test_indices, normalization,
+                final_config.training.global_batch_size, MPI_COMM_WORLD);
             if (rank == 0) {
-                std::cout << "Final test physical MSE: "
-                          << final_result.validation_mse << std::endl;
+                write_test_metrics(
+                    diagnostics_run_directory(final_config.training.diagnostics,
+                                              final_context),
+                    test_metrics);
+                print_test_metrics(test_metrics);
             }
         }
     } catch (const std::exception& error) {

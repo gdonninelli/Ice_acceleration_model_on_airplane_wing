@@ -1,8 +1,8 @@
 #!/bin/bash
-# Slurm submission script for activation-function-tuning on CINECA.
+# Slurm submission script for the configured ordinary CNN training on CINECA.
 # Replace site-specific placeholders before submitting with sbatch.
 
-#SBATCH --job-name=activation-tuning
+#SBATCH --job-name=cnn-training
 #SBATCH --account=ACCOUNT_HERE
 #SBATCH --partition=dcgp_usr_prod
 #SBATCH --nodes=1
@@ -10,9 +10,12 @@
 #SBATCH --ntasks-per-node=64
 #SBATCH --cpus-per-task=1
 #SBATCH --time=15:00:00
-#SBATCH --output=activation_tuning_%j.out
+#SBATCH --output=cnn_training_%j.out
 
 set -euo pipefail
+
+repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
+cd "${repo_root}"
 
 module purge
 module load python/3.11.7
@@ -28,20 +31,19 @@ if [[ ! -f dataset/cnn_dataset_test.npz ]]; then
     exit 1
 fi
 
-mkdir -p build/experiments
-source_revision="$(git rev-parse --short=12 HEAD 2>/dev/null || printf unknown)"
-mpicxx -std=c++20 -O3 -ICNN/src \
-    -DCNN_SOURCE_REVISION=\"${source_revision}\" \
-    CNN/experiments/activation-function-tuning/main.cpp \
-    CNN/src/core/*.cpp CNN/src/data/*.cpp CNN/src/layers/*.cpp \
-    CNN/src/model/*.cpp CNN/src/optimizers/*.cpp \
-    CNN/src/training/*.cpp CNN/src/tuning/*.cpp \
-    -o build/experiments/activation-function-tuning
+cmake -S CNN -B build/CNN -DCMAKE_BUILD_TYPE=Release
+cmake --build build/CNN --target cnn_executable --parallel
 
-time mpirun -n "${SLURM_NTASKS}" \
-    ./build/experiments/activation-function-tuning \
-    --epochs 100 --folds 5 --batch-size 64 --seed 42 \
+run_name="slurm-${SLURM_JOB_ID:-manual}"
+time mpirun -n "${SLURM_NTASKS:-1}" \
+    ./build/CNN/cnn_executable \
+    --activation leakyrelu --alpha 0.05 \
+    --epochs 200 --batch-size 64 --learning-rate 1e-3 \
+    --physics-weight 0.10 --l1-weight 0 --l2-weight 0 \
+    --dropout 0 --gradient-clip 1 --seed 42 \
     --train-path dataset/cnn_dataset_train.npz \
     --test-path dataset/cnn_dataset_test.npz \
-    --results-dir results/cross_validation/activation-function-tuning \
-    --diagnostic
+    --results-dir results \
+    --experiment ordinary-training \
+    --run-name "${run_name}" \
+    --diagnostics

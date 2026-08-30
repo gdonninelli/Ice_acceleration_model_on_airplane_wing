@@ -23,6 +23,10 @@ struct TrainingResult {
     size_t training_samples = 0;
     size_t validation_samples = 0;
     std::vector<EpochMetrics> history;
+    double training_mse = 0.0;
+    size_t epochs_completed = 0;
+    size_t best_epoch = 0;
+    bool stopped_early = false;
 };
 
 class Trainer {

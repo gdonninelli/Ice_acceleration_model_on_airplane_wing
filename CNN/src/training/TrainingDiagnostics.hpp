@@ -88,6 +88,7 @@ public:
     void after_optimizer_step(const CNNModel& model);
     EpochDiagnosticsSummary finish_epoch(size_t epoch,
                                          double training_objective,
+                                         double training_mse,
                                          double validation_mse,
                                          size_t samples,
                                          size_t batches);

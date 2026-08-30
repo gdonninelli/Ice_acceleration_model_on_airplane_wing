@@ -197,7 +197,7 @@ mpirun -n 4 ./build/CNN/cnn_executable --dropout 0.2
 Training parameters are available from the command line:
 
 ```bash
-mpirun -n 4 ./build/CNN/cnn_executable --epochs 100 --batch-size 256 --learning-rate 1e-5
+mpirun -n 4 ./build/CNN/cnn_executable --epochs 200 --batch-size 64 --learning-rate 1e-3
 ```
 
 Run deterministic random K-fold evaluation for the configured model:
@@ -206,15 +206,28 @@ Run deterministic random K-fold evaluation for the configured model:
 mpirun -n 4 ./build/CNN/cnn_executable --cross-validate --folds 5 --epochs 100 --batch-size 256 --seed 42
 ```
 
-The global batch size is independent of MPI rank count. Fold normalization is fitted from training samples only, the test NPZ remains untouched until cross-validation is complete, and scoring uses physical-unit validation MSE. Developers can pass a typed `ParameterGrid` to `CrossValidator::tune()` when comparing configurations.
+The global batch size is independent of MPI rank count. Fold or holdout
+normalization is fitted from fitting samples only, the test NPZ remains
+untouched until final evaluation, and scoring uses physical-unit MSE.
+Developers can pass a typed `ParameterGrid` to `CrossValidator::tune()` when
+comparing configurations.
 
 ### Output
 
-Ordinary/final training prints one compact line per epoch by default. Final training validates every epoch unless `--validation-interval` is provided. Cross-validation remains concise and validates every 10 epochs by default, then reports the final fold scores, aggregate mean and deviation, and final untouched-test MSE. The test NPZ is not loaded until cross-validation has completed.
+Ordinary/final training prints one compact line per epoch by default,
+including physical training and validation MSE. It validates every epoch and
+stops when validation MSE exceeds training MSE by more than 15%, restoring the
+best validation epoch. Cross-validation remains concise and validates every
+10 epochs by default, then reports the final fold scores, aggregate mean and
+deviation, and final untouched-test MSE. The test NPZ is not loaded until
+final evaluation.
 
 ### Training Diagnostics
 
-Diagnostics are optional and do not change model updates, weighted MPI gradient synchronization, fold normalization, or physical-MSE candidate selection. Enable them with a configurable output location:
+Diagnostics are enabled by default and do not change model updates, weighted
+MPI gradient synchronization, fold normalization, or physical-MSE candidate
+selection. Disable them with `--no-diagnostics` or enable them explicitly with
+a configurable output location:
 
 ```bash
 mpirun -n 4 ./build/CNN/cnn_executable \
@@ -227,7 +240,7 @@ mpirun -n 4 ./build/CNN/cnn_executable \
   --histogram-bins 64
 ```
 
-Relevant options are `--diagnostics`, `--no-diagnostics`, `--results-dir`, `--experiment`, `--run-name`, `--validation-interval`, `--histogram-bins`, `--verbose-final`, and `--quiet-final`. Diagnostics are disabled by default. CV defaults to a validation interval of 10; final training defaults to 1. A non-checkpoint epoch stores an empty validation-MSE field rather than carrying a previous value forward.
+Relevant options are `--diagnostics`, `--no-diagnostics`, `--results-dir`, `--experiment`, `--run-name`, `--validation-interval`, `--histogram-bins`, `--verbose-final`, and `--quiet-final`. Diagnostics are enabled by default. CV defaults to a validation interval of 10; final training defaults to 1. A non-checkpoint epoch stores an empty validation-MSE field rather than carrying a previous value forward, unless early stopping requires validation at every epoch.
 
 Each run writes:
 
@@ -240,6 +253,7 @@ results/<experiment>/<run>/
   activation_statistics.csv
   activation_histograms.csv
   learning_rate_steps.csv           # populated for scheduled optimizers
+  test_metrics.csv                  # overall and |AoA| stratified test MSE
   cv_summary.csv                    # CV sessions
   candidate_000/fold_000/...       # per-candidate/fold artifacts
   final/...                         # final fit after CV
@@ -250,12 +264,13 @@ Candidate and fold directory names are numeric and zero-based. User-facing candi
 
 Metrics and recording policy:
 
-- `epoch_metrics.csv` stores epoch, sample-weighted SIMM training objective, physical-unit validation MSE or a missing field, globally processed samples, global optimizer steps/batches, and configured/effective learning rates.
+- `epoch_metrics.csv` stores epoch, sample-weighted SIMM training objective, physical-unit training MSE, physical-unit validation MSE or a missing field, globally processed samples, global optimizer steps/batches, and configured/effective learning rates.
 - `gradient_norms.csv` measures synchronized global gradients before element-wise clipping and Adam. `all` combines weights and biases for each trainable layer; separate parameter scopes are also emitted. Mean, RMS, maximum, and last L2 norm aggregate every global optimizer step in the epoch. Depth plots use RMS.
 - `parameter_update_ratios.csv` measures the actual Adam delta around the real optimizer call: `||after-before||_2 / max(||before||_2, 1e-12)`. It therefore includes clipping, Adam moments, coupled weight decay, and every optimizer behavior. Pre-update norm, update norm, ratio aggregates, and near-zero denominator counts are stored.
 - `activation_statistics.csv` stores exact streaming count, mean, population variance, minimum, and maximum for the tensor entering and returned by each `ActivationLayer`. Rows explicitly use `pre_activation` and `post_activation`; Flatten and Concatenate are not treated as activations.
 - `activation_histograms.csv` stores fixed, bounded histograms over `[-10, 10]`. Values outside that range are counted in the edge bins. Bin edges are identical across epochs, histogram counts cover the full population, and no raw activation tensors are retained.
-- `metadata.json` stores mode, names, candidate/fold identity, selected parameters, seeds, model order, optimizer/Adam settings, clipping, batch/epoch settings, dataset paths, MPI size, histogram policy, and the build-time Git revision when available.
+- `metadata.json` stores mode, names, candidate/fold identity, selected parameters, seeds, model order, optimizer/Adam settings, clipping, batch/epoch settings, early-stopping policy, dataset paths, MPI size, histogram policy, and the build-time Git revision when available.
+- `test_metrics.csv` stores overall physical test MSE and sample-weighted physical MSE for `abs(AoA) <= 10` degrees and `abs(AoA) > 10` degrees.
 - `learning_rate_steps.csv` stores exact per-step effective rates when an optimizer reports that it uses a schedule. Current Adam has a constant rate, so epoch-level configured/effective values are sufficient and this file contains only its header.
 
 Activation values are collected from the existing training forward pass only. Gradient and update metrics are computed after every synchronized optimizer step and retained only as epoch aggregates. Activation moments and histograms are accumulated during the epoch and persisted once per epoch.
