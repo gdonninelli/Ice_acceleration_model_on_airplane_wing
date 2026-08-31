@@ -1,0 +1,5 @@
+metric,value
+selected_epoch,198
+training_physical_mse,0.0035719505099807087
+validation_physical_mse,0.0031052226149980849
+test_physical_mse,0.0026357972082815058
