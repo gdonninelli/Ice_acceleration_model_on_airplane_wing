@@ -81,7 +81,8 @@ struct LossConfig {
 
 struct TrainingConfig {
     size_t epochs = 100;
-    size_t global_batch_size = 64;
+    // The canonical final-training split uses six equal global batches of 257.
+    size_t global_batch_size = 257;
     float gradient_clip = 1.0f;
     uint64_t seed = 42;
     bool shuffle = true;

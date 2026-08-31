@@ -43,6 +43,11 @@ struct Partition {
     size_t count;
 };
 
+struct BatchRange {
+    size_t offset;
+    size_t count;
+};
+
 class ActivationObserverGuard {
 public:
     explicit ActivationObserverGuard(CNNModel& model) : _model(model) {}
@@ -60,6 +65,36 @@ Partition partition_batch(size_t batch_size, int rank, int world_size) {
     return {
         rank_index * base + std::min(rank_index, remainder),
         base + (rank_index < remainder ? 1 : 0)};
+}
+
+size_t balanced_batch_count(size_t sample_count, size_t maximum_batch_size) {
+    if (maximum_batch_size == 0) {
+        throw std::invalid_argument("Batch size must be positive.");
+    }
+    if (sample_count == 0) {
+        return 0;
+    }
+    return sample_count / maximum_batch_size +
+           (sample_count % maximum_batch_size == 0 ? 0 : 1);
+}
+
+BatchRange balanced_batch_range(size_t sample_count,
+                                size_t maximum_batch_size,
+                                size_t batch_index) {
+    const size_t batches =
+        balanced_batch_count(sample_count, maximum_batch_size);
+    if (batch_index >= batches) {
+        throw std::out_of_range("Batch index is outside the training range.");
+    }
+
+    // Treat the configured batch size as an upper bound and distribute the
+    // remainder across batches. For the canonical 1542-sample split, a
+    // global batch size of 257 produces six equal batches and no tiny tail.
+    const size_t base_size = sample_count / batches;
+    const size_t remainder = sample_count % batches;
+    return {
+        batch_index * base_size + std::min(batch_index, remainder),
+        base_size + (batch_index < remainder ? 1 : 0)};
 }
 
 void reduce_sum(double local_value,
@@ -302,6 +337,9 @@ TrainingResult Trainer::fit(CNNModel& model,
                                  _communicator, true);
     ActivationObserverGuard observer_guard(model);
     std::vector<size_t> ordered_training(training_indices.begin(), training_indices.end());
+    const size_t training_batch_count =
+        balanced_batch_count(ordered_training.size(),
+                             training_config.global_batch_size);
     double final_training_objective = 0.0;
     double final_training_physical_mse = 0.0;
     std::vector<EpochMetrics> history;
@@ -398,11 +436,13 @@ TrainingResult Trainer::fit(CNNModel& model,
 
         double local_loss_sum = 0.0;
         unsigned long long local_seen = 0;
-        for (size_t batch_offset = 0; batch_offset < ordered_training.size();
-             batch_offset += training_config.global_batch_size) {
-            const size_t global_count = std::min(
-                training_config.global_batch_size,
-                ordered_training.size() - batch_offset);
+        for (size_t batch_index = 0; batch_index < training_batch_count;
+             ++batch_index) {
+            const BatchRange batch = balanced_batch_range(
+                ordered_training.size(), training_config.global_batch_size,
+                batch_index);
+            const size_t batch_offset = batch.offset;
+            const size_t global_count = batch.count;
             const Partition local = partition_batch(
                 global_count, distributed.rank, distributed.size);
 
@@ -568,14 +608,11 @@ TrainingResult Trainer::fit(CNNModel& model,
         std::string epoch_diagnostics_error;
         try {
             if (diagnostics) {
-                const size_t batches =
-                    (ordered_training.size() + training_config.global_batch_size - 1) /
-                    training_config.global_batch_size;
                 diagnostics_summary = diagnostics->finish_epoch(
                     completed_epoch, final_training_objective,
                     final_training_physical_mse,
                     checkpoint_validation_physical_mse,
-                    static_cast<size_t>(global_seen), batches);
+                    static_cast<size_t>(global_seen), training_batch_count);
             }
         } catch (const std::exception& error) {
             epoch_diagnostics_error = error.what();
@@ -589,10 +626,7 @@ TrainingResult Trainer::fit(CNNModel& model,
             std::cout << "Epoch " << completed_epoch << "/"
                       << training_config.epochs
                       << " | samples=" << global_seen
-                      << " | steps="
-                      << ((ordered_training.size() +
-                           training_config.global_batch_size - 1) /
-                          training_config.global_batch_size)
+                      << " | steps=" << training_batch_count
                       << " | train_objective=" << final_training_objective
                       << " | training_physical_mse="
                       << final_training_physical_mse

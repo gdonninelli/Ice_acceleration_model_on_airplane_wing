@@ -150,7 +150,11 @@ mpirun -n 4 ./CNN/cnn_executable \
   --seed 42
 ```
 
-`--batch-size` is the global MPI batch size. It does not scale with the number of ranks. Partial final batches are processed, and gradient aggregation is weighted by each rank's actual sample count.
+`--batch-size` is the maximum global MPI batch size. It does not scale with the
+number of ranks. Training distributes remainder samples across balanced batches
+instead of creating a tiny final update, and gradient aggregation is weighted by
+each rank's actual sample count. Evaluation may still process a smaller final
+batch because it performs no optimizer update.
 
 The executable evaluates the currently configured model across the requested folds. It does not create pooling layers, alternative optimizers, or a predefined hyperparameter search. Those remain extension choices supplied through `TrialConfig` and `ParameterGrid`.
 

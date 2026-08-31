@@ -44,7 +44,9 @@ struct CommandLineOptions {
     float l2_weight = 0.0f;
     float gradient_clip = 1.0f;
     size_t epochs = 200;
-    size_t global_batch_size = 64;
+    // The canonical 1542-sample holdout split divides exactly into 6 batches
+    // of 257, avoiding the six-sample tail that motivated this setting.
+    size_t global_batch_size = 257;
     size_t folds = 5;
     size_t validation_interval = 0;
     size_t histogram_bins = 64;
@@ -392,7 +394,7 @@ void print_help() {
         << "  --validation-interval N Validation frequency (CV default: 10, final default: 1)\n"
         << "  --histogram-bins N     Fixed activation histogram bins (default: 64)\n"
         << "  --epochs N             Epochs per fold/training run (default: 200)\n"
-        << "  --batch-size N         Global MPI batch size (default: 64)\n"
+        << "  --batch-size N         Global MPI batch size (default: 257)\n"
         << "  --activation NAME      leakyrelu, relu, tanh, or sigmoid\n"
         << "  --alpha VALUE          LeakyReLU negative slope\n"
         << "  --dropout VALUE        Dropout rate in [0, 1) for the dense head (default: 0)\n"

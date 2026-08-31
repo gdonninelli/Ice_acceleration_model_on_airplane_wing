@@ -197,7 +197,7 @@ mpirun -n 4 ./build/CNN/cnn_executable --dropout 0.2
 Training parameters are available from the command line:
 
 ```bash
-mpirun -n 4 ./build/CNN/cnn_executable --epochs 200 --batch-size 64 --learning-rate 1e-3
+mpirun -n 4 ./build/CNN/cnn_executable --epochs 200 --batch-size 257 --learning-rate 1e-3
 ```
 
 Run deterministic random K-fold evaluation for the configured model:
@@ -206,7 +206,9 @@ Run deterministic random K-fold evaluation for the configured model:
 mpirun -n 4 ./build/CNN/cnn_executable --cross-validate --folds 5 --epochs 100 --batch-size 256 --seed 42
 ```
 
-The global batch size is independent of MPI rank count. Fold or holdout
+The global batch size is independent of MPI rank count. Training distributes
+remainder samples across balanced global batches; for the canonical 1542-sample
+holdout split, batch size 257 produces six equal batches. Fold or holdout
 normalization is fitted from fitting samples only, the test NPZ remains
 untouched until final evaluation, and scoring uses physical-unit MSE.
 Developers can pass a typed `ParameterGrid` to `CrossValidator::tune()` when
