@@ -7,7 +7,8 @@ physical-MSE spikes in the ordinary training run.
 
 - Dataset: `dataset/cnn_dataset_train.npz` for training and the holdout split;
   `dataset/cnn_dataset_test.npz` is used only for final scoring.
-- Seed: `42`.
+- Seeds: `42` for the original runs; `0`, `1`, and `42` for the multi-seed
+  reruns.
 - MPI size: `64` ranks.
 - Optimizer: Adam with learning rate `1e-3`, beta1 `0.9`, beta2 `0.999`.
 - SIMM physics weight: `0.1`.
@@ -207,25 +208,94 @@ the ratio resets the streak. Training stops after 20 consecutive qualifying
 epochs, and the best checkpoint is restored when configured. The SIMM
 objective, optimizer, batch size, clipping, and validation split are unchanged.
 
-## Next Controlled Experiment
+### Rerun With the 20/20 Policy
 
-Keep trial 3's configuration unchanged and increase the epoch count to `834`:
+The same `834`-epoch, six-batch configuration was rerun with the new stopping
+policy:
+
+| Seed | Run | Epochs completed | Stop epoch | Selected epoch | Final training MSE | Final validation MSE | Test MSE |
+| ---: | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 0 | `slurm-55390016_trial_4_seed_0b` | 834 | none | 743 | `0.001672786` | `0.001499316` | `0.001542168` |
+| 1 | `slurm-55390186_trial_4_seed_1b` | 210 | 210 | 190 | `0.003171709` | `0.005345270` | `0.002699663` |
+| 42 | `slurm-55391033_trial_4_b` | 834 | none | 831 | `0.001321096` | `0.001325427` | `0.001377287` |
+
+The stopping behavior matches the intended policy:
+
+- Seed 0 had 18 raw ratio crossings, but its longest qualifying streak was
+  only one epoch, so it completed the full budget.
+- Seed 1 had 206 raw ratio crossings. After its best checkpoint at epoch 190,
+  epochs 191--210 formed 20 consecutive qualifying epochs, so training stopped
+  at epoch 210 and restored epoch 190.
+- Seed 42 had 74 raw ratio crossings, but its longest qualifying streak was
+  four epochs, so it completed the full budget and selected epoch 831.
+
+Compared with the previous first-crossing runs, the untouched test-set MSE
+improved for every seed:
+
+| Seed | Previous test MSE | New test MSE | Reduction |
+| ---: | ---: | ---: | ---: |
+| 0 | `0.017024867` | `0.001542168` | `90.94%` |
+| 1 | `0.013266330` | `0.002699663` | `79.65%` |
+| 42 | `0.001923563` | `0.001377287` | `28.40%` |
+
+Across the three seeds, mean test MSE fell from `0.010738254` to
+`0.001873040`, an `82.56%` reduction. The seed-to-seed range also narrowed
+from `8.85x` between the best and worst runs to `1.96x`. The remaining
+variation is largely validation-split variation because the split still uses
+the training seed.
+
+The early optimization transient remains, but it is finite and bounded after
+the first two epochs. The largest post-transient training/validation MSE pairs
+were `0.023183/0.024127` for seed 0, `0.027943/0.030847` for seed 1, and
+`0.018733/0.018893` for seed 42. All numeric values in the new diagnostic CSVs
+are finite. The fix therefore addresses premature termination and checkpoint
+selection; it does not remove the initial optimizer transient.
+
+### Final Seed-42 Training
+
+The seed-42 configuration was then extended to a `2500`-epoch maximum:
+
+Result directory:
+`results/ordinary-training/slurm-final_training`
+
+- Global batch size: `257`, giving six Adam updates per epoch.
+- The run completed `1525` epochs, or `9150` optimizer updates, before the
+  `20/20` early-stopping policy triggered.
+- The best checkpoint was epoch `1505`, or `9030` optimizer updates. Epochs
+  `1506--1525` formed the required 20-epoch qualifying streak.
+- Final selected training, validation, and test physical MSE:
+  `0.000493208`, `0.000599464`, and `0.000672714`.
+- Test MSE by angle range was `0.000546783` for `|AoA| <= 10` degrees and
+  `0.001365339` for `|AoA| > 10` degrees.
+
+The selected test MSE is `51.16%` lower than the previous 834-epoch seed-42
+run (`0.001377287`) and `63.11%` lower than the original trial 1 baseline
+(`0.001823545`). The longer budget was therefore useful for this seed. The
+final metrics equal the epoch-1505 checkpoint rather than the stopping epoch,
+confirming that best-checkpoint restoration worked as intended.
+
+## Comparable-Step Experiment
+
+The planned experiment kept trial 3's configuration unchanged and increased the
+epoch count to `834`:
 
 - `834 * 6 = 5004` Adam updates.
 - This closely matches the original batch-64 budget of `5000` updates.
 - Keep MPI size `64`, global batch size `257`, learning rate `1e-3`, physics
   weight `0.1`, seed `42`, and the current element-wise clipping unchanged.
 
-The Slurm command should include:
+The Slurm command used:
 
 ```bash
 --epochs 834 --batch-size 257 --learning-rate 1e-3
 ```
 
-This isolates the effect of giving the larger-batch run a comparable optimizer
-budget. Do not add global-norm clipping or change the learning rate in this
-run. If the longer run still has unacceptable early excursions, global L2
-clipping is the next separate experiment.
+This isolated the effect of giving the larger-batch run a comparable optimizer
+budget. The stopping-policy reruns show that the early transient is not caused
+by premature stopping. Do not add global-norm clipping or change the learning
+rate when comparing stopping policies. If reducing the remaining initial
+excursion is still required, global L2 clipping should be evaluated as a
+separate experiment.
 
 ## Clipping Status
 
@@ -235,8 +305,8 @@ norm of the complete network gradient. Diagnostics record raw synchronized
 gradients before this clipping, while parameter-update diagnostics include the
 actual clipped Adam update.
 
-Global-norm clipping is intentionally deferred until after the comparable-step
-`257`-batch experiment so that its effect can be measured independently.
+Global-norm clipping remains deferred so that its effect can be measured
+independently from the completed batch-size and early-stopping experiments.
 
 ## Trial 3 Plot
 
