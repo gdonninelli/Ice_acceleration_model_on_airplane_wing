@@ -169,6 +169,8 @@ void verify_diagnostics_agreement(const TrainingConfig& config,
     append_string(config.diagnostics.training_dataset_path);
     append_string(config.diagnostics.validation_dataset_path);
     append(config.early_stopping ? 1 : 0);
+    append(config.early_stopping_min_epochs);
+    append(config.early_stopping_patience);
     append(std::bit_cast<uint64_t>(config.max_overfit_ratio));
     append(config.restore_best_weights ? 1 : 0);
 
@@ -295,6 +297,11 @@ TrainingResult Trainer::fit(CNNModel& model,
         throw std::invalid_argument(
             "Maximum overfitting ratio must be finite and non-negative.");
     }
+    if (training_config.early_stopping &&
+        training_config.early_stopping_patience == 0) {
+        throw std::invalid_argument(
+            "Early-stopping patience must be positive when early stopping is enabled.");
+    }
     verify_diagnostics_agreement(training_config, _communicator);
     if (!std::isfinite(loss_config.l1_weight) ||
         loss_config.l1_weight < 0.0f ||
@@ -348,6 +355,7 @@ TrainingResult Trainer::fit(CNNModel& model,
     double best_validation_physical_mse =
         std::numeric_limits<double>::infinity();
     size_t best_epoch = 0;
+    size_t overfit_streak = 0;
     size_t epochs_completed = 0;
     bool stopped_early = false;
 
@@ -576,16 +584,9 @@ TrainingResult Trainer::fit(CNNModel& model,
 
         bool overfit = false;
         if (training_config.early_stopping) {
-            if (checkpoint_training_physical_mse == 0.0) {
-                overfit = checkpoint_validation_physical_mse > 0.0;
-            } else {
-                overfit = checkpoint_validation_physical_mse >
-                          checkpoint_training_physical_mse *
-                              (1.0 + training_config.max_overfit_ratio);
-            }
-
-            if (checkpoint_validation_physical_mse <
-                best_validation_physical_mse) {
+            const bool validation_improved =
+                checkpoint_validation_physical_mse < best_validation_physical_mse;
+            if (validation_improved) {
                 best_validation_physical_mse =
                     checkpoint_validation_physical_mse;
                 best_training_objective = final_training_objective;
@@ -597,6 +598,27 @@ TrainingResult Trainer::fit(CNNModel& model,
                         values, values + parameter.tensor->size());
                 }
             }
+
+            bool ratio_exceeded = false;
+            if (checkpoint_training_physical_mse == 0.0) {
+                ratio_exceeded = checkpoint_validation_physical_mse > 0.0;
+            } else {
+                ratio_exceeded = checkpoint_validation_physical_mse >
+                                 checkpoint_training_physical_mse *
+                                     (1.0 + training_config.max_overfit_ratio);
+            }
+
+            // A single noisy validation excursion should not stop training.
+            // Require a post-warm-up streak, and only count epochs that are
+            // both above the configured gap and worse than the best checkpoint.
+            if (completed_epoch < training_config.early_stopping_min_epochs ||
+                validation_improved || !ratio_exceeded) {
+                overfit_streak = 0;
+            } else {
+                ++overfit_streak;
+            }
+            overfit = overfit_streak >= training_config.early_stopping_patience &&
+                      completed_epoch >= training_config.early_stopping_min_epochs;
         }
 
         if (training_config.early_stopping && overfit) {
@@ -662,9 +684,11 @@ TrainingResult Trainer::fit(CNNModel& model,
         if (stopped_early) {
             if (distributed.rank == 0 && verbose) {
                 std::cout << "Early stopping at epoch " << completed_epoch
-                          << ": validation MSE exceeded training MSE by more than "
+                          << " after " << training_config.early_stopping_patience
+                          << " consecutive epochs with validation MSE more than "
                           << training_config.max_overfit_ratio * 100.0
-                          << "%." << std::endl;
+                          << "% above training MSE without improvement."
+                          << std::endl;
             }
             break;
         }

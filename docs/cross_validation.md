@@ -550,6 +550,15 @@ for (const CandidateResult& candidate : result.candidates) {
 
 Validation requires an additional pass over the fold's validation samples after every epoch's optimizer updates. The final scoring pass is performed on the selected final weights. Training activation diagnostics never trigger an additional forward pass.
 
+When `TrainingConfig::early_stopping` is enabled, stopping uses the per-epoch
+physical MSE values rather than the history interval. The default policy waits
+for `early_stopping_min_epochs = 20`, then requires
+`early_stopping_patience = 20` consecutive epochs where validation MSE is more
+than `max_overfit_ratio` above training MSE without improving the best
+validation checkpoint. An improvement or a return below the ratio resets the
+streak. `restore_best_weights` controls whether the best checkpoint is restored
+before final scoring.
+
 ## Diagnostic Artifacts
 
 Set diagnostics on the trial before calling `evaluate()` or `tune()`:

@@ -89,6 +89,8 @@ struct TrainingConfig {
     size_t validation_interval = 10;
     TrainingDiagnosticsConfig diagnostics;
     bool early_stopping = false;
+    size_t early_stopping_min_epochs = 20;
+    size_t early_stopping_patience = 20;
     double max_overfit_ratio = 0.15;
     bool restore_best_weights = true;
 };

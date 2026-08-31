@@ -434,6 +434,10 @@ struct TrainingDiagnosticsRecorder::Impl {
                << ",\n  \"gradient_clip\": " << json_number(model.gradient_clip())
                << ",\n  \"early_stopping\": "
                << (trial.training.early_stopping ? "true" : "false")
+               << ",\n  \"early_stopping_min_epochs\": "
+               << trial.training.early_stopping_min_epochs
+               << ",\n  \"early_stopping_patience\": "
+               << trial.training.early_stopping_patience
                << ",\n  \"max_overfit_ratio\": "
                << json_number(trial.training.max_overfit_ratio)
                << ",\n  \"restore_best_weights\": "

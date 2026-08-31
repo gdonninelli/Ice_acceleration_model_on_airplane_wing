@@ -477,6 +477,10 @@ TrialConfig make_single_trial(const CommandLineOptions& options,
         trial.selected_parameters["validation_fraction"] = "0.10";
     }
     trial.selected_parameters["early_stopping"] = early_stopping ? "true" : "false";
+    trial.selected_parameters["early_stopping_min_epochs"] =
+        std::to_string(trial.training.early_stopping_min_epochs);
+    trial.selected_parameters["early_stopping_patience"] =
+        std::to_string(trial.training.early_stopping_patience);
     trial.selected_parameters["max_overfit_ratio"] = "0.15";
     trial.selected_parameters["restore_best_weights"] = "true";
     return trial;

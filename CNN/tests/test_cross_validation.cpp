@@ -263,6 +263,13 @@ void test_training_diagnostics_artifacts() {
             const auto directory = root / "experiment" / "run";
             require(std::filesystem::exists(directory / "metadata.json"),
                     "Diagnostics metadata was not written");
+            const std::string metadata =
+                read_text_file(directory / "metadata.json");
+            require(metadata.find("\"early_stopping_min_epochs\": 20") !=
+                        std::string::npos &&
+                        metadata.find("\"early_stopping_patience\": 20") !=
+                        std::string::npos,
+                    "Early-stopping policy is missing from diagnostics metadata");
             const std::string epoch_metrics =
                 read_text_file(directory / "epoch_metrics.csv");
             require(epoch_metrics.starts_with(
@@ -518,6 +525,85 @@ void test_trainer_with_partial_batches() {
                 "MPI weighted gradient update differs from serial update");
         }
     }
+}
+
+void test_early_stopping_policy() {
+    Dataset dataset = tiny_dataset(7);
+    const std::vector<size_t> training{0, 1, 2, 3, 4};
+    const std::vector<size_t> validation{5, 6};
+    const NormalizationStats normalization =
+        dataset.fit_normalization(training);
+
+    ModelFactory factory;
+    Trainer trainer(MPI_COMM_WORLD);
+
+    TrialConfig warmup = minimal_trial(0.0f);
+    warmup.training.epochs = 3;
+    warmup.training.early_stopping = true;
+    warmup.training.early_stopping_min_epochs = 20;
+    warmup.training.early_stopping_patience = 1;
+    auto warmup_model = factory.build(warmup, 1, 1, 2,
+                                      warmup.training.seed, MPI_COMM_WORLD);
+    const TrainingResult result = trainer.fit(
+        *warmup_model, dataset, training, dataset, validation, normalization,
+        warmup.loss, warmup.training, warmup.training.seed, false);
+    require(result.epochs_completed == warmup.training.epochs &&
+                !result.stopped_early,
+            "Early stopping ignored its minimum-epoch warm-up");
+
+    TrialConfig improving = minimal_trial(0.0f);
+    improving.training.epochs = 5;
+    improving.training.early_stopping = true;
+    improving.training.early_stopping_min_epochs = 0;
+    improving.training.early_stopping_patience = 1;
+    improving.training.max_overfit_ratio = 0.0;
+    auto improving_model = factory.build(
+        improving, 1, 1, 2, improving.training.seed, MPI_COMM_WORLD);
+    const TrainingResult immediate = trainer.fit(
+        *improving_model, dataset, training, dataset, validation, normalization,
+        improving.loss, improving.training, improving.training.seed, false);
+    require(immediate.epochs_completed == improving.training.epochs &&
+                !immediate.stopped_early &&
+                immediate.best_epoch == improving.training.epochs,
+            "Validation improvements did not reset the overfit streak");
+
+    Dataset overfit_dataset(
+        {0.0f, 1.0f, 2.0f, 3.0f, 4.0f, 5.0f, 6.0f},
+        {100000.0f, -2.0f, 100001.0f, -1.0f, 100002.0f, 0.0f,
+         100003.0f, 1.0f, 100004.0f, 2.0f, 100005.0f, 3.0f,
+         100006.0f, 4.0f},
+        {0.0f, 0.0f, 0.0f, 0.0f, 0.0f, 100.0f, 100.0f}, 1, 1);
+    const NormalizationStats overfit_normalization =
+        overfit_dataset.fit_normalization(training);
+    TrialConfig overfit_config = minimal_trial(0.0f);
+    overfit_config.training.epochs = 5;
+    overfit_config.training.validation_interval = 1;
+    overfit_config.training.early_stopping = true;
+    overfit_config.training.early_stopping_min_epochs = 0;
+    overfit_config.training.early_stopping_patience = 2;
+    auto overfit_model = factory.build(
+        overfit_config, 1, 1, 2, overfit_config.training.seed, MPI_COMM_WORLD);
+    const TrainingResult overfit = trainer.fit(
+        *overfit_model, overfit_dataset, training, overfit_dataset, validation,
+        overfit_normalization, overfit_config.loss, overfit_config.training,
+        overfit_config.training.seed, false);
+    require(overfit.stopped_early && overfit.epochs_completed == 3 &&
+                overfit.best_epoch == 1 && overfit.history.size() == 3,
+            "Early stopping did not require consecutive patience epochs");
+    require_close(overfit.validation_mse, overfit.history.front().validation_mse,
+                  1e-5, "Early stopping did not restore the best checkpoint");
+
+    TrialConfig invalid = overfit_config;
+    invalid.training.early_stopping_patience = 0;
+    auto invalid_model = factory.build(invalid, 1, 1, 2,
+                                       invalid.training.seed, MPI_COMM_WORLD);
+    require_throws(
+        [&] {
+            trainer.fit(*invalid_model, dataset, training, dataset, validation,
+                        normalization, invalid.loss, invalid.training,
+                        invalid.training.seed, false);
+        },
+        "Early stopping accepted zero patience");
 }
 
 void test_regularization_config_validation() {
@@ -1066,6 +1152,7 @@ int main(int argc, char** argv) {
         test_diagnostics_math_and_activation_capture();
         test_parameter_grid_and_fresh_models();
         test_trainer_with_partial_batches();
+        test_early_stopping_policy();
         test_regularization_config_validation();
         test_dropout_layer_behavior();
         test_dropout_training_integration();
