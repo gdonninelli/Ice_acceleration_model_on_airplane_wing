@@ -645,8 +645,8 @@ void TrainingDiagnosticsRecorder::after_optimizer_step(const CNNModel&) {
 EpochDiagnosticsSummary TrainingDiagnosticsRecorder::finish_epoch(
     size_t epoch,
     double training_objective,
-    double training_mse,
-    double validation_mse,
+    double training_physical_mse,
+    double validation_physical_mse,
     size_t samples,
     size_t batches) {
     if (epoch != _impl->current_epoch) {
@@ -709,12 +709,12 @@ EpochDiagnosticsSummary TrainingDiagnosticsRecorder::finish_epoch(
             _impl->optimizer.configured_learning_rate;
         _impl->epoch_file << epoch << ',' << std::setprecision(17)
                           << training_objective << ',';
-        if (std::isfinite(training_mse)) {
-            _impl->epoch_file << training_mse;
+        if (std::isfinite(training_physical_mse)) {
+            _impl->epoch_file << training_physical_mse;
         }
         _impl->epoch_file << ',';
-        if (std::isfinite(validation_mse)) {
-            _impl->epoch_file << validation_mse;
+        if (std::isfinite(validation_physical_mse)) {
+            _impl->epoch_file << validation_physical_mse;
         }
         _impl->epoch_file << ',' << samples << ',' << batches << ','
                           << configured_lr << ','

@@ -1,3 +1,4 @@
+#include "src/core/Loss.hpp"
 #include "src/data/Dataset.hpp"
 #include "src/model/ModelFactory.hpp"
 #include "src/training/Trainer.hpp"
@@ -66,12 +67,19 @@ struct BatchPartition {
 };
 
 struct TestMetrics {
-    double overall_mse = std::numeric_limits<double>::quiet_NaN();
-    double low_angle_mse = std::numeric_limits<double>::quiet_NaN();
-    double high_angle_mse = std::numeric_limits<double>::quiet_NaN();
+    double overall_physical_mse = std::numeric_limits<double>::quiet_NaN();
+    double low_angle_physical_mse = std::numeric_limits<double>::quiet_NaN();
+    double high_angle_physical_mse = std::numeric_limits<double>::quiet_NaN();
     size_t overall_samples = 0;
     size_t low_angle_samples = 0;
     size_t high_angle_samples = 0;
+};
+
+struct FinalMetrics {
+    size_t selected_epoch = 0;
+    double training_physical_mse = std::numeric_limits<double>::quiet_NaN();
+    double validation_physical_mse = std::numeric_limits<double>::quiet_NaN();
+    double test_physical_mse = std::numeric_limits<double>::quiet_NaN();
 };
 
 struct TrainedRun {
@@ -150,14 +158,18 @@ TestMetrics evaluate_test_metrics(CNNModel& model,
             const float* target_values = batch.targets->get_data();
             const float* alpha_values = batch.alpha_radians->get_data();
 
+            const float batch_physical_mse = Loss::physical_mse(
+                predictions, batch.targets,
+                static_cast<float>(normalization.target_std));
+            local_sums[0] += static_cast<double>(batch_physical_mse) * local.count;
+            local_counts[0] += static_cast<unsigned long long>(local.count);
+
             for (size_t sample = 0; sample < local.count; ++sample) {
                 const double error =
                     (static_cast<double>(prediction_values[sample]) -
                      static_cast<double>(target_values[sample])) *
-                    normalization.target_std;
+                    static_cast<double>(static_cast<float>(normalization.target_std));
                 const double squared_error = error * error;
-                local_sums[0] += squared_error;
-                ++local_counts[0];
 
                 const bool high_angle =
                     std::abs(static_cast<double>(alpha_values[sample])) >
@@ -215,27 +227,56 @@ void write_test_metrics(const std::filesystem::path& output_directory,
         throw std::runtime_error("Failed to write test metrics: " + path.string());
     }
 
-    output << "subset,samples,mse\n" << std::setprecision(17)
+    output << "subset,samples,physical_mse\n" << std::setprecision(17)
            << "overall," << metrics.overall_samples << ','
-           << metrics.overall_mse << '\n'
+           << metrics.overall_physical_mse << '\n'
            << "abs_aoa_le_10_deg," << metrics.low_angle_samples << ','
-           << metrics.low_angle_mse << '\n'
+           << metrics.low_angle_physical_mse << '\n'
            << "abs_aoa_gt_10_deg," << metrics.high_angle_samples << ','
-           << metrics.high_angle_mse << '\n';
+           << metrics.high_angle_physical_mse << '\n';
     if (!output) {
         throw std::runtime_error("Failed to flush test metrics: " + path.string());
     }
 }
 
 void print_test_metrics(const TestMetrics& metrics) {
-    std::cout << "Final test physical MSE: " << metrics.overall_mse
-              << " (samples=" << metrics.overall_samples << ")\n"
-              << "Test physical MSE | abs(AoA) <= 10 deg: "
-              << metrics.low_angle_mse << " (samples="
+    std::cout << "Test physical MSE | abs(AoA) <= 10 deg: "
+              << metrics.low_angle_physical_mse << " (samples="
               << metrics.low_angle_samples << ")\n"
               << "Test physical MSE | abs(AoA) > 10 deg: "
-              << metrics.high_angle_mse << " (samples="
+              << metrics.high_angle_physical_mse << " (samples="
               << metrics.high_angle_samples << ")" << std::endl;
+}
+
+size_t selected_epoch(const TrainingResult& result) {
+    return result.best_epoch != 0 ? result.best_epoch : result.epochs_completed;
+}
+
+void write_final_metrics(const std::filesystem::path& output_directory,
+                         const FinalMetrics& metrics) {
+    std::filesystem::create_directories(output_directory);
+    const auto path = output_directory / "final_metrics.csv";
+    std::ofstream output(path, std::ios::trunc);
+    if (!output) {
+        throw std::runtime_error("Failed to write final metrics: " + path.string());
+    }
+
+    output << "metric,value\n"
+           << "selected_epoch," << metrics.selected_epoch << '\n'
+           << std::setprecision(17)
+           << "training_physical_mse," << metrics.training_physical_mse << '\n'
+           << "validation_physical_mse," << metrics.validation_physical_mse << '\n'
+           << "test_physical_mse," << metrics.test_physical_mse << '\n';
+    if (!output) {
+        throw std::runtime_error("Failed to flush final metrics: " + path.string());
+    }
+}
+
+void print_final_metrics(const FinalMetrics& metrics) {
+    std::cout << "Best epoch: " << metrics.selected_epoch << '\n'
+              << "Training physical MSE: " << metrics.training_physical_mse << '\n'
+              << "Validation physical MSE: " << metrics.validation_physical_mse << '\n'
+              << "Test physical MSE: " << metrics.test_physical_mse << std::endl;
 }
 
 size_t parse_size(const std::string& option, const std::string& value) {
@@ -503,14 +544,16 @@ int main(int argc, char** argv) {
                     diagnostics_run_directory(config.training.diagnostics,
                                               run_context),
                     test_metrics);
-                std::cout << "Best validation physical MSE: "
-                          << trained.result.validation_mse << "\n"
-                          << "Best validation training physical MSE: "
-                          << trained.result.training_mse << "\n";
-                if (trained.result.best_epoch != 0) {
-                    std::cout << "Selected validation epoch: "
-                              << trained.result.best_epoch << "\n";
-                }
+                const FinalMetrics final_metrics{
+                    selected_epoch(trained.result),
+                    trained.result.training_mse,
+                    trained.result.validation_mse,
+                    test_metrics.overall_physical_mse};
+                write_final_metrics(
+                    diagnostics_run_directory(config.training.diagnostics,
+                                              run_context),
+                    final_metrics);
+                print_final_metrics(final_metrics);
                 print_test_metrics(test_metrics);
             }
         } else {
@@ -564,6 +607,16 @@ int main(int argc, char** argv) {
                     diagnostics_run_directory(final_config.training.diagnostics,
                                               final_context),
                     test_metrics);
+                const FinalMetrics final_metrics{
+                    selected_epoch(final_trained.result),
+                    final_trained.result.training_mse,
+                    final_trained.result.validation_mse,
+                    test_metrics.overall_physical_mse};
+                write_final_metrics(
+                    diagnostics_run_directory(final_config.training.diagnostics,
+                                              final_context),
+                    final_metrics);
+                print_final_metrics(final_metrics);
                 print_test_metrics(test_metrics);
             }
         }

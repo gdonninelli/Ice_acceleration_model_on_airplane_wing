@@ -76,6 +76,11 @@ The validation curve is read from:
 epoch_metrics.csv: validation_physical_mse
 ```
 
+The same file also stores `training_physical_mse`. Both physical-MSE columns
+are evaluated after the epoch's optimizer updates with the same
+`Loss::physical_mse` conversion; the plot keeps the SIMM objective and
+validation MSE on separate axes for readability.
+
 ### Axes
 
 - x-axis: completed epoch
@@ -99,11 +104,12 @@ Typical patterns:
 
 The two curves should not be subtracted. SIMM and physical MSE are different quantities.
 
-### Missing Points
+### Validation Frequency
 
-If validation was not evaluated at an epoch, the validation CSV field is empty and no validation point is plotted for that epoch.
-
-Cross-validation defaults to validation every 10 epochs. For a short run where every epoch should appear, use:
+Diagnostics contain a validation value for every epoch. Cross-validation still
+defaults to storing public history checkpoints every 10 epochs, but this does
+not reduce the per-epoch validation values in `epoch_metrics.csv`. To change
+the public history checkpoint interval, use:
 
 ```bash
 --validation-interval 1

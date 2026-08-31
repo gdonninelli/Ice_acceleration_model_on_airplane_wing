@@ -303,12 +303,12 @@ TrainingResult Trainer::fit(CNNModel& model,
     ActivationObserverGuard observer_guard(model);
     std::vector<size_t> ordered_training(training_indices.begin(), training_indices.end());
     double final_training_objective = 0.0;
-    double final_training_mse = 0.0;
+    double final_training_physical_mse = 0.0;
     std::vector<EpochMetrics> history;
     std::vector<std::vector<float>> best_parameters;
     double best_training_objective = std::numeric_limits<double>::infinity();
-    double best_training_mse = std::numeric_limits<double>::infinity();
-    double best_validation_mse = std::numeric_limits<double>::infinity();
+    double best_validation_physical_mse =
+        std::numeric_limits<double>::infinity();
     size_t best_epoch = 0;
     size_t epochs_completed = 0;
     bool stopped_early = false;
@@ -318,9 +318,9 @@ TrainingResult Trainer::fit(CNNModel& model,
         scheduler = trial_config->scheduler.build();
     }
 
-    auto evaluate_mse = [&](const Dataset& dataset,
-                            std::span<const size_t> indices,
-                            const std::string& phase) {
+    auto evaluate_physical_mse = [&](const Dataset& dataset,
+                                     std::span<const size_t> indices,
+                                     const std::string& phase) {
         double local_mse_sum = 0.0;
         unsigned long long local_seen = 0;
         std::string evaluation_error;
@@ -352,7 +352,7 @@ TrainingResult Trainer::fit(CNNModel& model,
         } catch (const std::exception& error) {
             evaluation_error = error.what();
         } catch (...) {
-            evaluation_error = "unknown local MSE evaluation error";
+            evaluation_error = "unknown local physical-MSE evaluation error";
         }
         throw_if_distributed_failure(evaluation_error, phase, _communicator);
 
@@ -367,10 +367,12 @@ TrainingResult Trainer::fit(CNNModel& model,
     };
 
     auto evaluate_training = [&]() {
-        return evaluate_mse(training_dataset, training_indices, "Training MSE");
+        return evaluate_physical_mse(training_dataset, training_indices,
+                                     "Training physical MSE");
     };
     auto evaluate_validation = [&]() {
-        return evaluate_mse(validation_dataset, validation_indices, "Validation");
+        return evaluate_physical_mse(validation_dataset, validation_indices,
+                                     "Validation physical MSE");
     };
 
     for (size_t epoch = 0; epoch < training_config.epochs; ++epoch) {
@@ -509,57 +511,56 @@ TrainingResult Trainer::fit(CNNModel& model,
         }
         final_training_objective =
             global_loss_sum / static_cast<double>(global_seen);
-        final_training_mse = evaluate_training();
+        final_training_physical_mse = evaluate_training();
         if (!std::isfinite(final_training_objective) ||
-            !std::isfinite(final_training_mse)) {
+            !std::isfinite(final_training_physical_mse)) {
             throw std::runtime_error("Training produced a non-finite loss.");
         }
         const bool history_checkpoint =
             completed_epoch % training_config.validation_interval == 0;
-        double checkpoint_validation_mse =
-            std::numeric_limits<double>::quiet_NaN();
-        const bool evaluate_epoch =
-            history_checkpoint || training_config.early_stopping;
-        if (evaluate_epoch) {
-            const double checkpoint_training_mse = final_training_mse;
-            checkpoint_validation_mse = evaluate_validation();
-            if (!std::isfinite(checkpoint_validation_mse)) {
-                throw std::runtime_error("Validation produced a non-finite loss.");
-            }
-            if (history_checkpoint) {
-                history.push_back(EpochMetrics{
-                    completed_epoch,
-                    final_training_objective,
-                    checkpoint_validation_mse});
+        const double checkpoint_training_physical_mse =
+            final_training_physical_mse;
+        // Validation is a reporting metric for every epoch. The configured
+        // interval still controls the public history checkpoints used by CV.
+        const double checkpoint_validation_physical_mse = evaluate_validation();
+        if (!std::isfinite(checkpoint_validation_physical_mse)) {
+            throw std::runtime_error(
+                "Validation produced a non-finite physical MSE.");
+        }
+        if (history_checkpoint) {
+            history.push_back(EpochMetrics{
+                completed_epoch,
+                final_training_objective,
+                checkpoint_validation_physical_mse});
+        }
+
+        bool overfit = false;
+        if (training_config.early_stopping) {
+            if (checkpoint_training_physical_mse == 0.0) {
+                overfit = checkpoint_validation_physical_mse > 0.0;
+            } else {
+                overfit = checkpoint_validation_physical_mse >
+                          checkpoint_training_physical_mse *
+                              (1.0 + training_config.max_overfit_ratio);
             }
 
-            bool overfit = false;
-            if (training_config.early_stopping) {
-                if (checkpoint_training_mse == 0.0) {
-                    overfit = checkpoint_validation_mse > 0.0;
-                } else {
-                    overfit = checkpoint_validation_mse >
-                              checkpoint_training_mse *
-                                  (1.0 + training_config.max_overfit_ratio);
+            if (checkpoint_validation_physical_mse <
+                best_validation_physical_mse) {
+                best_validation_physical_mse =
+                    checkpoint_validation_physical_mse;
+                best_training_objective = final_training_objective;
+                best_epoch = completed_epoch;
+                best_parameters.clear();
+                for (const auto& parameter : model.parameters()) {
+                    const float* values = parameter.tensor->get_data();
+                    best_parameters.emplace_back(
+                        values, values + parameter.tensor->size());
                 }
-
-                if (checkpoint_validation_mse < best_validation_mse) {
-                    best_validation_mse = checkpoint_validation_mse;
-                    best_training_objective = final_training_objective;
-                    best_training_mse = checkpoint_training_mse;
-                    best_epoch = completed_epoch;
-                    best_parameters.clear();
-                    for (const auto& parameter : model.parameters()) {
-                        const float* values = parameter.tensor->get_data();
-                        best_parameters.emplace_back(
-                            values, values + parameter.tensor->size());
-                    }
-                }
             }
+        }
 
-            if (training_config.early_stopping && overfit) {
-                stopped_early = true;
-            }
+        if (training_config.early_stopping && overfit) {
+            stopped_early = true;
         }
         epochs_completed = completed_epoch;
 
@@ -572,8 +573,8 @@ TrainingResult Trainer::fit(CNNModel& model,
                     training_config.global_batch_size;
                 diagnostics_summary = diagnostics->finish_epoch(
                     completed_epoch, final_training_objective,
-                    final_training_mse,
-                    checkpoint_validation_mse,
+                    final_training_physical_mse,
+                    checkpoint_validation_physical_mse,
                     static_cast<size_t>(global_seen), batches);
             }
         } catch (const std::exception& error) {
@@ -592,8 +593,11 @@ TrainingResult Trainer::fit(CNNModel& model,
                       << ((ordered_training.size() +
                            training_config.global_batch_size - 1) /
                           training_config.global_batch_size)
-                      << " | train=" << final_training_objective
-                      << " | train_mse=" << final_training_mse;
+                      << " | train_objective=" << final_training_objective
+                      << " | training_physical_mse="
+                      << final_training_physical_mse
+                      << " | validation_physical_mse="
+                      << checkpoint_validation_physical_mse;
             // Reported separately from the training objective so that the
             // objective stays comparable across regularization strengths.
             if (loss_config.l2_weight != 0.0f) {
@@ -606,14 +610,10 @@ TrainingResult Trainer::fit(CNNModel& model,
                           << l1_penalty(model.parameters(),
                                         loss_config.l1_weight);
             }
-            if (evaluate_epoch) {
-                std::cout << " | validation_mse="
-                          << checkpoint_validation_mse;
-            } else {
-                std::cout << " | validation_mse=missing";
-            }
-            std::cout << " | lr="
-                      << model.optimizer_metadata().effective_learning_rate;
+            const OptimizerMetadata optimizer = model.optimizer_metadata();
+            std::cout << " | lr=" << optimizer.effective_learning_rate
+                      << " | configured_lr="
+                      << optimizer.configured_learning_rate;
             if (diagnostics) {
                 std::cout << " | grad_rms="
                           << diagnostics_summary.gradient_rms_summary
@@ -657,20 +657,26 @@ TrainingResult Trainer::fit(CNNModel& model,
         }
         model.broadcast_initial_weights(0);
         final_training_objective = best_training_objective;
-        final_training_mse = best_training_mse;
         restored_best_weights = true;
     }
 
-    const double final_validation_mse =
-        restored_best_weights ? best_validation_mse : evaluate_validation();
+    const double final_validation_physical_mse = evaluate_validation();
+    if (restored_best_weights) {
+        final_training_physical_mse = evaluate_training();
+    }
+    if (!std::isfinite(final_training_physical_mse) ||
+        !std::isfinite(final_validation_physical_mse)) {
+        throw std::runtime_error(
+            "Final model produced a non-finite physical MSE.");
+    }
 
     return TrainingResult{
         final_training_objective,
-        final_validation_mse,
+        final_validation_physical_mse,
         training_indices.size(),
         validation_indices.size(),
         std::move(history),
-        final_training_mse,
+        final_training_physical_mse,
         epochs_completed,
         best_epoch,
         stopped_early};

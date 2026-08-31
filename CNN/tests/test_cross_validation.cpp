@@ -6,6 +6,7 @@
 #include "layers/ReLULayer.hpp"
 #include "model/ModelFactory.hpp"
 #include "optimizers/AdamOptimizer.hpp"
+#include "optimizers/LRScheduler.hpp"
 #include "training/TrainingDiagnostics.hpp"
 #include "tuning/CrossValidator.hpp"
 #include "tuning/SearchSpace.hpp"
@@ -238,8 +239,8 @@ void test_training_diagnostics_artifacts() {
     blueprint.head_layers = {Recipes::dense(1)};
     TrialConfig config{"diagnostics candidate", blueprint, Recipes::adam(1e-3f),
                        LossConfig{0.0f},
-                       TrainingConfig{1, 3, 1.0f, 31, false}, {}};
-    config.training.validation_interval = 1;
+                       TrainingConfig{3, 3, 1.0f, 31, false}, {}};
+    config.training.validation_interval = 2;
     config.training.diagnostics.enabled = true;
     config.training.diagnostics.results_root = root.string();
     config.training.diagnostics.experiment_name = "experiment";
@@ -262,6 +263,17 @@ void test_training_diagnostics_artifacts() {
             const auto directory = root / "experiment" / "run";
             require(std::filesystem::exists(directory / "metadata.json"),
                     "Diagnostics metadata was not written");
+            const std::string epoch_metrics =
+                read_text_file(directory / "epoch_metrics.csv");
+            require(epoch_metrics.starts_with(
+                        "epoch,train_objective,training_physical_mse,"
+                        "validation_physical_mse,samples,batches,"
+                        "configured_learning_rate,effective_learning_rate\n"),
+                    "Epoch metrics schema is not explicit about physical MSE");
+            require(std::count(epoch_metrics.begin(), epoch_metrics.end(), '\n') == 4,
+                    "Epoch metrics did not record every training epoch");
+            require(epoch_metrics.find(",,") == std::string::npos,
+                    "Epoch metrics omitted a per-epoch physical MSE");
             const std::string activations =
                 read_text_file(directory / "activation_statistics.csv");
             require(activations.find(",pre_activation,5,") != std::string::npos &&

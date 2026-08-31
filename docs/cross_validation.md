@@ -513,7 +513,7 @@ The recipe must construct a new optimizer every time. Optimizer objects must nev
 
 ## Epoch History
 
-`TrainingConfig::validation_interval` controls validation/history checkpoints and defaults to `Trainer::kHistoryIntervalEpochs == 10`. The executable uses 10 for CV and 1 for verbose final training unless `--validation-interval` is supplied. At each configured checkpoint, `Trainer` records:
+`TrainingConfig::validation_interval` controls history checkpoints and defaults to `Trainer::kHistoryIntervalEpochs == 10`. The executable uses 10 for CV and 1 for verbose final training unless `--validation-interval` is supplied. Physical validation MSE is evaluated after every epoch's optimizer updates. At each configured history checkpoint, `Trainer` records:
 
 ```cpp
 struct EpochMetrics {
@@ -529,7 +529,7 @@ Each fold stores its own points in:
 FoldMetrics::history
 ```
 
-With the default CV interval, 100 epochs produce 10 history entries. A 25-epoch run contains epochs 10 and 20; epoch 25 is still evaluated for final candidate scoring but is not added to checkpoint history. Runs shorter than the interval have empty history while still producing a final validation MSE. Diagnostic `epoch_metrics.csv` always has one row per epoch and leaves validation missing on non-checkpoint epochs.
+With the default CV interval, 100 epochs produce 10 history entries. A 25-epoch run contains epochs 10 and 20; epoch 25 is evaluated for per-epoch diagnostics and final candidate scoring but is not added to checkpoint history. Runs shorter than the interval have empty history while still producing a final validation MSE. Diagnostic `epoch_metrics.csv` always has one row per epoch with both training and validation physical MSE.
 
 Access the history with:
 
@@ -544,7 +544,7 @@ for (const CandidateResult& candidate : result.candidates) {
 }
 ```
 
-Validation requires an additional pass over the fold's validation samples at every configured checkpoint. The final scoring pass is reused when the final epoch is divisible by the interval. Training activation diagnostics never trigger an additional forward pass.
+Validation requires an additional pass over the fold's validation samples after every epoch's optimizer updates. The final scoring pass is performed on the selected final weights. Training activation diagnostics never trigger an additional forward pass.
 
 ## Diagnostic Artifacts
 

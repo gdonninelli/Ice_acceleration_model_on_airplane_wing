@@ -19,11 +19,11 @@ struct EpochMetrics {
 
 struct TrainingResult {
     double training_objective = 0.0;
-    double validation_mse = 0.0;
+    double validation_mse = 0.0; // Physical-unit validation MSE.
     size_t training_samples = 0;
     size_t validation_samples = 0;
     std::vector<EpochMetrics> history;
-    double training_mse = 0.0;
+    double training_mse = 0.0; // Physical-unit training MSE.
     size_t epochs_completed = 0;
     size_t best_epoch = 0;
     bool stopped_early = false;
