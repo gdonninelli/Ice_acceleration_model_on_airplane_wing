@@ -49,7 +49,7 @@ time mpirun -n "${SLURM_NTASKS:-1}" \
     ./build/CNN/cnn_executable \
     --activation leakyrelu \
     --alpha 0.05 \
-    --epochs 200 \
+    --epochs 834 \
     --batch-size 257 \
     --learning-rate 1e-3 \
     --physics-weight 0.10 \
