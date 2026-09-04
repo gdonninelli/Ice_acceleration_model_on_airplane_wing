@@ -1,13 +1,13 @@
 # Fdb version 4
-["bibtex main"] 1788540061.33415 "main.aux" "main.bbl" "main" 1788540063.77592 0
+["bibtex main"] 1788543151.73236 "main.aux" "main.bbl" "main" 1788543411.61327 0
   "./bibliography.bib" 1788539774.19417 3232 86e2ce85b528ca6f9b6696290db9d25c ""
   "/usr/local/texlive/2024/texmf-dist/bibtex/bst/natbib/plainnat.bst" 1233624470 26816 ffe5423d2019860bad9f54bc402fac15 ""
-  "main.aux" 1788540063.47016 34161 46b2fb0b758522d1a612b52c8e790855 "pdflatex"
+  "main.aux" 1788543411.23315 42004 3a53ee87f0392bf72fdfffd1482fe7c9 "pdflatex"
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["pdflatex"] 1788540061.41291 "main.tex" "main.pdf" "main" 1788540063.77609 0
+["pdflatex"] 1788543408.30913 "main.tex" "main.pdf" "main" 1788543411.61345 0
   "/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc" 1136849721 2971 def0b6c1f0b107b3b936def894055589 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/tfm/jknappen/ec/ecbx0800.tfm" 1136768653 3584 269b66e921ba58750c12f7f1c8ea3ebd ""
@@ -301,7 +301,7 @@
   "Chapters/01_Introduction.tex" 1788534840.70362 2611 da6fe15ea5082d352d9725a6ab12f403 ""
   "Chapters/02_Navier-Stokes_Simulation.tex" 1788534840.70394 35657 7a73b0a6f4f8489a96e54d5d77315c66 ""
   "Chapters/03_Convolutional_Neural_Network.tex" 1788534840.70427 72212 7971003ccdf8e684b0b9305e2a25c98c ""
-  "Chapters/04_Tuning.tex" 1788540040.98901 35834 d1333edee4dbf7c3a344c8321635cd44 ""
+  "Chapters/04_Tuning.tex" 1788543403.31493 56493 92733a8f2e47c96f14300fbb0ec1cc0c ""
   "Chapters/05_Conclusions.tex" 1788534992.87722 4741 69ed33a6a99cd2e41b84fb009865610a ""
   "Configuration_files/config.tex" 1788534840.70507 3107 f4a077b14493775c0ccebf4646e47739 ""
   "Configuration_files/title_page.tex" 1788534840.7053 1329 1ea7a4eee6c4f40d22b875836b01c649 ""
@@ -317,11 +317,18 @@
   "Images/Chapter03/cnn_architecture.png" 1788534840.70957 649410 7f72e3515552c2f12079b736325414d4 ""
   "Images/Chapter03/relu.png" 1788534840.71116 38038 b6c82b466ae0ea1f764ebfb5cfeb232f ""
   "Images/Chapter03/uml_diagram.png" 1788534840.71174 585544 8f76ccec01ebcb79e0edd28e318e4154 ""
+  "Images/Chapter04/dropout/dropout_history.png" 1788543126.05883 129128 3d68ede4733f7a2f58375405b02cfe48 ""
+  "Images/Chapter04/dropout/dropout_paired_differences.png" 1788543125.97112 108990 7dd6b49a4187d94bb5f448fb4b8d6b60 ""
+  "Images/Chapter04/dropout/dropout_ranking.png" 1788543125.92152 44173 8d262fbd57b1bda835c283cb20622f53 ""
+  "Images/Chapter04/dropout/dropout_stability.png" 1788543126.41182 155681 6fee078cf1c87b7a62a7216a94299a8b ""
+  "Images/Chapter04/topology/topology_history.png" 1788540677.19487 167067 15b9219a75eb8eff94f1612dcde0322c ""
+  "Images/Chapter04/topology/topology_kernel_paired.png" 1788540677.13731 63948 52d664b1cf7753c6c750f23bc92ffcdc ""
+  "Images/Chapter04/topology/topology_ranking.png" 1788540677.09 149828 f2351097efb15b81a39b6b7423fca233 ""
   "Images/logo_polimi_ing_indinf.eps" 1788534840.71248 1016894 87cec33dc4ce62619be8e2b6e306843d ""
   "Images/raggiera_polimi.eps" 1788534840.71482 1813066 dca994a8e6dbfff46979ea0a845ddce3 ""
-  "main.aux" 1788540063.47016 34161 46b2fb0b758522d1a612b52c8e790855 "pdflatex"
-  "main.bbl" 1788540061.40986 3309 36fa4e82b7cb423cb2b49881649f72c7 "bibtex main"
-  "main.out" 1788540063.47189 8471 ba51bd783c8f9a37f4ef915a9bdfb711 "pdflatex"
+  "main.aux" 1788543411.23315 42004 3a53ee87f0392bf72fdfffd1482fe7c9 "pdflatex"
+  "main.bbl" 1788543151.81334 3309 36fa4e82b7cb423cb2b49881649f72c7 "bibtex main"
+  "main.out" 1788543411.23539 8471 ba51bd783c8f9a37f4ef915a9bdfb711 "pdflatex"
   "main.tex" 1788535133.93126 9062 cb3cdf061b200e462fe5006fcd930337 ""
   (generated)
   "main.aux"
