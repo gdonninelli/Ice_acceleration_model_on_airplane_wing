@@ -8,8 +8,6 @@ dataset/*.npz
 SDF/data/*_matrix.txt
 SDF/data/*_alpha_*.dat
 
-# LaTeX auxiliary files
-*.tex
 
 # Git backup and system files
 .git_backup/

@@ -54,13 +54,13 @@ constexpr const char* kDatasetPath = "dataset/cnn_dataset_train.npz";
 // Same constant as Loss.cpp: the physics prior is masked to |alpha| <= 10 deg.
 constexpr float kMaskLimitRad = 0.174533f;
 
-// Baseline topology, identical to make_single_trial() in CNN/main.cpp.
+// Winning topology from layer-architecture tuning.
 ModelBlueprint make_blueprint() {
     ModelBlueprint blueprint;
     blueprint.feature_layers.push_back(Recipes::conv2d(8, 5, 5, 0));
     blueprint.feature_layers.push_back(Recipes::activation("leakyrelu", 0.05f));
     blueprint.feature_layers.push_back(Recipes::flatten());
-    for (int width : {128, 64}) {
+    for (int width : {1024, 512, 256, 128}) {
         blueprint.head_layers.push_back(Recipes::dense(width));
         blueprint.head_layers.push_back(Recipes::activation("leakyrelu", 0.05f));
     }

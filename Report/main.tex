@@ -1,0 +1,233 @@
+\documentclass[11pt,a4paper]{article} 
+
+%------------------------------------------------------------------------------
+%	REQUIRED PACKAGES AND  CONFIGURATIONS
+%------------------------------------------------------------------------------
+% PACKAGES FOR TITLES
+\usepackage{titlesec}
+\usepackage{color}
+
+% PACKAGES FOR LANGUAGE AND FONT
+\usepackage[utf8]{inputenc}
+\usepackage[english]{babel}
+\usepackage[T1]{fontenc} % Font encoding
+
+% PACKAGES FOR IMAGES
+\usepackage{graphicx}
+\graphicspath{{Images/}}
+\usepackage{eso-pic} % For the background picture on the title page
+\usepackage{subfig} % Numbered and caption subfigures using \subfloat
+\usepackage{caption} % Coloured captions
+\usepackage{transparent}
+\usepackage{placeins}
+
+% STANDARD MATH PACKAGES
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{bm}
+\usepackage[overload]{empheq}  % For braced-style systems of equations
+\usepackage{amssymb}
+
+% PACKAGES FOR TABLES
+\usepackage{tabularx}
+\usepackage{longtable} % tables that can span several pages
+\usepackage{colortbl}
+
+% PACKAGES FOR ALGORITHMS (PSEUDO-CODE)
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% PACKAGES FOR REFERENCES & BIBLIOGRAPHY
+\usepackage[colorlinks=true,linkcolor=black,anchorcolor=black,citecolor=black,filecolor=black,menucolor=black,runcolor=black,urlcolor=black]{hyperref} % Adds clickable links at references
+\usepackage{cleveref}
+\usepackage[round, authoryear]{natbib} % Square brackets, citing references with numbers, citations sorted by appearance in the text and compressed
+\bibliographystyle{plainnat} % You may use a different style adapted to your field
+
+% PACKAGE FOR FLOW DIAGRAM
+\usepackage{tikz}
+\usetikzlibrary{positioning, arrows.meta, fit, backgrounds}
+\definecolor{flowblue}{RGB}{31,73,125}
+\definecolor{flowslate}{RGB}{80,80,100}
+
+% PACKAGES FOR THE APPENDIX
+\usepackage{appendix}
+
+% PACKAGES FOR ITEMIZE & ENUMERATES 
+\usepackage{enumitem}
+
+% PACKAGE FOR CODE LISTINGS
+\usepackage{listings}
+\lstdefinestyle{bashstyle}{
+  basicstyle=\ttfamily\footnotesize,
+  breaklines=true,
+  breakatwhitespace=true,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  showstringspaces=false,
+  frame=single,
+  framerule=0.3pt,
+  columns=fullflexible,
+  upquote=true,
+  keepspaces=true,
+  xleftmargin=1.5em
+}
+
+% OTHER PACKAGES
+\usepackage{amsthm,thmtools,xcolor} % Coloured "Theorem"
+\usepackage{comment} % Comment part of code
+\usepackage{fancyhdr} % Fancy headers and footers
+\usepackage{lipsum} % Insert dummy text
+\usepackage{tcolorbox} % Create coloured boxes (e.g. the one for the key-words)
+
+%-------------------------------------------------------------------------
+%	NEW COMMANDS DEFINED
+%-------------------------------------------------------------------------
+% EXAMPLES OF NEW COMMANDS -> here you see how to define new commands
+\newcommand{\bea}{\begin{eqnarray}} % Shortcut for equation arrays
+\newcommand{\eea}{\end{eqnarray}}
+\newcommand{\e}[1]{\times 10^{#1}}  % Powers of 10 notation
+\newcommand{\mathbbm}[1]{\text{\usefont{U}{bbm}{m}{n}#1}} % From mathbbm.sty
+\newcommand{\pdev}[2]{\frac{\partial#1}{\partial#2}}
+% NB: you can also override some existing commands with the keyword \renewcommand
+
+%----------------------------------------------------------------------------
+%	ADD YOUR PACKAGES (be careful of package interaction)
+%----------------------------------------------------------------------------
+
+%\usepackage{setspace}
+%\onehalfspacing
+
+%----------------------------------------------------------------------------
+%	ADD YOUR DEFINITIONS AND COMMANDS (be careful of existing commands)
+%----------------------------------------------------------------------------
+
+
+% Do not change Configuration_files/config.tex file unless you really know what you are doing. 
+% This file ends the configuration procedures (e.g. customizing commands, definition of new commands)
+\input{Configuration_files/config}
+
+% Insert here the info that will be displayed into your Title page 
+% -> title of your work
+\renewcommand{\title}{Different Approaches for Lift Coefficient Prediction on an Airfoil: Classical CFD and Deep Learning Techniques}
+% -> author name and surname
+\renewcommand{\author}{Giulio Enzo Donninelli, Alessia Rigoni, Vittorio Sironi and Alessandro Verrengia}
+% -> MSc course
+\newcommand{\course}{Advanced Methods for Scientific Computing}
+% -> advisor name and surname
+\newcommand{\advisor}{Prof. Luca Dedè}
+% IF AND ONLY IF you need to modify the co-supervisors you also have to modify the file Configuration_files/title_page.tex (ONLY where it is marked)
+%\newcommand{\firstcoadvisor}{Name Surname} % insert if any otherwise comment
+%\newcommand{\secondcoadvisor}{Name Surname} % insert if any otherwise comment
+% -> author ID
+%\newcommand{\ID}{Student ID}
+% -> academic year
+\newcommand{\YEAR}{2025-2026}
+% -> abstract (only in English)
+\renewcommand{\abstract}{This work presents an integrated computational pipeline for rapid aerodynamic analysis, bridging high-fidelity simulations with a data-driven surrogate model. We extended the \textbf{\lifex} \cpp finite element library with a Reynolds-Averaged Navier-Stokes (RANS) solver using the Spalart-Allmaras turbulence model. This solver generated a reference dataset on the CINECA Leonardo HPC cluster, which was used to train a Convolutional Neural Network (CNN) built from scratch in \cpp. The CNN predicts lift coefficients from a Signed Distance Function (SDF) geometry representation and is trained in parallel using MPI. The model achieves a validation Mean Squared Error of 0.0104 and a 35$\times$ speedup over direct simulation, providing a robust framework for efficient aerodynamic design.}
+
+% -> key-words (only in English)
+\newcommand{\keywords}{}
+
+\newcommand{\lifex}{\texttt{LifeX}}
+\newcommand{\dealii}{\texttt{deal.II}}
+\newcommand{\cpp}{C\texttt{++} }
+
+\definecolor{codegray}{gray}{0.95}
+
+\lstdefinestyle{bashstyle}{
+    language=bash,
+    backgroundcolor=\color{codegray},
+    commentstyle=\color{green!50!black},
+    keywordstyle=\color{blue}\bfseries,
+    stringstyle=\color{purple},
+    basicstyle=\ttfamily\small,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    numbersep=5pt,
+    breaklines=true,
+    breakatwhitespace=false,
+    frame=tb,
+    rulecolor=\color{black!30},
+    captionpos=b,
+    tabsize=2,
+    showstringspaces=false,
+    morekeywords={singularity, cmake, sbatch}, % Add custom keywords
+}
+
+\definecolor{codegray}{gray}{0.95}
+\definecolor{codegreen}{rgb}{0,0.6,0}
+\definecolor{codepurple}{rgb}{0.58,0,0.82}
+\definecolor{codeteal}{rgb}{0.0, 0.5, 0.5}
+
+\lstdefinestyle{cppstyle}{
+    language=C++,
+    backgroundcolor=\color{codegray},
+    commentstyle=\color{codegreen},
+    stringstyle=\color{codepurple},
+    basicstyle=\ttfamily\small,
+    breaklines=true,
+    breakatwhitespace=true,
+    numbers=left,
+    numberstyle=\tiny\color{gray},
+    numbersep=5pt,
+    frame=tb,
+    rulecolor=\color{black!30},
+    captionpos=b,
+    tabsize=2,
+    showstringspaces=false,
+    keywordstyle=\color{blue}\bfseries,
+    keywordstyle=[2]\color{codeteal},
+    directivestyle=\color{purple!70!black},
+    morekeywords={nullptr, override, final, explicit, auto, constexpr},
+    morekeywords=[2]{std, vector, string, cout, endl, ostream, istream, fstream, unique_ptr, shared_ptr, size_t, int32_t, uint64_t},
+}
+
+%-------------------------------------------------------------------------
+%	BEGIN OF YOUR DOCUMENT
+%-------------------------------------------------------------------------
+\begin{document}
+
+%-----------------------------------------------------------------------------
+% TITLE PAGE
+%-----------------------------------------------------------------------------
+% Do not change Configuration_files/TitlePage.tex (Modify it IF AND ONLY IF you need to add or delete the Co-advisors)
+% This file creates the Title Page of the document
+\input{Configuration_files/title_page}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%     THESIS MAIN TEXT     %%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+%-----------------------------------------------------------------------------
+% INTRODUCTION
+%-----------------------------------------------------------------------------
+
+\input{Chapters/01_Introduction}
+
+%-----------------------------------------------------------------------------
+% CAPITOLO ALE E VITTO
+%-----------------------------------------------------------------------------
+
+\input{Chapters/02_Navier-Stokes_Simulation}
+
+%-----------------------------------------------------------------------------
+% CAPITOLO GIULIO E ALESSIA
+%-----------------------------------------------------------------------------
+
+\input{Chapters/03_Convolutional_Neural_Network}
+
+%-----------------------------------------------------------------------------
+% Tuning
+%-----------------------------------------------------------------------------
+
+\input{Chapters/04_Tuning}
+
+%-----------------------------------------------------------------------------
+% CONCLUSIONS
+%-----------------------------------------------------------------------------
+
+\input{Chapters/05_Conclusions}
+
+\bibliography{bibliography}
+
+\end{document}

@@ -54,15 +54,15 @@ constexpr float kPhysicsWeight = 0.25f;
 constexpr size_t kEvaluationChunk = 256;
 constexpr const char* kDatasetPath = "dataset/cnn_dataset_train.npz";
 
-// Baseline topology from make_single_trial() in CNN/main.cpp, with dropout
-// after each hidden activation. The recipe is present even at rate = 0 so
-// every candidate consumes the same layer seeds (identical initialization).
+// Winning topology from layer-architecture tuning, with dropout after each
+// hidden activation. The recipe is present even at rate = 0 so every candidate
+// consumes the same layer seeds (identical initialization).
 ModelBlueprint make_blueprint(float dropout_rate) {
     ModelBlueprint blueprint;
     blueprint.feature_layers.push_back(Recipes::conv2d(8, 5, 5, 0));
     blueprint.feature_layers.push_back(Recipes::activation("leakyrelu", 0.05f));
     blueprint.feature_layers.push_back(Recipes::flatten());
-    for (int width : {128, 64}) {
+    for (int width : {1024, 512, 256, 128}) {
         blueprint.head_layers.push_back(Recipes::dense(width));
         blueprint.head_layers.push_back(Recipes::activation("leakyrelu", 0.05f));
         blueprint.head_layers.push_back(Recipes::dropout(dropout_rate));
