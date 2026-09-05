@@ -4,7 +4,6 @@
 The Convolutional Neural Network described and implemented in Chapter~\ref{sec:03_Convolutional_Neural_Network} provides the starting point for the numerical study presented in this chapter. Although the initial model is already able to approximate the lift coefficient from the airfoil geometry and the flow parameters, our objective is not limited to obtaining a working implementation. We also want to understand which choices of architecture, optimization algorithm, regularization, activation function, and learning rate allow the surrogate model to obtain more accurate and more reliable predictions. For this reason, we performed a sequence of controlled tuning experiments. In each experiment one group of quantities was varied, while the other settings were kept fixed as far as the corresponding driver allowed. The results were then analysed not only through the final validation error, but also through the evolution of the training objective, the physical validation error, the gradient norms, the actual parameter updates, and the activation distributions.
 
 The order of the study follows the development of the model. First, we investigated the topology of the network, because the feature representation and the capacity of the regression head influence every subsequent experiment. We then considered dropout, the optimizer, the weight of the SIMM physical term, and L1 and L2 regularization. Once these settings had been examined, we compared the available activation functions and finally studied both the magnitude and the schedule of the learning rate. The last part of the chapter describes the long ordinary training run performed with the production executable and collects the conclusions that can be drawn from the complete tuning campaign.
-
 \subsection{Cross-validation and diagnostic methodology}
 \label{sec:04_cross_validation}
 
@@ -32,6 +31,7 @@ The training objective is monitored through \texttt{train\_objective}, while the
 \end{equation}
 and is not simply a learning rate multiplied by a gradient. It includes the optimizer moments, clipping, decay, the numerical epsilon, and the current parameter values. Finally, activation statistics are distinguished between the pre-activation tensor entering a non-linearity and the post-activation tensor returned by it. Their mean, variance, minimum, maximum, and fixed-bin histograms are used to identify signal attenuation, saturation, or growth of the activation scale. In all cases, we checked the raw CSV files for non-finite values and for late-epoch increases before describing a run as numerically stable.
 
+\newpage
 \subsection{Topology tuning}
 \label{sec:04_topology_tuning}
 
@@ -99,7 +99,7 @@ The kernel comparison gives a second clear result. The $5\times5$ convolution wa
 The diagnostic conclusion for this grid is limited to the available artifacts. All printed training objectives and validation MSE values are finite, and none of the winner histories shows a late epoch increase that would indicate divergence within the 100 epoch budget. However, gradient norms, actual parameter update ratios, pre-activation and post-activation distributions, variances, and histograms were not recorded for this experiment, so no claim about vanishing or exploding gradients or about activation saturation can be supported for these candidates. The evidence also has three structural limitations. First, each candidate was trained once per fold with seed 42, so architecture differences cannot be separated from training seed noise. Second, the splitter works at sample level, so the comparison measures interpolation over the sampled dataset rather than generalization to an unseen airfoil family. Third, the selected first layer width sits on the boundary of the tested depth four family and the absolute validation values are optimistic under the random split documented in the experiment README, in which the same profile and angle can appear in both sets with a different Reynolds number. The observed reversal of the widest depth two heads supports the selected configuration, but a new grid with wider and deeper heads would be required to establish behaviour beyond it.
 
 Cross-validation winner: \texttt{conv5x5-dense-1024-512-256-128} with physical validation MSE $0.004560\pm0.000946$ and untouched test MSE $0.002805$ after refit. Production configuration: the ordinary model built by \texttt{make\_single\_trial} in \texttt{CNN/main.cpp} uses a $5\times5$ convolution with eight channels and stride five, LeakyReLU with $\alpha=0.05$, and the smaller dense head $(128,64,1)$, with source defaults Adam learning rate $10^{-3}$, physics weight $0.10$, no dropout, no L1 or L2 penalty, gradient clipping at 1, batch size 257, and seed 42. The production choice therefore differs from the topology winner in head capacity, learning rate, physics weight, and batch size. To conclude, we retain the topology winner as the lowest observed candidate of this grid, while the numbers reported for the final long training run in Section~\ref{sec:04_final_training} describe the recorded production configuration and must not be read as a test score for the large topology winner.
-
+\newpage
 \subsection{Dropout tuning}
 \label{sec:04_dropout_tuning}
 
@@ -187,154 +187,274 @@ Activation statistics give a compatible but limited view of signal propagation. 
 \end{figure}
 
 The cross-validation winner is therefore \texttt{dropout rate = 0.0}, with physical validation MSE $0.005833893\pm0.001006787$ on the recorded sweep. The production configuration in \texttt{CNN/main.cpp} also uses no dropout by default: \texttt{make\_single\_trial} passes the source default \texttt{dropout=0.0} to the regression head. The ordinary production path otherwise differs from this sweep, using source defaults Adam learning rate $10^{-3}$, physics weight $0.10$, global batch size 257, gradient clipping at 1, and seed 42, with command-line options available to override the rate. Thus, the selected dropout rate agrees with the production configuration. The test set was untouched, so no dropout-specific independent test estimate exists. To conclude, the available evidence supports retaining $p=0$ for the production model because every nonzero rate worsened the paired validation result and none reduced the small reference gap enough to compensate for its higher validation error. This conclusion is limited to the recorded data split and training budget.
-
+\newpage
 \subsection{Optimizer comparison}
 \label{sec:04_optimizer_tuning}
 
-The optimizer controls how the gradient is converted into a parameter update. For plain stochastic gradient descent, the update is
+The optimizer determines how the gradient produced by the SIMM loss is converted into a change of the trainable parameters. This choice is important for the present CNN because the convolutional feature extractor and the dense regression head have parameters with different dimensions and gradient histories. A fixed learning rate can therefore lead to different effective progress depending on whether the method retains a direction from previous batches or scales each coordinate using past squared gradients. AdaGrad formalizes cumulative coordinate adaptation~\cite{duchi2011adaptive}, while Adam combines first and second moment estimates with bias correction~\cite{kingma2015adam}. We tested whether these mechanisms, together with momentum, improve the physical validation error within the same finite training budget. The result is a comparison at one learning rate and is not a claim that an optimizer is universally preferable.
+
+Let $g_{t,j}$ denote the gradient for parameter component $j$ after the MPI weighted aggregation and after the loss-gradient contributions have been combined. The implementation clips each component immediately before the optimizer is called, so that the gradient actually consumed by every candidate is
 \begin{equation}
-    \theta_{t+1}=\theta_t-\eta g_t,
-    \label{eq:04_sgd}
+    \widetilde{g}_{t,j}=\operatorname{clip}(g_{t,j},-c,c),
+    \qquad c=1.
+    \label{eq:04_optimizer_clipping}
 \end{equation}
-where $g_t$ is the synchronized mini-batch gradient and $\eta$ is the learning rate. Momentum introduces an accumulated direction, while AdaGrad uses the cumulative squared gradients to construct a coordinate-wise scale. RMSprop replaces the cumulative sum with an exponential average. Adam combines exponential first and second moments and applies bias correction~\cite{duchi2011adaptive,kingma2015adam}:
+The clipping is element-wise rather than a global norm operation. In this experiment the L1 and L2 loss weights and the optimizer weight decay are all zero, so no additional regularization term changes $g_{t,j}$. For vanilla SGD, the update is
 \begin{equation}
-    m_t=\beta_1m_{t-1}+(1-\beta_1)g_t,
-    \qquad
-    v_t=\beta_2v_{t-1}+(1-\beta_2)g_t^2,
-    \label{eq:04_adam_moments}
+    \theta_{t+1,j}=\theta_{t,j}-\eta\widetilde{g}_{t,j}.
+    \label{eq:04_optimizer_sgd}
 \end{equation}
+For SGD with momentum, the implementation stores a velocity $u_{t,j}$ and applies
 \begin{equation}
-    \widehat{m}_t=\frac{m_t}{1-\beta_1^t},
+    u_{t,j}=\mu u_{t-1,j}+\widetilde{g}_{t,j},
     \qquad
-    \widehat{v}_t=\frac{v_t}{1-\beta_2^t},
+    \theta_{t+1,j}=\theta_{t,j}-\eta u_{t,j},
+    \qquad \mu=0.9.
+    \label{eq:04_optimizer_momentum}
+\end{equation}
+There is no Nesterov step in the project implementation. AdaGrad stores the cumulative squared gradient,
+\begin{equation}
+    G_{t,j}=G_{t-1,j}+\widetilde{g}_{t,j}^{2},
     \qquad
-    \theta_{t+1}=\theta_t-\eta\frac{\widehat{m}_t}{\sqrt{\widehat{v}_t}+\varepsilon}.
+    \theta_{t+1,j}=\theta_{t,j}-
+    \frac{\eta\widetilde{g}_{t,j}}{\sqrt{G_{t,j}+\varepsilon}},
+    \qquad \varepsilon=10^{-8},
+    \label{eq:04_optimizer_adagrad}
+\end{equation}
+whereas RMSprop replaces the cumulative sum with an exponential average,
+\begin{equation}
+    s_{t,j}=\rho s_{t-1,j}+(1-\rho)\widetilde{g}_{t,j}^{2},
+    \qquad
+    \theta_{t+1,j}=\theta_{t,j}-
+    \frac{\eta\widetilde{g}_{t,j}}{\sqrt{s_{t,j}+\varepsilon}},
+    \qquad \rho=0.9.
+    \label{eq:04_optimizer_rmsprop}
+\end{equation}
+Finally, Adam stores both a first moment $m_{t,j}$ and a second moment $v_{t,j}$:
+\begin{equation}
+    \begin{aligned}
+    m_{t,j}&=\beta_1m_{t-1,j}+(1-\beta_1)\widetilde{g}_{t,j},
+    &v_{t,j}&=\beta_2v_{t-1,j}+(1-\beta_2)\widetilde{g}_{t,j}^{2},\\
+    \widehat{m}_{t,j}&=\frac{m_{t,j}}{1-\beta_1^t},
+    &\widehat{v}_{t,j}&=\frac{v_{t,j}}{1-\beta_2^t},\\
+    \theta_{t+1,j}&=\theta_{t,j}-\eta
+    \frac{\widehat{m}_{t,j}}{\sqrt{\widehat{v}_{t,j}}+\varepsilon},
+    &\beta_1&=0.9,\quad \beta_2=0.999,\quad \varepsilon=10^{-8}.
+    \end{aligned}
     \label{eq:04_adam_update}
 \end{equation}
-The experiment compared the five optimizers implemented in the project at the common learning rate $10^{-5}$, with momentum $0.9$ for SGD with momentum, decay $0.9$ for RMSprop, and Adam parameters $\beta_1=0.9$, $\beta_2=0.999$, and $\varepsilon=10^{-8}$. Every candidate received a fresh optimizer state in every fold.
+In all five equations $\eta=10^{-5}$. The state variables are initialized to zero for every newly constructed optimizer, and Adam starts with $t=0$. They persist across mini-batches within one fold, but the construction of a fresh model and a fresh \texttt{Optimizer} by \texttt{ModelFactory} prevents state from being shared between candidates or folds. The learning rate is constant because no scheduler is attached to the \texttt{TrialConfig}; it is not an unrecorded learning-rate schedule.
 
-The selected topology \texttt{conv5x5-dense-1024-512-256-128} was fixed, together with the SIMM physics weight $0.25$, batch size 64, 100 epochs, and seed 42. Adam obtained the lowest validation MSE, as shown in Table~\ref{tab:04_optimizer_results}. The complete ranking is consistent with the expected distinction between adaptive and non-adaptive updates: RMSprop was second, AdaGrad followed it, momentum SGD was worse, and plain SGD was substantially worse at this learning rate.
+The fixed model was the selected topology from the previous experiment, \texttt{conv5x5-dense-1024-512-256-128}. It maps the $150\times150$ SDF through \texttt{Conv2D} with eight channels, a $5\times5$ kernel, stride five, and zero padding, followed by LeakyReLU with $\alpha=0.05$ and flattening. The flattened features are concatenated with the two scalar inputs, $(\mathrm{Re},\alpha)$, and passed through the dense widths $(1024,512,256,128)$ and a final scalar output. The loss was the data MSE plus a SIMM physics residual with weight $0.25$; the angle of attack was converted from degrees to radians for that residual, and dropout and L1 and L2 penalties were disabled. The comparison contained five candidates and 25 fold evaluations. It used the 1713-sample training dataset, while the 429-sample test dataset was excluded from candidate selection. Five sample-level folds were generated by \texttt{RandomKFold} with shuffling and seed 42. Their validation sizes were 343, 343, 343, 342, and 342 samples, with complementary training sizes of 1370, 1370, 1370, 1371, and 1371. The same fold plan was used for every candidate, and normalization was fitted on each fold's training indices only. The global batch size was 64, giving 22 balanced optimizer steps per epoch, 2200 steps per fold, and 55000 optimizer steps across the comparison. Training shuffled the fold indices at each epoch, and validation and public history were recorded at the configured ten-epoch interval. Early stopping was disabled. MPI distributes the global batches across ranks and synchronizes gradients using the actual sample counts, so the nominal batch size is not multiplied by the number of ranks.
+
+The selection score is the physical-unit validation MSE in Equation~\eqref{eq:04_validation_mse}, not the numerical value of the standardized SIMM objective. The current optimizer-comparison result directory does not contain a diagnostics-enabled \texttt{cv\_summary.csv}; therefore, the aggregate values in Table~\ref{tab:04_optimizer_results} were recomputed from its 25 \texttt{fold\_results.csv} rows with the validation sample counts above. The mean and deviation use the sample-weighted population formulas implemented by \texttt{CrossValidator}. This is different from the experiment's \texttt{analyze.py} script, whose summary plot uses an unweighted mean and a sample standard deviation. The ranking is unchanged, but the latter deviation is not used here.
 
 \begin{table}[h!]
     \centering
-    \begin{tabular}{lcc}
+    \scriptsize
+    \setlength{\tabcolsep}{3pt}
+    \begin{tabular}{lcccc}
         \hline
-        Optimizer & Mean validation MSE & Fold standard deviation \\
+        Optimizer & Mean validation MSE & Fold standard deviation & Minimum fold & Maximum fold \\
         \hline
-        Adam & 0.004427 & 0.000887 \\
-        RMSprop & 0.005216 & 0.000653 \\
-        AdaGrad & 0.006185 & 0.001238 \\
-        SGD with momentum & 0.007151 & 0.001412 \\
-        SGD & 0.017927 & 0.006229 \\
+        Adam & 0.004427 & 0.000794 & 0.002879 & 0.005044 \\
+        RMSprop & 0.005216 & 0.000585 & 0.004518 & 0.006173 \\
+        AdaGrad & 0.006184 & 0.001108 & 0.004239 & 0.007439 \\
+        SGD with momentum & 0.007150 & 0.001264 & 0.004791 & 0.008473 \\
+        SGD & 0.017924 & 0.005568 & 0.013063 & 0.028647 \\
         \hline
     \end{tabular}
-    \caption{Cross-validation comparison of the five optimizers at learning rate $10^{-5}$.}
+    \caption{Complete optimizer comparison at learning rate $10^{-5}$. The means and fold deviations are sample-weighted physical validation MSE values, with the deviation defined as the weighted population standard deviation over the five folds. The minimum and maximum columns show the corresponding unweighted extrema of the fold scores.}
     \label{tab:04_optimizer_results}
 \end{table}
 
-Adam reduced the mean validation error by approximately 15.1 percent relative to RMSprop and by 38.1 percent relative to momentum SGD. Plain SGD also had the largest fold spread, indicating that its poor mean was accompanied by greater sensitivity to the validation split. The result does not mean that Adam is independent of the learning rate; it only establishes Adam as the best optimizer among the candidates at $10^{-5}$ under this fixed topology, loss, and training budget. The final refit of the selected optimizer produced a recorded untouched-test MSE of $0.003655$. The final diagnostics remained finite, and the actual update ratios were small compared with the parameter norms, which is consistent with a convergent rather than an unstable trajectory.
+Adam was the cross-validation winner with $0.004426734\pm0.000793966$ physical validation MSE. It was the lowest-scoring candidate in each zero-based fold, with values $0.002879$, $0.004510$, $0.004897$, $0.004806$, and $0.005044$. RMSprop was the closest alternative at $0.005215589\pm0.000584618$, with fold values from $0.004518$ to $0.006173$. Thus Adam reduced the weighted mean relative to RMSprop by approximately $15.1\%$ and relative to SGD with momentum by approximately $38.1\%$. AdaGrad and momentum SGD occupied intermediate positions. Plain SGD was not a failed run, since all five folds reached epoch 100 with finite values, but it remained much less accurate at this rate and had the largest fold deviation. Its zero-based fold 3 score, $0.028647420$, was the largest value in the comparison. This is evidence of poorer performance and less uniform fold results for this split, not by itself proof of a general optimizer sensitivity.
 
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.82\linewidth]{Images/Chapter04/optimizer/optimizer_ranking.png}
+    \caption{Optimizer ranking from the five-fold comparison at learning rate $10^{-5}$. Dark points are individual physical validation MSE values, boxes summarize the five folds, and red points with bars show the sample-weighted mean and weighted population standard deviation. The vertical axis is logarithmic.}
+    \label{fig:04_optimizer_ranking}
+\end{figure}
+
+The physical training MSE recorded after the final fold epoch was also lower for the better validation candidates, but it must be interpreted separately from the SIMM objective. Using training-sample-weighted means from \texttt{fold\_results.csv}, the final physical training MSE was $0.003842$ for Adam, $0.004814$ for RMSprop, $0.005930$ for AdaGrad, $0.007027$ for momentum SGD, and $0.017337$ for SGD. The corresponding validation means are those in Table~\ref{tab:04_optimizer_results}. In particular, the small Adam training to validation difference is not evidence that the optimizer alone controls generalization; it shows that the selected method reached a lower physical training error within the same 100-epoch budget.
+
+The checkpoint histories show how this separation developed. Averaged with the same validation sample weights, Adam's physical validation MSE decreased from $0.006205$ at epoch 10 to $0.004800$ at epoch 50 and $0.004427$ at epoch 100. It was not strictly monotone: the mean rose from $0.004506$ at epoch 80 to $0.004597$ at epoch 90 before reaching its lowest recorded value at epoch 100. RMSprop reached $0.004682$ at epoch 80 and then increased to $0.006073$ at epoch 90 before finishing at $0.005216$. By contrast, the fold-averaged curves for AdaGrad, momentum SGD, and SGD decreased at the recorded checkpoints, but remained above Adam at epoch 100. Plain SGD fell from $0.273765$ at epoch 10 to $0.017924$ at epoch 100, which indicates progress without convergence to the error scale reached by the other candidates. Figure~\ref{fig:04_optimizer_history} shows these physical validation histories on a logarithmic axis. The SIMM training objective is intentionally not placed on the same axis, because it is expressed in standardized units and includes the physics term.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.95\linewidth]{Images/Chapter04/optimizer/optimizer_history.png}
+    \caption{Physical validation MSE at the ten-epoch history checkpoints for the five optimizer candidates. Lines and shaded regions are the sample-weighted means and weighted population standard deviations over the five folds. The vertical axis is logarithmic; the SIMM training objective and the test set are not shown.}
+    \label{fig:04_optimizer_history}
+\end{figure}
+
+The diagnostic conclusion is limited by the provenance of the available files. The matching $10^{-5}$ comparison was run without the \texttt{--diagnostics} option, so none of the structured diagnostic CSV files was produced for these candidates. Consequently, no claim about layer-wise gradient flow, actual parameter movement, activation attenuation, or histogram tails can be made for these five candidates. A separate \texttt{run/} directory does contain such diagnostics, but its metadata identifies a different $10^{-3}$ comparison and an unknown source revision. Those files are not combined with the $10^{-5}$ results. The two figures above therefore summarize only the compatible fold scores and histories. All 25 compatible fold records are finite and successful, but the absence of matching diagnostics prevents a stronger numerical stability conclusion.
+
+After selecting Adam by cross-validation, the recorded refit reported a physical MSE of $0.00365482$ on the 429-sample test dataset in \texttt{summary.txt}. The test data were loaded only after the cross-validation search and did not influence the optimizer ranking. There is, however, a limitation in the experiment driver: it passes the test dataset to \texttt{Trainer::fit} as its validation dataset and evaluates it after every epoch, rather than literally evaluating it once. Early stopping was disabled, so these repeated measurements did not affect parameter updates or candidate selection, but the value should be described as a post-selection test check with this qualification rather than as evidence used to choose Adam.
+
+The cross-validation winner is therefore \textbf{Adam at learning rate $10^{-5}$}. Its physical validation MSE was $0.004426734\pm0.000793966$ under the fixed large topology, loss, fold plan, and 100-epoch budget. The production configuration is related but not identical: \texttt{make\_single\_trial} in \texttt{CNN/main.cpp} constructs Adam, but its source defaults use learning rate $10^{-3}$, physics weight $0.10$, the smaller dense head $(128,64,1)$, global batch size 257, 200 epochs, gradient clipping at 1, and ordinary-training early stopping with a 10 percent holdout, a minimum of 20 epochs, patience of 20 epochs, a maximum overfit ratio of $0.15$, and best-weight restoration. The production path also uses the source default seed 42 and no dropout or L1 or L2 penalty. Thus the optimizer algorithm agrees with the selected candidate, while the experiment does not establish the performance of the complete production configuration at the production learning rate. To conclude, Adam is retained as the optimizer choice because it won every compatible validation fold and achieved the lowest observed mean without a failed candidate, whereas the alternatives either made slower progress or reached a higher final error. A new comparison over learning rates and repeated seeds would be required before extending this conclusion beyond the tested setting.
+\newpage
 \subsection{Physics-weight tuning}
 \label{sec:04_physics_weight_tuning}
 
-The physics-informed loss introduced in Chapter~\ref{sec:03_loss} combines the data error with a SIMM residual. In standardized target units, the loss used by the trainer can be written as
+The SIMM term was tuned because it is the only part of the objective that encodes an aerodynamic relation not learned directly from the CFD targets. A positive physics weight can improve the low-angle regime if the thin-airfoil relation supplies useful information, but it can also pull the prediction away from the simulation data when the relation is only approximate. The experiment therefore asks whether the prior improves the physical-unit validation error, rather than assuming that a larger physics contribution is beneficial. The search was performed over the training dataset only, and the untouched test dataset was not used to choose the weight.
+
+The implementation evaluates the loss in the fold-specific standardized target space. Let $C_{L,i}$ be the physical target, let $\mu_y$ and $s_y$ be the target mean and standard deviation fitted on the training part of a fold, and let $a_i$ be the angle of attack in radians. The standardized target and prediction are $y_i=(C_{L,i}-\mu_y)/s_y$ and $\widehat{y}_i$, while the standardized physical target is
 \begin{equation}
-    \mathcal{L}=\mathcal{L}_{\mathrm{data}}+\lambda\mathcal{L}_{\mathrm{physics}},
-    \label{eq:04_simm_loss}
+    y_i^{\mathrm{phys}}=\frac{2\pi a_i-\mu_y}{s_y}.
+    \label{eq:04_physics_target}
 \end{equation}
-where $\lambda$ controls the influence of the physical relation. For the symmetric profiles considered in this project, the thin-airfoil relation is $C_L\approx2\pi\alpha$ in the low-angle regime. The physics residual is masked according to
+The mask is evaluated on the unstandardized angle,
 \begin{equation}
     M_i=\begin{cases}
-        1, & |\alpha_i|\leq 10^\circ,\\
-        0, & |\alpha_i|>10^\circ,
+        1, & |a_i|\leq 0.174533\ \mathrm{rad},\\
+        0, & |a_i|>0.174533\ \mathrm{rad},
     \end{cases}
-    \qquad
-    \mathcal{L}_{\mathrm{physics}}=
-    \frac{1}{N}\sum_{i=1}^{N}M_i
-    \left(\widehat{C}_{L,i}-2\pi\alpha_i\right)^2.
     \label{eq:04_physics_mask}
 \end{equation}
-The relation is transformed into the fold's standardized target space during training, but the candidate selection remains the physical-unit validation MSE.
+which corresponds to $|\alpha|\leq10^\circ$. The actual batch objective is
+\begin{equation}
+    \mathcal{L}=\frac{1}{N}\sum_{i=1}^{N}(\widehat{y}_i-y_i)^2
+    +\lambda\frac{1}{N}\sum_{i=1}^{N}M_i
+    (\widehat{y}_i-y_i^{\mathrm{phys}})^2,
+    \label{eq:04_simm_loss}
+\end{equation}
+where the physics sum is divided by the full batch size, not by the number of masked samples. The prediction gradient used by backpropagation is consequently
+\begin{equation}
+    \frac{\partial\mathcal{L}}{\partial\widehat{y}_i}
+    =\frac{2}{N}\left[(\widehat{y}_i-y_i)
+    +\lambda M_i(\widehat{y}_i-y_i^{\mathrm{phys}})\right].
+    \label{eq:04_physics_gradient}
+\end{equation}
+The validation score is converted back to physical units by multiplying the standardized prediction residual by $s_y$ before squaring. Therefore, the SIMM objective and the selection metric have different units and cannot be ranked by their numerical magnitudes.
 
-The committed experiment tested $\lambda\in\{0,0.05,0.1,0.25,0.5,1,2\}$ with Adam at $10^{-5}$, batch size 64, 100 epochs, and five folds. As with dropout, the historical driver used the smaller $(128,64)$ head. The source has now been corrected to construct the selected large topology, and the provenance of the existing values is recorded in \texttt{physics\_weight\_tuning/README.md} in the result directory. The existing measurements are therefore retained as historical results and are not treated as a new experiment on the corrected topology.
+The sweep evaluated seven values, $\lambda\in\{0,0.05,0.1,0.25,0.5,1,2\}$, for 35 candidate-fold evaluations. Adam used a constant effective learning rate of $9.9999997\times10^{-6}$, the global batch size was 64, the epoch budget was 100, the fold count was five, the base seed was 42, and element-wise gradient clipping used a threshold of 1. No learning-rate schedule or early stopping was enabled. The fold plan was a shuffled sample-level split of the 1713-sample training dataset, with validation sizes 343, 343, 343, 342, and 342. Normalization was fitted on each fold's training indices only, and the test dataset was not loaded during the sweep.
+
+There is an important provenance limitation. The current experiment source constructs the large head \texttt{conv5x5-dense-1024-512-256-128}, but the retained diagnostic metadata for this completed sweep records the earlier head \texttt{conv5x5-dense-128-64}. The raw CSV and diagnostic files are therefore reported as an archival run of the physics-weight question, not silently relabelled as measurements from the current source recipe. The figures aggregate over folds and over diagnostic rows without displaying a layer index, so they describe global numerical behaviour and do not imply that incompatible layer topologies were grouped together. The production model is read separately from \texttt{CNN/main.cpp} below.
 
 \begin{table}[h!]
     \centering
-    \begin{tabular}{ccc}
+    \scriptsize
+    \setlength{\tabcolsep}{3pt}
+    \begin{tabular}{rccrr}
         \hline
-        $\lambda$ & Mean validation MSE & Fold standard deviation \\
+        $\lambda$ & Mean validation MSE & Fold standard deviation & $\Delta_{\lambda}$ & Improved folds \\
         \hline
-        0.00 & 0.005602 & 0.001228 \\
-        0.05 & 0.005639 & 0.001270 \\
-        0.10 & 0.005630 & 0.001247 \\
-        0.25 & 0.005708 & 0.001337 \\
-        0.50 & 0.006027 & 0.001334 \\
-        1.00 & 0.006583 & 0.001510 \\
-        2.00 & 0.007408 & 0.001698 \\
+        0.00 & 0.005600634 & 0.001099091 & 0 & -- \\
+        0.05 & 0.005637647 & 0.001136246 & +0.000037038 & 1/5 \\
+        0.10 & 0.005629100 & 0.001116111 & +0.000028457 & 1/5 \\
+        0.25 & 0.005706661 & 0.001195944 & +0.000106089 & 1/5 \\
+        0.50 & 0.006025918 & 0.001193569 & +0.000425322 & 0/5 \\
+        1.00 & 0.006581512 & 0.001350790 & +0.000981093 & 0/5 \\
+        2.00 & 0.007406998 & 0.001519330 & +0.001806727 & 0/5 \\
         \hline
     \end{tabular}
-    \caption{Historical physics-weight sweep on the earlier $(128,64)$ dense head.}
+    \caption{Recorded physics-weight sweep. The mean and deviation are the sample-weighted physical validation values in \texttt{cv\_summary.csv}. $\Delta_{\lambda}$ is the paired candidate minus reference validation MSE, so positive values are worse than $\lambda=0$.}
     \label{tab:04_physics_results}
 \end{table}
 
-The lowest recorded error was obtained at $\lambda=0$. Increasing the weight did not improve either of the two angle groups. For the reference case, the low-angle validation MSE was $0.004097$ over 1442 samples and the high-angle MSE was $0.013604$ over 271 samples. At $\lambda=2$, these values increased to $0.005843$ and $0.015727$, respectively. Thus, the stronger prior did not produce a targeted reduction in the region where it is active. It also increased the peak gradient norm from 56.87 at $\lambda=0$ to 149.44 at $\lambda=2$, while all recorded values remained finite. The historical result therefore favours the data-only candidate for this fixed architecture and budget, but it must not be generalized to the corrected large topology until the sweep is rerun.
+The lowest recorded physical validation MSE was obtained at $\lambda=0$, with $0.005600634\pm0.001099091$. The two closest nonzero candidates, $0.10$ and $0.05$, were worse by $2.8457\times10^{-5}$ and $3.7038\times10^{-5}$, respectively, and each improved on the reference in only one of five folds. The stronger values were worse in every fold. None of the nonzero candidates satisfies the pre-registered paired rule of improving in at least four folds with an improvement larger than its own paired spread. Thus the mean ranking and the paired analysis lead to the same data-only choice, while the fold deviations show that the two smallest differences are small relative to split variability.
 
+The angle split tests whether a possible benefit is concentrated where the prior is active. Across the five validation folds there were 1442 low-angle samples and 271 high-angle samples. For $\lambda=0$, the count-weighted MSE was $0.004096627$ in the low-angle group and $0.013603506$ in the high-angle group. At $\lambda=2$, the corresponding values were $0.005843330$ and $0.015727326$. Both groups therefore worsened as the prior became strong; the effect was not a selective improvement in the masked regime. Figure~\ref{fig:04_physics_performance} shows this split together with the complete validation ranking and representative convergence histories.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.98\linewidth]{Images/Chapter04/physics/physics_performance.png}
+    \caption{Global summaries of the recorded physics-weight sweep. The first panel shows sample-weighted mean physical validation MSE with fold deviations, the second separates the count-weighted low-angle and high-angle validation errors, and the third shows physical validation histories for $\lambda=0$, $0.25$, and $2$ with fold-spread bands. The training SIMM objective is not placed on the validation-MSE axis.}
+    \label{fig:04_physics_performance}
+\end{figure}
+
+The convergence curves are consistent with the final ranking. The fold-averaged validation MSE for $\lambda=0$ decreased from approximately $0.007025$ at epoch 10 to $0.005602$ at epoch 100, whereas the corresponding values for $\lambda=2$ were $0.008356$ and $0.007407$. Every candidate completed 100 epochs with finite values. The training objective started and ended higher as $\lambda$ increased, from approximately $0.599$ to $0.0104$ for $\lambda=0$ and from $1.393$ to $0.0168$ for $\lambda=2$ when averaged over folds. These are standardized SIMM objectives, so their difference from the physical validation MSE is not a generalization gap.
+
+The diagnostic files provide a numerical stability check without replacing the validation criterion. All numeric fields in the 35 fold directories are finite, the effective learning rate is constant, and the learning-rate step files contain no schedule entries. When the rows with \texttt{parameter\_scope=all} are combined through $G=\sqrt{\sum_\ell \mathrm{rms\_norm}_\ell^2}$, the epoch-one mean increases from about $18.76$ at $\lambda=0$ to $45.36$ at $\lambda=2$ as the prior is strengthened, while the corresponding epoch-100 values are $0.842$ and $1.071$. The maximum recorded step norm increases from $56.87$ to $149.44$, but the largest late-epoch value for $\lambda=2$ is only $4.20$. This is an early transient and not a late exploding-gradient trend. The weights-only actual update ratio also decreases over training, from about $1.69\times10^{-4}$ to $2.43\times10^{-5}$ for $\lambda=0$. Weight denominators did not produce near-zero events in this scope. Bias-scope ratios were not used because their small denominators can create very large ratios without comparable absolute parameter movement.
+
+The post-activation variance remains finite and changes only modestly in the global aggregate. Averaged over the recorded activation rows and folds, it changes from approximately $0.1092$ to $0.1113$ for $\lambda=0$ and from $0.1092$ to $0.1114$ for $\lambda=2$. These values do not establish that the physics term causes signal attenuation or amplification. Figure~\ref{fig:04_physics_diagnostics} reports the gradient aggregate, actual weights-only update ratio, and post-activation variance without grouping the curves by model layer. The plot is consequently a check of fold and training-time behaviour, not a layer-wise claim.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.98\linewidth]{Images/Chapter04/physics/physics_aggregate_diagnostics.png}
+    \caption{Layer-agnostic diagnostics for the recorded physics-weight sweep. Curves are means over folds and comparable diagnostic rows, with minimum to maximum fold bands. The gradient panel uses the square root of the sum of squared per-layer RMS norms for the all-parameter scope, the update panel uses the actual weights-scope update ratio, and the variance panel uses post-activation population variance. No layer index is shown.}
+    \label{fig:04_physics_diagnostics}
+\end{figure}
+
+The cross-validation winner is therefore $\lambda=0$ for the recorded five-fold run, with physical validation MSE $0.005600634\pm0.001099091$. The production configuration must be stated separately. In the current \texttt{CNN/main.cpp}, \texttt{make\_single\_trial} uses the smaller dense head $(128,64,1)$, Adam at the source-default learning rate $10^{-3}$, physics weight $0.10$, global batch size 257, 200 epochs, gradient clipping at 1, and no L1 or L2 penalty. The experiment README calls $0.25$ a production default, but the source file is authoritative for the current executable. The ordinary final run used the production path and therefore does not provide an independent test estimate for the selected $\lambda=0$. The documented physics result supports removing the SIMM term under the recorded low-rate, 100-epoch sweep, but a rerun is required before extending that conclusion from the archived small-head measurements to the current large-head source recipe.
+\newpage
 \subsection{Weight regularization}
 \label{sec:04_regularization_tuning}
 
-Weight regularization was introduced to test whether reducing parameter magnitude could improve generalization. The two penalties considered in the experiment are applied to weight tensors, not to biases. For a weight vector $\mathbf{w}$, the L1 and L2 contributions can be expressed as
+Weight regularization was tested because the dense head contains millions of trainable weights, so reducing unnecessary parameter magnitude could in principle improve validation performance. L1 regularization is associated with sparsity and L2 regularization with continuous shrinkage~\cite{tibshirani1996lasso,hoerl1970ridge}. These expectations motivate the experiment, but they do not determine the result: a penalty can also slow optimization or introduce bias when the unregularized model is not overfitting within the available training budget.
+
+For every convolutional and dense weight tensor $W_\ell$, the implementation defines the two penalties as
 \begin{equation}
-    \mathcal{L}_{\mathrm{L1}}=\lambda_1\lVert\mathbf{w}\rVert_1,
+    R_{\mathrm{L1}}=\lambda_1\sum_{\ell}\sum_{w\in W_\ell}|w|,
     \qquad
-    \mathcal{L}_{\mathrm{L2}}=\lambda_2\lVert\mathbf{w}\rVert_2^2.
+    R_{\mathrm{L2}}=\lambda_2\sum_{\ell}\sum_{w\in W_\ell}w^2.
     \label{eq:04_regularization}
 \end{equation}
-The L1 term promotes sparsity through a sign-dependent subgradient, whereas the L2 term continuously penalizes large weights. These loss penalties are distinct from optimizer weight decay. The experiment used two independent one-dimensional grids so that the effect of L1 could be separated from the effect of L2.
+Biases are excluded, the sums are not normalized by parameter count or batch size, and the two coefficients were varied independently. The corresponding gradient contribution is
+\begin{equation}
+    \frac{\partial(R_{\mathrm{L1}}+R_{\mathrm{L2}})}{\partial w}
+    =\lambda_1\,\operatorname{sign}(w)+2\lambda_2 w,
+    \qquad \operatorname{sign}(0)=0.
+    \label{eq:04_regularization_gradient}
+\end{equation}
+The trainer adds this contribution after synchronized MPI gradient averaging and before element-wise clipping and the Adam update. It is therefore different from Adam weight decay. The recorded \texttt{train\_objective} remains the SIMM objective; the final L1 and L2 penalty values are reported separately.
 
-The large selected topology was used here: \texttt{conv5x5-dense-1024-512-256-128}, with Adam at $10^{-5}$, physics weight $0.25$, batch size 64, five folds, seed 42, and 100 epochs. There were eight L1 candidates and eight L2 candidates. The reference value $0$ was included independently on both axes. The available result is a historical reference run preserved in the experiment README rather than a current raw result tree, so the values below are reported with that limitation.
+The current experiment source fixes \texttt{conv5x5-dense-1024-512-256-128}, LeakyReLU with $\alpha=0.05$, Adam at $10^{-5}$, physics weight $0.25$, global batch size 64, seed 42, gradient clipping at 1, and 100 epochs. It evaluates eight L1 values, $\{0,6.75\times10^{-7},2.13\times10^{-6},6.75\times10^{-6},2.13\times10^{-5},6.75\times10^{-5},2.13\times10^{-4},6.75\times10^{-4}\}$, and eight L2 values, $\{0,10^{-4},3.16\times10^{-4},10^{-3},3.16\times10^{-3},10^{-2},3.16\times10^{-2},10^{-1}\}$. Each axis is a separate one-dimensional sweep with zero as its own reference, giving 16 candidates and 80 fold evaluations. The test dataset was not part of the search.
+
+The numerical provenance differs from the physics sweep. The current result directory does not contain the raw regularization CSVs or metadata. The complete candidate values and aggregate results below are the documented Reference Results in \texttt{CNN/experiments/regularization\_tuning/README.md}, which identifies a large-topology CINECA run. Raw CSVs retained in an older Git revision belong to the earlier $(128,64)$ head and are not merged with these values. The tables should therefore be read as a documented historical result, not as a newly recomputed sample-weighted summary. This limitation does not change the direction of the documented ranking, but it prevents an independent reconstruction of every fold statistic from the current worktree.
 
 \begin{table}[h!]
     \centering
-    \begin{tabular}{rcc}
+    \scriptsize
+    \setlength{\tabcolsep}{3pt}
+    \begin{tabular}{rccrr}
         \hline
-        $\lambda_1$ & Mean validation MSE & Fold standard deviation \\
+        $\lambda_1$ & Mean validation MSE & Fold standard deviation & $\Delta_{\lambda_1}$ & Improved folds \\
         \hline
-        0 & 0.004419 & 0.000794 \\
-        $6.75\times10^{-7}$ & 0.004424 & 0.000788 \\
-        $2.13\times10^{-6}$ & 0.004436 & 0.000800 \\
-        $6.75\times10^{-6}$ & 0.004478 & 0.000811 \\
-        $2.13\times10^{-5}$ & 0.004540 & 0.000832 \\
-        $6.75\times10^{-5}$ & 0.004684 & 0.000902 \\
-        $2.13\times10^{-4}$ & 0.005100 & 0.000950 \\
-        $6.75\times10^{-4}$ & 0.006462 & 0.001189 \\
+        0 & 0.004419 & 0.000794 & 0 & -- \\
+        $6.75\times10^{-7}$ & 0.004424 & 0.000788 & +0.0000053 & 2/5 \\
+        $2.13\times10^{-6}$ & 0.004436 & 0.000800 & +0.0000178 & 2/5 \\
+        $6.75\times10^{-6}$ & 0.004478 & 0.000811 & +0.0000588 & 0/5 \\
+        $2.13\times10^{-5}$ & 0.004540 & 0.000832 & +0.0001209 & 0/5 \\
+        $6.75\times10^{-5}$ & 0.004684 & 0.000902 & +0.0002656 & 0/5 \\
+        $2.13\times10^{-4}$ & 0.005100 & 0.000950 & +0.0006810 & 0/5 \\
+        $6.75\times10^{-4}$ & 0.006462 & 0.001189 & +0.0020431 & 0/5 \\
         \hline
     \end{tabular}
-    \caption{L1 regularization sweep on the selected topology.}
+    \caption{Documented L1 reference sweep on the large topology. Values are transcribed from the experiment README because the corresponding raw result tree is absent. $\Delta_{\lambda_1}$ is the documented candidate minus reference mean validation MSE.}
     \label{tab:04_l1_results}
 \end{table}
 
 \begin{table}[h!]
     \centering
-    \begin{tabular}{rcc}
+    \scriptsize
+    \setlength{\tabcolsep}{3pt}
+    \begin{tabular}{rccrr}
         \hline
-        $\lambda_2$ & Mean validation MSE & Fold standard deviation \\
+        $\lambda_2$ & Mean validation MSE & Fold standard deviation & $\Delta_{\lambda_2}$ & Improved folds \\
         \hline
-        0 & 0.004419 & 0.000794 \\
-        $10^{-4}$ & 0.004483 & 0.000819 \\
-        $3.16\times10^{-4}$ & 0.004580 & 0.000859 \\
-        $10^{-3}$ & 0.004768 & 0.000932 \\
-        $3.16\times10^{-3}$ & 0.005092 & 0.000992 \\
-        $10^{-2}$ & 0.005902 & 0.001100 \\
-        $3.16\times10^{-2}$ & 0.006994 & 0.001217 \\
-        $10^{-1}$ & 0.008453 & 0.001080 \\
+        0 & 0.004419 & 0.000794 & 0 & -- \\
+        $10^{-4}$ & 0.004483 & 0.000819 & +0.0000644 & 1/5 \\
+        $3.16\times10^{-4}$ & 0.004580 & 0.000859 & +0.0001613 & 0/5 \\
+        $10^{-3}$ & 0.004768 & 0.000932 & +0.0003489 & 0/5 \\
+        $3.16\times10^{-3}$ & 0.005092 & 0.000992 & +0.0006730 & 0/5 \\
+        $10^{-2}$ & 0.005902 & 0.001100 & +0.0014836 & 0/5 \\
+        $3.16\times10^{-2}$ & 0.006994 & 0.001217 & +0.0025749 & 0/5 \\
+        $10^{-1}$ & 0.008453 & 0.001080 & +0.0040345 & 0/5 \\
         \hline
     \end{tabular}
-    \caption{L2 regularization sweep on the selected topology.}
+    \caption{Documented L2 reference sweep on the large topology. Values are transcribed from the experiment README because the corresponding raw result tree is absent. $\Delta_{\lambda_2}$ is the documented candidate minus reference mean validation MSE.}
     \label{tab:04_l2_results}
 \end{table}
 
-In both axes the zero-penalty candidate had the lowest observed validation MSE. The nonzero values degraded the error monotonically, and no candidate met the pre-registered paired criterion of improving at least four of the five folds with a mean paired difference larger than its own spread. The regularization terms were nevertheless active: the sum of squared weights fell from approximately 2993 at zero L2 to 582 at the largest L2 value, while the training MSE increased more rapidly than the validation MSE. This behaviour indicates that the penalties were restricting the fit rather than correcting a substantial overfitting gap. The validation minus training gap decreased, but the improvement was not sufficient to compensate for the loss in training accuracy. The selected configuration is consequently $\lambda_1=0$ and $\lambda_2=0$ for the tested learning rate and epoch budget.
+In both documented axes the zero-penalty candidate had the lowest observed validation MSE. The nearest L1 candidates were only $5.3\times10^{-6}$ and $1.78\times10^{-5}$ worse in the reported mean and improved in two folds, so neither meets the four-fold paired criterion or exceeds its own paired spread. The nearest L2 candidate, $10^{-4}$, improved in one fold and was worse by $6.44\times10^{-5}$ in the reported mean. The degradation then increased across the tested grids. The penalties were active rather than numerically inert: the documented $\sum w^2$ decreased from approximately 2993 at zero penalty to 587 for the largest L1 value and 582 for the largest L2 value, while $\lVert w-w_0\rVert$ increased from about 0.91 to 41.18 and 36.46, respectively. At the same time, the validation minus training gap decreased, but the training MSE rose faster, indicating that shrinkage restricted the fit more than it corrected overfitting in this fixed 100-epoch regime.
 
+The recorded diagnostic summaries, also preserved only in the README, are consistent with this interpretation. The largest gradient norm is reported as approximately 22.54 across the L1 axis and most of the L2 axis, with only the strongest L2 values increasing it to 24.08. The reported post-activation variance changes from 0.1441 at zero L1 to 0.1654 at the largest L1 and from 0.1441 at zero L2 to 0.1686 at the largest L2. Because the underlying diagnostic CSVs are absent, these values are not used to make a layer-wise stability claim. No new regularization diagnostic plot is included; the tables and provenance statement are the reproducible evidence that remains in the current repository.
+
+The documented cross-validation winner is therefore $\lambda_1=0$ and $\lambda_2=0$, with reported mean physical validation MSE $0.004419\pm0.000794$. The current production source also sets both penalties to zero, so the direction of this choice agrees with \texttt{CNN/main.cpp}. The production run nevertheless differs in head width, learning rate, physics weight, batch size, and epoch or early-stopping policy, and no regularization-specific test estimate exists. To conclude, the retained evidence supports not adding L1 or L2 at Adam learning rate $10^{-5}$ and 100 epochs. A new diagnostics-enabled run would be required to attach stronger numerical stability claims or to test whether the answer changes after the production learning rate and training budget are used.
+
+\newpage
 \subsection{Activation-function tuning}
 \label{sec:04_activation_tuning}
 
@@ -375,6 +495,7 @@ The fixed topology was \texttt{conv5x5-dense-1024-512-256-128}. Adam used learni
 
 LeakyReLU with $\alpha=0.05$ had the lowest mean error and the smallest final fold dispersion. Its peak gradient norm was 20.14 and its peak weight update ratio was $4.50\times10^{-4}$. All metrics remained finite. The Tanh candidate had a higher peak gradient norm of 111.51, which is consistent with a stronger transient during the early optimization, while Sigmoid showed a much larger mean checkpoint fold standard deviation of 0.02919, consistent with slower and less uniform early convergence. These observations do not by themselves prove that saturation caused the ranking, but they support the interpretation that the selected LeakyReLU provided a more regular signal scale for this model. The final refit of the selected activation achieved an untouched-test physical MSE of $0.002739$.
 
+\newpage
 \subsection{Learning-rate and schedule tuning}
 \label{sec:04_learning_rate_tuning}
 
@@ -414,6 +535,7 @@ The fixed model was \texttt{conv5x5-dense-1024-512-256-128}, with Adam, physics 
 
 The selected constant rate $10^{-3}$ improved the mean validation MSE by approximately 18.3 percent relative to the constant $10^{-5}$ baseline. The step schedules starting at $10^{-3}$ were stable, but their early reductions prevented the parameters from continuing to move through the useful part of the loss surface within the 100-epoch budget. The schedules starting at $10^{-5}$ became even less effective after their reductions. In contrast, all five candidates involving a rate of $10^{-1}$ produced errors from approximately $2.09\times10^8$ to $8.31\times10^{17}$, depending on the schedule and fold. Even the five-epoch warm-up did not avoid the instability associated with the high peak rate. The data therefore support $10^{-3}$ as the lowest observed rate setting for this search, rather than a universal stability threshold. Its final refit produced an untouched-test MSE of $0.003254$.
 
+\newpage
 \subsection{Final production training}
 \label{sec:04_final_training}
 
@@ -422,7 +544,7 @@ The final ordinary training was launched through the production path rather than
 The selected epoch in the recorded final run was 1505. At that checkpoint, the physical training MSE was $0.0004932$ and the validation MSE was $0.0005995$. The independent test evaluation over 429 samples gave $0.0006727$. The test error was $0.0005468$ over the 363 samples with $|\alpha|\leq10^\circ$ and $0.0013653$ over the 66 samples outside that range. The higher error at high angle is consistent with the fact that the SIMM relation is masked there, although the error split alone does not establish the cause. The diagnostic files for this run contained finite metrics, and the training history continued beyond the selected epoch before the best checkpoint was restored.
 
 The final run should not be compared numerically with every cross-validation value without qualification. The tuning experiments use fold-specific normalization and approximately 80 percent of the training samples in each fold, whereas ordinary training uses a 90/10 split and the final refit uses the complete training set before evaluating the test data. In addition, the production source still contains the smaller $(128,64)$ head, while the topology search selected the larger head. The final numbers are therefore the performance of the recorded production configuration, not a test score for the large topology winner. They are nevertheless the appropriate values for describing the executable that was finally used.
-
+\newpage
 \subsection{Conclusions}
 \label{sec:04_tuning_conclusions}
 
