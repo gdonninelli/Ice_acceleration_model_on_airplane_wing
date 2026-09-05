@@ -14,3 +14,39 @@ This contrast between computational cost and prediction speed places our work wi
 Nevertheless, certain limitations inherent to each method must be acknowledged. These include the computational demand of the RANS simulations and, for the data-driven model, the absence of an \textit{a priori} error estimate, the strict dependency on a training dataset that accurately resembles the target inference domain\footnote{As noted, since the training data from the CFD was slightly biased, we expect this bias persists in the surrogate model.}, and the general lack of interpretability characteristic of black-box models.\\
 
 Looking forward, the framework developed here opens up promising avenues for engineering design and analysis. The speed of the trained CNN makes it ideal for real-time applications and rapid design iterations on consumer-grade hardware, completely bypassing the need for constant HPC access. This capability is particularly relevant for the agile aerodynamic design and field-testing of components for Unmanned Aerial Vehicles and quadcopters, where on-the-fly performance evaluation can accelerate development cycles. The simulation pipeline itself is now poised to serve as a data engine for training future surrogate models on more complex geometries, such as the iced airfoils that motivated this study.
+
+\section{Contributors}
+\label{sec:06_Contributors}
+\begin{table}[H]
+    \centering
+    \begin{tabular}{|c|c|}
+        \hline
+        \textbf{Contribution} & \textbf{Name} \\
+        \hline
+        CNN API in CPP & Giulio Enzo Donninelli, Alessia Rigoni \\
+        \hline
+        Data Structure for diagnostic purposes & Giulio Enzo Donninelli \\
+        \hline
+        Topology Tuning & Giulio Enzo Donninelli, Alessandro Verrengia \\
+        \hline
+        Dropout Implementation & Alessia Rigoni, Vittorio Sironi \\
+        \hline
+        Optimizer Comparison & Alessia Rigoni \\
+        \hline
+        Physics-weight Tuning & Alessia Rigoni, Vittorio Sironi \\
+        \hline
+        Weight regularization & Giulio Enzo Donninelli \\
+        \hline
+        Activation-function Tuning & Giulio Enzo Donninelli \\
+        \hline
+        Learning Rate Tuning & Alessia Rigoni \\
+        \hline
+        Training & Giulio Enzo Donninelli \\
+        \hline
+        Report Writing & Giulio Enzo Donninelli, Alessia Rigoni \\
+        \hline
+
+    \end{tabular}
+    \caption{Contributors to the work presented in this report.}
+    \label{tab:contributors}
+\end{table}
