@@ -458,22 +458,47 @@ The documented cross-validation winner is therefore $\lambda_1=0$ and $\lambda_2
 \subsection{Activation-function tuning}
 \label{sec:04_activation_tuning}
 
-The activation function determines the nonlinear transformation and the gradient transmitted between consecutive affine layers. The experiment compared Tanh, Sigmoid, ReLU, and three LeakyReLU slopes. The LeakyReLU function used in the implementation is
+The activation function determines the nonlinear transformation applied after an affine layer and therefore affects both the signal passed to the next layer and the gradient returned during backpropagation. This choice is particularly relevant for the selected topology, which contains one activation after the convolution and four more in the dense head. We therefore compared bounded functions, a rectifier with an inactive negative branch, and LeakyReLU functions with three negative slopes. The purpose was not to assume that one family is universally better, but to measure which transformation gives the lowest physical validation error under the fixed architecture and training budget. Saturating nonlinearities can reduce the derivative when their input has large magnitude, whereas a rectifier retains a unit derivative on its positive branch; these are established mechanisms for changes in signal and gradient propagation~\cite{glorot2010understanding}.
 \begin{equation}
-    \sigma(x)=\begin{cases}
+\begin{aligned}
+    f_{\mathrm{ReLU}}(x)&=\begin{cases}
+        x, & x>0,\\
+        0, & x\leq0,
+    \end{cases}
+    & f_{\mathrm{ReLU}}'(x)&=\begin{cases}
+        1, & x>0,\\
+        0, & x\leq0,
+    \end{cases}\\[1ex]
+    f_{\alpha}(x)&=\begin{cases}
         x, & x>0,\\
         \alpha x, & x\leq0,
     \end{cases}
-    \qquad
-    \sigma'(x)=\begin{cases}
+    & f_{\alpha}'(x)&=\begin{cases}
         1, & x>0,\\
         \alpha, & x\leq0.
     \end{cases}
-    \label{eq:04_activation}
+\end{aligned}
+    \label{eq:04_rectifier_activations}
 \end{equation}
-ReLU is recovered when the negative branch is set to zero, whereas Tanh and Sigmoid bound their outputs and can enter saturation at large absolute inputs. The comparison of these effects is relevant to the observed activation variances and gradient norms, and is consistent with the analysis of saturation and layer-wise signal propagation in~\cite{glorot2010understanding}.
+Here $\alpha$ is the fixed negative slope of a LeakyReLU layer. Thus, negative inputs are removed by ReLU and attenuated rather than removed by LeakyReLU. The code evaluates the non-positive branch also at $x=0$, which fixes the derivative convention used in the recorded backward pass. The smooth alternatives were implemented as
+\begin{equation}
+\begin{aligned}
+    f_{\mathrm{Tanh}}(x)&=\tanh(x),
+    & f_{\mathrm{Tanh}}'(x)&=1-\tanh^2(x),\\
+    f_{\mathrm{Sigmoid}}(x)&=\frac{1}{1+\exp(-x)},
+    & f_{\mathrm{Sigmoid}}'(x)&=f_{\mathrm{Sigmoid}}(x)\left(1-f_{\mathrm{Sigmoid}}(x)\right).
+\end{aligned}
+    \label{eq:04_saturating_activations}
+\end{equation}
+Their outputs are bounded, and the derivatives become small in the corresponding saturation regions. The final dense layer remains linear, so these transformations are used only in the convolutional branch and in the four hidden dense layers.
 
-The fixed topology was \texttt{conv5x5-dense-1024-512-256-128}. Adam used learning rate $10^{-5}$, the physics weight was $0.1$, dropout and L1/L2 regularization were zero, and the batch size, epoch count, fold count, and seed were 64, 100, 5, and 42. The six candidates and their measured scores are listed in Table~\ref{tab:04_activation_results}.
+The fixed topology was \texttt{conv5x5-dense-1024-512-256-128}. More precisely, the $150\times150$ SDF was passed through \texttt{Conv2DLayer(1,8,5, stride=5, padding=0)}, which produces $8\times30\times30=7200$ features. The two scalar inputs are then concatenated, so the dense sequence is \texttt{DenseLayer(7202,1024)}, \texttt{DenseLayer(1024,512)}, \texttt{DenseLayer(512,256)}, \texttt{DenseLayer(256,128)}, and a final \texttt{DenseLayer(128,1)}. The same candidate activation was used after the convolution and after each of the four hidden dense layers. This detail matters because the comparison changes the complete nonlinear path rather than one isolated layer.
+
+The search used the six candidates \texttt{tanh}, \texttt{sigmoid}, \texttt{relu}, \texttt{leakyrelu-alpha-0.01}, \texttt{leakyrelu-alpha-0.05}, and \texttt{leakyrelu-alpha-0.1}. Adam was fixed at learning rate $10^{-5}$ with $\beta_1=0.9$, $\beta_2=0.999$, $\varepsilon=10^{-8}$, and zero optimizer weight decay. The SIMM loss used physics weight $0.1$, while the L1 and L2 weights and dropout rate were zero. Each fold ran for 100 epochs with global batch size 64, element-wise gradient clipping at 1, shuffled samples, and no early stopping. The recorded run used five sample-level folds generated with shuffling and seed 42, and 64 MPI ranks. The validation sets contained 343, 343, 343, 342, and 342 samples, with complementary training sizes of 1370, 1370, 1370, 1371, and 1371. Each fold therefore processed 22 balanced global batches per epoch, or 2200 optimizer steps. The 30 candidate-fold fits consequently accounted for 66000 optimizer steps before the final refit. The validation and public history interval was ten epochs, and the diagnostics used 64 fixed histogram bins over $[-10,10]$ with out-of-range values placed in the edge bins. The effective learning rate in the diagnostics was constant at $9.9999997\times10^{-6}$ and \texttt{learning\_rate\_steps.csv} contained only its header, so no schedule was present.
+
+The fold plan was reused for all candidates, and normalization statistics were fitted on each fold's training indices only. A fresh model and a fresh Adam optimizer were constructed for every candidate and fold. The 1713-sample training NPZ was the only dataset used for candidate selection; the 429-sample test NPZ was loaded by the driver only after the best candidate had been identified and refitted on all training samples. The source revision recorded in the diagnostic metadata is \texttt{8aada70b492a}, whereas the current checkout is \texttt{fe71f0964ca4}; the numerical values below are therefore taken from the committed format-1 artifacts and are not silently reinterpreted using the newer diagnostic schema.
+
+Selection used the physical-unit validation MSE defined in Equation~\eqref{eq:04_validation_mse}. The official \texttt{cv\_summary.csv} aggregates the fold errors with validation-sample weights, and \texttt{CrossValidator::tune} selects the smallest resulting mean. The standardized SIMM training objective is not substituted for this score and is not compared numerically with it. Moreover, the implementation selects on the mean validation MSE alone. Gradient, update, and activation diagnostics are used below as post hoc evidence about the numerical behaviour, not as an additional undocumented selection criterion. The complete ranking is reported in Table~\ref{tab:04_activation_results}.
 
 \begin{table}[h!]
     \centering
@@ -489,61 +514,288 @@ The fixed topology was \texttt{conv5x5-dense-1024-512-256-128}. Adam used learni
         Sigmoid & 0.008971 & 0.001250 \\
         \hline
     \end{tabular}
-    \caption{Activation-function comparison on the selected topology.}
+    \caption{Complete activation-function comparison on the fixed large topology. Means and deviations are the sample-weighted physical validation MSE and weighted population standard deviation from \texttt{cv\_summary.csv}; the ranking was performed over all six candidates.}
     \label{tab:04_activation_results}
 \end{table}
 
-LeakyReLU with $\alpha=0.05$ had the lowest mean error and the smallest final fold dispersion. Its peak gradient norm was 20.14 and its peak weight update ratio was $4.50\times10^{-4}$. All metrics remained finite. The Tanh candidate had a higher peak gradient norm of 111.51, which is consistent with a stronger transient during the early optimization, while Sigmoid showed a much larger mean checkpoint fold standard deviation of 0.02919, consistent with slower and less uniform early convergence. These observations do not by themselves prove that saturation caused the ranking, but they support the interpretation that the selected LeakyReLU provided a more regular signal scale for this model. The final refit of the selected activation achieved an untouched-test physical MSE of $0.002739$.
+The lowest observed mean was obtained by LeakyReLU with $\alpha=0.05$, with physical validation MSE $0.0044274\pm0.0008653$. Its five fold values were 0.00447944, 0.00573559, 0.00399854, 0.00312070, and 0.00480010. The nearest candidate was $\alpha=0.01$, whose mean was $0.0044477\pm0.0008761$, only $2.03\times10^{-5}$ higher, or approximately $0.46\%$ relative to the selected mean. ReLU followed at $0.0044543\pm0.0008759$. The selected candidate was best in folds 1, 3, and 4 using zero-based fold indices, while $\alpha=0.01$ was best in fold 0 and ReLU in fold 2. Thus, the selection is a small aggregate advantage within the ReLU family rather than a uniform win in every split. The fold deviations are much larger than the difference between the first three means, so we refer to $\alpha=0.05$ as the selected or lowest observed candidate, not as a statistically established optimum. No repeated seed was used.
+
+The separation from the bounded alternatives was larger. Tanh reached $0.005465620520\pm0.001045446677$, about $23.4\%$ above the selected mean, while Sigmoid reached $0.008971404356\pm0.001250088488$, about twice the selected mean. Figure~\ref{fig:04_activation_ranking} displays the official weighted means and deviations. All 30 candidate-fold records completed with finite metrics, and no candidate was removed from the ranking because of a failed or divergent run.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.82\linewidth]{Images/Chapter04/activation/activation_ranking.png}
+    \caption{Complete activation-function ranking from the official \texttt{cv\_summary.csv}. Points are sample-weighted mean physical validation MSE values and horizontal error bars are the corresponding weighted population standard deviations over the five folds. The orange point identifies the lowest observed candidate, LeakyReLU with $\alpha=0.05$.}
+    \label{fig:04_activation_ranking}
+\end{figure}
+
+The checkpoint histories explain how the final separation developed. The fold-weighted validation MSE for the selected candidate decreased from 0.00655666 at epoch 10 to 0.00505364 at epoch 50 and 0.00442742 at epoch 100. The corresponding values for Tanh were 0.00801736, 0.00635208, and 0.00546562. Sigmoid was markedly slower at the beginning, decreasing from 0.410526 at epoch 10 to 0.0132361 at epoch 50 and 0.00897140 at epoch 100. Its training SIMM objective also fell from 0.888182 to 0.0272476 and then 0.0178482, whereas the selected candidate went from 0.0130666 to 0.0103440 and then 0.00891624. These objectives are standardized SIMM quantities and are kept separate from the physical validation curve. The candidate-level validation means were lowest at the final recorded checkpoint, and none of the histories showed a late unbounded increase. Figure~\ref{fig:04_activation_history} shows the fold-weighted physical validation histories on a logarithmic vertical axis.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.92\linewidth]{Images/Chapter04/activation/activation_history.png}
+    \caption{Fold-weighted physical validation MSE at the ten-epoch checkpoints for the six activation candidates. Shaded regions show the positive part of the weighted population standard deviation band over the five folds, and the vertical axis is logarithmic. The standardized SIMM training objective is not plotted on this axis.}
+    \label{fig:04_activation_history}
+\end{figure}
+
+The recorded diagnostics provide a numerical stability check, but they do not change the selection rule. For gradient flow, we use rows with \texttt{parameter\_scope=all} and the stored \texttt{maximum\_norm} for peak checks. The largest value for the selected candidate was 20.1379 at epoch 1, zero-based fold 2, and stable model layer 4, the first dense layer. The corresponding peaks were 20.8124 for ReLU, 20.6424 for $\alpha=0.01$, and 20.7899 for $\alpha=0.1$. Tanh was the numerical outlier with a peak of 111.508 at epoch 1, zero-based fold 1, also at layer 4. Sigmoid had a lower peak of 18.2200, but this does not imply better optimization because its early validation curve was much worse. All of these maxima occurred at the first epoch rather than late in training, and the selected candidate's fold-averaged RMS gradient norms at stable trainable layer indices $(0,4,6,8,10,12)$ decreased from $(1.596,7.795,3.352,2.284,1.619,0.938)$ at epoch 1 to $(0.156,0.640,0.302,0.242,0.198,0.133)$ at epoch 100. This pattern is consistent with an initial transient followed by settling, not with a late exploding gradient.
+
+For parameter motion, we use \texttt{parameter\_scope=weights} and the actual \texttt{mean\_ratio} in Equation~\eqref{eq:04_update_ratio}. The selected candidate reached a maximum weight update ratio of $4.50124\times10^{-4}$ at epoch 1, zero-based fold 3, layer 4. The associated mean pre-update norm was 42.3385 and the mean update norm was 0.0190575, with no near-zero denominator event. The neighbouring LeakyReLU candidates had comparable maxima, $4.47063\times10^{-4}$ for $\alpha=0.01$ and $4.42262\times10^{-4}$ for $\alpha=0.1$, while the largest value over the grid was $6.15050\times10^{-4}$ for Sigmoid. Each run also contains six epoch-1 events in the bias-only rows because the denominator is protected by $10^{-12}$ while the initially zero biases have a very small norm. The corresponding weight and combined-layer rows have no such events. We therefore do not interpret the large bias-only ratios as unstable parameter movement. The small weight ratios, together with the absence of non-finite diagnostics and late gradient growth, support the conclusion that the selected score was not produced by an anomalously large update.
+
+The activation statistics show the transformation expected from the equations. For the selected LeakyReLU, the post-activation population variances were pooled over folds from the recorded population moments as follows:
+\begin{equation}
+\begin{array}{c|ccccc}
+\text{epoch} & \text{layer 1} & \text{layer 5} & \text{layer 7} & \text{layer 9} & \text{layer 11} \\
+\hline
+1   & 0.109805 & 0.092960 & 0.065048 & 0.045128 & 0.030745 \\
+50  & 0.109755 & 0.102640 & 0.084950 & 0.067045 & 0.051060 \\
+100 & 0.108244 & 0.100116 & 0.082939 & 0.065922 & 0.050486
+\end{array}
+\label{eq:04_activation_variance}
+\end{equation}
+The variance decreases through the dense head, but it does not collapse to zero and changes little between epochs 50 and 100. The full selected-candidate diagnostic range was approximately $[-4.003,4.035]$ before activation and $[-0.200,4.035]$ after activation, which is consistent with retaining a scaled negative branch. The corresponding ReLU post-activation minimum was exactly zero. These observations support controlled negative attenuation and a stable signal scale for the selected run, although they do not establish that this mechanism alone caused its small validation advantage.
+
+The bounded candidates show the clearest saturation-related evidence. Across the Tanh diagnostics, post-activation values reached $-0.999355$ and $0.999393$, so some values were close to the limits where its derivative is small; this candidate also had the large early gradient maximum described above. The only activation values outside the fixed histogram interval $[-10,10]$ occurred for Sigmoid, at zero-based fold 4, layer 5, from epochs 78 to 100. At epoch 100 that layer had pre-activation minimum $-10.9256$, maximum $10.6715$, and variance 7.78885, while the post-activation range over the complete Sigmoid grid was approximately $[1.8\times10^{-5},0.999977]$. This behaviour is consistent with saturation and with the slow early convergence of Sigmoid, but the diagnostics do not prove a causal explanation for the validation ranking. Histogram edge counts were treated only as evidence of values reaching the configured limits, because out-of-range values are clamped into the edge bins. Figure~\ref{fig:04_activation_diagnostics} combines the peak checks with the selected-candidate depth profiles; the gradient and update panels aggregate maxima over folds, layers, and epochs, while the lower panels identify their fold and population-moment aggregation.
+
+The vanishing-gradient risk is most directly assessed from the distribution of the pre-activation value $z$, rather than from the post-activation value alone. If $a_j=f_j(z_j)$, the chain rule inserts one derivative factor at every nonlinear layer. Ignoring the separate linear weight transformations, the activation contribution along a path through $k$ nonlinearities is
+\begin{equation}
+    \frac{\partial\mathcal{L}}{\partial z_j}
+    =\frac{\partial\mathcal{L}}{\partial a_j}f_j'(z_j),
+    \qquad
+    G_{\mathrm{act}}(k)=\prod_{j=1}^{k}\left|f_j'(z_j)\right|.
+    \label{eq:04_activation_chain_gradient}
+\end{equation}
+When the actual values $z_j$ fall in a plateau, $G_{\mathrm{act}}$ becomes small even when the upstream loss gradient is non-zero. A broad or heavy-tailed pre-activation distribution therefore raises the fraction of samples and paths that receive weak local gradients; it does not imply that every path vanishes, because values near the central high-slope region can still carry a useful signal.
+
+The scale of this effect is substantial for the bounded functions. For Sigmoid, $|f'(5)|\simeq6.65\times10^{-3}$ and $|f'(10)|\simeq4.54\times10^{-5}$. For Tanh, the corresponding values are approximately $1.82\times10^{-4}$ and $8.24\times10^{-9}$. If five consecutive hidden nonlinearities were simultaneously evaluated at $|z|=5$, the activation-only factors would already be approximately $(6.65\times10^{-3})^5\simeq1.3\times10^{-11}$ for Sigmoid and $(1.82\times10^{-4})^5\simeq2.0\times10^{-19}$ for Tanh. These products are mechanism illustrations, not measured end-to-end gradients: the actual network also contains weight matrices, and different layers need not lie in the same plateau. They nevertheless show why a widespread distribution can create a vanishing-gradient bottleneck through depth.
+
+The rectifiers have a different but equally important failure mode. ReLU has an exact zero derivative for $z\leq0$, so a unit whose inputs remain on the negative branch contributes no local gradient through that activation. LeakyReLU replaces this strict plateau with a constant negative-branch slope $\alpha$. This avoids an exactly dead path, but it does not eliminate attenuation: $k$ consecutive negative-branch traversals contribute $\alpha^k$, so the tested $\alpha=0.05$ can still multiply the signal by $0.05^k$, while $\alpha=0.01$ attenuates it more strongly and $\alpha=0.1$ less strongly. Thus, ``non-saturating'' should not be interpreted as ``immune to vanishing gradients''; the relevant question is how much of the observed pre-activation distribution lies in each branch and how those branches are arranged across depth.
+
+Figure~\ref{fig:04_activation_input_distributions} makes this distributional argument explicit using the actual recorded values. It shows the empirical pre-activation histograms at layer 5, the first dense nonlinearity adjacent to the layer where the largest early gradient peaks were observed, pooled over all five folds at epochs 1 and 100. The black curve is the exact absolute derivative of the corresponding activation, plotted on the right axis, and the shaded area marks either $|f'(z)|\leq0.01$ for Tanh and Sigmoid or the negative branch for the rectifiers. At epoch 100, approximately $4.0\%$ of the Sigmoid layer-5 inputs lie in the displayed low-derivative tails, whereas approximately half of the inputs lie on the zero-slope ReLU branch or on the constant low-slope LeakyReLU branch; the selected $\alpha=0.05$ run has approximately $49.8\%$ negative inputs at this layer. The Tanh layer-5 distribution has no visible mass beyond the $0.01$ derivative threshold at epoch 100, which does not contradict the rare near-limit values found elsewhere in the complete diagnostic grid. The percentages are approximate histogram masses, not per-unit gradient measurements, and the fixed edge bins include values outside $[-10,10]$. The figure therefore demonstrates the available mechanism and its plausibility, while the recorded layer-aggregate gradient norms remain necessary to determine whether it produced harmful end-to-end gradient loss in this experiment.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.98\linewidth]{Images/Chapter04/activation/activation_input_distributions.png}
+    \caption{Empirical distributions of the actual pre-activation values $z$ at the first dense nonlinearity (stable model layer 5) for the six activation candidates. Gray bars show epoch 1 and blue step curves show epoch 100, with histograms pooled over the five folds. The black curves show the exact absolute derivative $|f'(z)|$ on the right-hand scale. Orange shading identifies the Tanh and Sigmoid regions with $|f'(z)|\leq0.01$ and the negative branch for ReLU and LeakyReLU. The epoch-100 mass annotations are approximate because the committed diagnostics store fixed-bin counts; the edge bins include values outside the displayed $[-10,10]$ range.}
+    \label{fig:04_activation_input_distributions}
+\end{figure}
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.96\linewidth]{Images/Chapter04/activation/activation_diagnostics.png}
+    \caption{Diagnostics for the activation-function search. The upper panels show, for each candidate, the maximum gradient \texttt{maximum\_norm} with \texttt{parameter\_scope=all} and the maximum actual weight update ratio with \texttt{parameter\_scope=weights}, taken over all five folds, layers, and epochs. The lower left panel shows fold-averaged RMS gradient norms for the selected candidate at epochs 1 and 100 over stable trainable layer indices. The lower right panel shows post-activation population variances for the selected candidate at epochs 1, 50, and 100, pooled over folds from the recorded population moments.}
+    \label{fig:04_activation_diagnostics}
+\end{figure}
+
+The final refit of the selected activation used all 1713 training samples and retained the large search topology. Its training SIMM objective decreased from 0.286768 at epoch 1 to 0.00865917 at epoch 100; the interval was set to 101, so no intermediate test values were written to the final diagnostic history. The summary reports a physical MSE of $0.00273892$ on the untouched 429-sample test set after selection. This is a post-selection estimate for the refitted activation-search model and must not be presented as the test performance of the ordinary production model.
+
+The \textbf{cross-validation winner} is therefore \texttt{LeakyReLU} with $\alpha=0.05$, with physical validation MSE $0.00442742\pm0.00086526$ on the fixed large topology. The \textbf{production configuration} in \texttt{CNN/main.cpp} uses the same activation choice at its source defaults, namely \texttt{LeakyReLU} with $\alpha=0.05$, but it uses the smaller dense head $(128,64,1)$, Adam learning rate $10^{-3}$, physics weight $0.10$, global batch size 257, 200 nominal epochs, no dropout, no L1 or L2 penalty, gradient clipping at 1, and ordinary-training early stopping with a 10 percent holdout. Command-line overrides can change these defaults. Thus, the activation decision agrees between the search and production source, while the activation experiment does not validate the complete production configuration because its topology, learning rate, batch size, and stopping policy differ. To conclude, we retain $\alpha=0.05$ as the selected production activation because it had the lowest observed sample-weighted validation MSE and diagnostics comparable to the neighbouring rectifiers. The small margin over $\alpha=0.01$ and ReLU, the single seed, and the sample-level rather than airfoil-level folds limit the strength of this conclusion beyond the recorded experiment.
 
 \newpage
 \subsection{Learning-rate and schedule tuning}
 \label{sec:04_learning_rate_tuning}
 
-After choosing the topology, optimizer, loss settings, and activation, we studied the learning rate. In Adam, the learning rate multiplies the bias-corrected adaptive direction in Equation~\eqref{eq:04_adam_update}. It therefore controls the scale of the actual parameter movement even though the denominator adapts to the history of each parameter. The experiment considered constant rates, step decay, cosine annealing, and warm-up followed by cosine decay. For a constant rate, $\eta_e=\eta_0$. For step decay, the implementation uses
+After choosing the topology, optimizer, loss settings, and activation, we studied the learning rate because it controls the scale and duration of the parameter updates. In Adam, the learning rate multiplies the bias-corrected adaptive direction in Equation~\eqref{eq:04_adam_update}; it is therefore not removed by the coordinate-wise denominator, even though that denominator adapts to the history of each parameter. A rate that is too small can leave a finite epoch budget underused, whereas a rate that is too large can amplify the interaction between the SIMM residual, the dense layers, and the optimizer moments. The schedule determines how long each scale is applied. Cosine decay has been studied as part of the SGDR family~\citep{loshchilov2017sgdr}, while warm-up was introduced to address early optimization difficulties in large-minibatch stochastic-gradient training~\citep{goyal2017accurate}. Those references motivate the schedule families tested here, but they do not predict the behaviour of this Adam run: the present experiment uses no warm restarts, a different optimizer, and a different data set.
+
+Let $e\in\{0,\ldots,E-1\}$ denote the zero-based epoch index and let $E$ be the total number of epochs. The constant candidates use
+\begin{equation}
+    \eta_e=\eta_0,
+    \label{eq:04_constant_schedule}
+\end{equation}
+for every epoch. For step decay, the implementation uses
 \begin{equation}
     \eta_e=\eta_0\gamma^{\lfloor e/S\rfloor},
     \label{eq:04_step_schedule}
 \end{equation}
-where $S$ is the step interval and $\gamma$ is the multiplicative factor. The cosine candidates use
+where $S$ is the step interval and $\gamma$ is the multiplicative factor. The cosine candidate uses
 \begin{equation}
     \eta_e=\eta_{\min}+\frac{1}{2}(\eta_{\max}-\eta_{\min})
     \left[1+\cos\left(\frac{e}{E-1}\pi\right)\right],
     \label{eq:04_cosine_schedule}
 \end{equation}
-and the warm-up candidate first increases linearly from $10^{-5}$ to $10^{-1}$ over five epochs before applying the cosine decay. These expressions describe the configured rate; the diagnostic file records the effective rate used at each epoch.
+which reaches $\eta_{\max}$ at $e=0$ and $\eta_{\min}$ at $e=E-1$. The warm-up candidate is defined by
+\begin{equation}
+    \eta_e=\begin{cases}
+        \eta_{\mathrm{start}}+\dfrac{e}{W}
+        (\eta_{\mathrm{peak}}-\eta_{\mathrm{start}}), & 0\leq e<W,\\[6pt]
+        \eta_{\min}+\dfrac{1}{2}(\eta_{\mathrm{peak}}-\eta_{\min})
+        \left[1+\cos\left(\dfrac{e-W}{E-W-1}\pi\right)\right], & W\leq e<E,
+    \end{cases}
+    \label{eq:04_warmup_cosine_schedule}
+\end{equation}
+where $W$ is the number of warm-up epochs. In the recorded grid, $E=100$, $W=5$, $\eta_{\mathrm{start}}=\eta_{\min}=10^{-5}$, and $\eta_{\mathrm{peak}}=10^{-1}$. Thus, the warm-up branch returns $10^{-5}$ at the first completed epoch and reaches $10^{-1}$ at completed epoch 6. The step schedules change at zero-based indices $e=30,60,90$ for $S=30$, and at $e=15,30,45,60,75,90$ for $S=15$, which correspond to completed epochs 31, 61, 91 and 16, 31, 46, 61, 76, 91, respectively. The configured optimizer rate and the scheduler output are distinct for the warm-up candidate: $\texttt{epoch\_metrics.csv}$ records the former in \texttt{configured\_learning\_rate} and the latter in \texttt{effective\_learning\_rate}. The latter is the rate used in the plots below.
 
-The fixed model was \texttt{conv5x5-dense-1024-512-256-128}, with Adam, physics weight $0.25$, batch size 64, 100 epochs, five folds, and seed 42. Eleven candidates were evaluated. The constant $10^{-3}$ candidate produced the lowest validation error, while every candidate that reached $10^{-1}$ diverged.
+The C++ driver evaluated the eleven candidates listed in Table~\ref{tab:04_learning_rate_results}. The fixed model was the previously selected topology with dense widths $(1024,512,256,128)$, a $5\times5$ convolution producing eight channels, LeakyReLU with $\alpha=0.05$, Adam with $\beta_1=0.9$, $\beta_2=0.999$, and $\varepsilon=10^{-8}$, SIMM physics weight $0.25$, zero L1 and L2 weights, global batch size 64, 100 epochs, element-wise gradient clipping at 1, and seed 42. The five folds were generated once with shuffled \texttt{RandomKFold}; the validation sets contained 343, 343, 343, 342, and 342 samples. Normalization was fitted on each fold's training subset and then applied to that fold's validation subset. Every candidate and fold constructed a fresh model and optimizer. Each fold processed 22 global batches per epoch, or 2200 optimizer steps, giving 121000 steps over the 55 candidate-fold fits. The diagnostic run recorded the training objective and effective rate at every completed epoch, while the physical validation MSE was checkpointed every ten epochs. Candidate selection used the sample-weighted physical-unit validation MSE, not the standardized SIMM objective, and the test file was not loaded during cross-validation.
 
 \begin{table}[h!]
     \centering
-    \begin{tabular}{lcc}
+    \scriptsize
+    \begin{tabularx}{\linewidth}{@{}lXrr@{}}
         \hline
-        Candidate & Mean validation MSE & Fold standard deviation \\
+        Candidate & Configuration & Mean validation MSE $\pm$ SD & Fold range \\
         \hline
-        \texttt{const\_1e-3} & 0.003609 & 0.001335 \\
-        \texttt{step\_s15\_1e-3} & 0.004005 & 0.000704 \\
-        \texttt{step\_s30\_1e-3} & 0.004072 & 0.000785 \\
-        \texttt{const\_1e-5} & 0.004419 & 0.000790 \\
-        \texttt{step\_s30\_1e-5} & 0.005034 & 0.000901 \\
-        \texttt{step\_s15\_1e-5} & 0.005094 & 0.000905 \\
-        \texttt{const\_1e-1} & $2.13\times10^{17}$ & $3.12\times10^{17}$ \\
+        \texttt{const\_1e-3} & Constant, $\eta_0=10^{-3}$ & $0.003609\pm0.001335$ & $0.002092$ to $0.006094$ \\
+        \texttt{step\_s15\_1e-3} & Step, $S=15$, $\gamma=0.5$, $\eta_0=10^{-3}$ & $0.004005\pm0.000704$ & $0.002826$ to $0.004779$ \\
+        \texttt{step\_s30\_1e-3} & Step, $S=30$, $\gamma=0.1$, $\eta_0=10^{-3}$ & $0.004072\pm0.000785$ & $0.002865$ to $0.004955$ \\
+        \texttt{const\_1e-5} & Constant, $\eta_0=10^{-5}$ & $0.004419\pm0.000790$ & $0.002880$ to $0.005001$ \\
+        \texttt{step\_s30\_1e-5} & Step, $S=30$, $\gamma=0.1$, $\eta_0=10^{-5}$ & $0.005034\pm0.000901$ & $0.003434$ to $0.005786$ \\
+        \texttt{step\_s15\_1e-5} & Step, $S=15$, $\gamma=0.5$, $\eta_0=10^{-5}$ & $0.005094\pm0.000905$ & $0.003484$ to $0.005861$ \\
+        \texttt{cosine\_1e-1} & Cosine, $\eta_{\max}=10^{-1}$, $\eta_{\min}=10^{-5}$ & $5.577\e{8}\pm2.251\e{8}$ & $2.087\e{8}$ to $7.949\e{8}$ \\
+        \texttt{warmup\_cosine\_1e-1} & Warm-up and cosine, $\eta_{\mathrm{peak}}=10^{-1}$ & $9.047\e{8}\pm8.866\e{8}$ & $1.207\e{8}$ to $2.507\e{9}$ \\
+        \texttt{step\_s15\_1e-1} & Step, $S=15$, $\gamma=0.5$, $\eta_0=10^{-1}$ & $5.010\e{9}\pm2.956\e{9}$ & $1.530\e{9}$ to $9.316\e{9}$ \\
+        \texttt{step\_s30\_1e-1} & Step, $S=30$, $\gamma=0.1$, $\eta_0=10^{-1}$ & $9.449\e{9}\pm4.726\e{9}$ & $3.197\e{9}$ to $1.631\e{10}$ \\
+        \texttt{const\_1e-1} & Constant, $\eta_0=10^{-1}$ & $2.131\e{17}\pm3.116\e{17}$ & $1.843\e{16}$ to $8.313\e{17}$ \\
         \hline
-    \end{tabular}
-    \caption{Representative learning-rate candidates. The complete grid also contained four additional candidates that reached $10^{-1}$ and diverged.}
+    \end{tabularx}
+    \caption{Complete ranking of the eleven learning-rate candidates. Means and deviations are the sample-weighted physical validation MSE and its weighted population standard deviation over the five folds, as recorded in \texttt{cv\_summary.csv}; the final column gives the minimum and maximum fold scores.}
     \label{tab:04_learning_rate_results}
 \end{table}
 
-The selected constant rate $10^{-3}$ improved the mean validation MSE by approximately 18.3 percent relative to the constant $10^{-5}$ baseline. The step schedules starting at $10^{-3}$ were stable, but their early reductions prevented the parameters from continuing to move through the useful part of the loss surface within the 100-epoch budget. The schedules starting at $10^{-5}$ became even less effective after their reductions. In contrast, all five candidates involving a rate of $10^{-1}$ produced errors from approximately $2.09\times10^8$ to $8.31\times10^{17}$, depending on the schedule and fold. Even the five-epoch warm-up did not avoid the instability associated with the high peak rate. The data therefore support $10^{-3}$ as the lowest observed rate setting for this search, rather than a universal stability threshold. Its final refit produced an untouched-test MSE of $0.003254$.
+The complete ranking is shown in Figure~\ref{fig:04_learning_rate_ranking}. The constant $10^{-3}$ candidate is the cross-validation winner with a mean physical validation MSE of $0.003608841294$ and a weighted population standard deviation of $0.001334569865$. Its five fold values, in zero-based fold order, are $0.002091737$, $0.003001337$, $0.003480483$, $0.006093833$, and $0.003383404$. It is the best candidate in four of the five folds; the fourth fold is the visible high-error exception. Relative to the constant $10^{-5}$ baseline, the selected candidate reduces the weighted mean by approximately 18.3 percent. The nearest alternative is \texttt{step\_s15\_1e-3}, whose mean is $0.004005474214$; its lower dispersion does not compensate for the higher aggregate validation error under the stated selection rule. The step candidates beginning at $10^{-3}$ remain in the same low-error scale, but their final effective rates are $1.5625\times10^{-5}$ for $S=15$ and $10^{-6}$ for $S=30$. The results are consistent with the interpretation that these reductions leave less update magnitude late in the 100-epoch budget, but the experiment does not establish that mechanism causally. Starting at $10^{-5}$ and reducing further gives still smaller final rates, and both schedules perform worse than their constant baseline. Importantly, $10^{-5}$ is the lowest tested rate, so the selected $10^{-3}$ is the lowest observed validation-error setting, not the lowest rate or a universal stability threshold.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.98\linewidth]{Images/Chapter04/learning_rate/learning_rate_ranking.png}
+    \caption{Complete learning-rate schedule ranking. Points show the sample-weighted mean physical validation MSE and horizontal bars show the weighted population standard deviation over five folds. The horizontal axis is logarithmic; orange identifies the selected constant $10^{-3}$ candidate and red identifies candidates whose rates reach $10^{-1}$.}
+    \label{fig:04_learning_rate_ranking}
+\end{figure}
+
+The convergence histories in Figure~\ref{fig:04_learning_rate_history} separate the six candidates that remain in the low-error scale from the five candidates that reach $10^{-1}$. The weighted validation curves for the low-rate group remain close to one another and finish between approximately $0.0036$ and $0.0051$, whereas the high-rate group remains many orders of magnitude above them even when its schedule later decreases. This separation is not an artefact of comparing the training objective with the validation error: the plotted curves use the physical validation column from the diagnostic files, and the SIMM training objective is kept separate. The curves also show why the small difference between the three $10^{-3}$ candidates should be described as a selection within this fold plan and budget rather than as a universal ordering of all possible schedules.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.92\linewidth]{Images/Chapter04/learning_rate/learning_rate_history.png}
+    \caption{Sample-weighted validation histories at the ten-epoch checkpoints recorded for cross-validation. The upper panel contains the six candidates whose rates remain in the low-error scale, while the lower panel contains the five candidates that reach $10^{-1}$. Both vertical axes are logarithmic and show physical-unit MSE.}
+    \label{fig:04_learning_rate_history}
+\end{figure}
+
+Figure~\ref{fig:04_learning_rate_schedules} shows the effective rates returned by the scheduler, rather than only the base rate stored in the optimizer recipe. The constant candidate stays at $10^{-3}$, while the $S=15$ and $S=30$ schedules reduce this value at the implementation-specific epoch boundaries given above. The cosine curve begins at $10^{-1}$ and reaches $10^{-5}$ only at the final epoch. The warm-up curve begins at $10^{-5}$, reaches $0.020008$ at completed epoch 2, reaches $0.1$ at completed epoch 6, and then follows the cosine branch. This distinction matters for interpreting the warm-up result: the candidate spends most of the early optimization pass approaching the same high peak that is unstable in the other $10^{-1}$ candidates.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.92\linewidth]{Images/Chapter04/learning_rate/learning_rate_schedules.png}
+    \caption{Effective learning rates from \texttt{epoch\_metrics.csv} for zero-based fold 0, plotted against completed epoch. The scheduler settings are deterministic and identical across folds. The logarithmic vertical axis makes the constant, step, cosine, and warm-up branches comparable.}
+    \label{fig:04_learning_rate_schedules}
+\end{figure}
+
+The high-rate candidates should be described as numerically unstable rather than as failed jobs. All 55 candidate-fold fits completed with finite diagnostic values and were included in the official ranking, but the five candidates that reach $10^{-1}$ have validation means from $5.577\times10^8$ to $2.131\times10^{17}$. The diagnostic evidence explains this scale separation. For the selected constant $10^{-3}$ candidate, the maximum gradient norm over all folds, layers, and epochs, using \texttt{parameter\_scope=all}, was $182.5645$ at zero-based fold 2, epoch 1, and layer 0. The corresponding maximum over the final ten epochs was $3.1207$, while the epoch-100 maximum was $1.9627$. In the weight-only update rows, the largest actual mean update ratio was $0.0170216$ at fold 2, epoch 1, and layer 4; the largest epoch-100 value was $0.0022612$, and the largest value over the final ten epochs was $0.0024313$. No near-zero denominator event occurred in the weight-scope rows used for this comparison. These are actual parameter movements, not the learning rate multiplied by a raw gradient. The gradient values are measured after synchronized aggregation and before the optimizer update, whereas the update ratios use the before and after parameter values.
+
+The corresponding high-rate values are qualitatively different. The constant $10^{-1}$ candidate reaches a maximum gradient norm of $2.1467\times10^{20}$ at zero-based fold 1, epoch 100, and layer 12. The cosine candidate reaches $2.8501\times10^{19}$ at fold 3, epoch 7, and the warm-up candidate reaches $3.2478\times10^{19}$ at fold 3, epoch 24. For the warm-up candidate in fold 0, the training objective increases from $0.3985$ at completed epoch 1 to $3.7331\times10^8$ at epoch 2, when the effective rate is $0.020008$, and to $3.4329\times10^{14}$ at epoch 6, when the peak rate is $0.1$. The later reductions in the cosine and step schedules reduce the error scale relative to constant $10^{-1}$, but do not return the runs to the low-error regime within 100 epochs. These observations support an instability interpretation at the tested high-rate scale; they do not provide a theoretical Lipschitz bound or a general threshold for this architecture.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.98\linewidth]{Images/Chapter04/learning_rate/learning_rate_diagnostics.png}
+    \caption{Learning-rate diagnostics from the complete five-fold run. The upper panels show the maximum over folds, layers, and epochs of \texttt{maximum\_norm} with \texttt{parameter\_scope=all} and of the actual \texttt{mean\_ratio} with \texttt{parameter\_scope=weights}. The lower-left panel shows the selected candidate's fold-averaged RMS gradient by stable model layer at epochs 1 and 100. The lower-right panel shows the selected candidate's pooled post-activation population variance at epochs 1, 50, and 100. All vertical axes are logarithmic.}
+    \label{fig:04_learning_rate_diagnostics}
+\end{figure}
+
+The lower panels of Figure~\ref{fig:04_learning_rate_diagnostics} provide a further check on the selected run. For \texttt{const\_1e-3}, the fold-averaged RMS gradient at epoch 1 is between approximately 19.8 and 37.2 over the stable trainable layer indices, and at epoch 100 it is between approximately $0.0722$ and $0.7793$. The pooled post-activation variance at layer 5 decreases from $1.0967$ at epoch 1 to $0.1053$ at epoch 100, while the corresponding values at layers 7, 9, and 11 decrease from $1.7903$, $1.7415$, and $1.0981$ to $0.1597$, $0.1513$, and $0.0969$. The reductions occur together with decreasing validation error and gradient magnitude, so they are consistent with ordinary convergence and signal attenuation, but they do not by themselves establish harmful vanishing gradients. The diagnostic panels therefore support the performance ranking without replacing physical validation MSE as the selection criterion.
+
+After cross-validation, the tuning driver refitted \texttt{const\_1e-3} on all 1713 training samples. The final metadata records the same large topology, batch size 64, physics weight $0.25$, and 100-epoch budget, and reports a physical MSE of $0.003253844668$ at completed epoch 100. This value agrees with the $0.00325384$ value in \texttt{summary.txt}, but its provenance requires qualification. The final run passes \texttt{dataset/cnn\_dataset\_test.npz} as the validation data set and sets \texttt{validation\_interval=1}, so the test MSE is written after every epoch rather than evaluated strictly once. Candidate selection was completed before this refit and no claim of early stopping from the test curve is made, but the recorded value should still be described as a post-selection refit estimate, not as a strictly untouched one-time test estimate.
+
+The distinction from ordinary production training is also important. The \textbf{cross-validation winner} is the constant $10^{-3}$ candidate, with physical validation MSE $0.003608841294\pm0.001334569865$ on the fixed large-topology experiment. The \textbf{production configuration} constructed by the ordinary training path in \texttt{CNN/main.cpp} uses the same source-default Adam rate $10^{-3}$ and no attached scheduler, but it uses the smaller dense head $(128,64,1)$, physics weight $0.10$, global batch size 257, nominal epoch count 200, gradient clipping at 1, seed 42, and early stopping on a 10 percent holdout. Thus, the selected learning-rate magnitude agrees with the ordinary source default, while the topology, loss weight, batch size, and stopping policy differ. The $0.00325384$ refit value is consequently not a test score for the ordinary production model, and the learning-rate experiment does not validate the complete production recipe at once.
+
+To conclude, within the fixed large topology, loss, fold plan, seed, and 100-epoch budget, the data support the constant $10^{-3}$ schedule as the lowest observed validation-error configuration. The constant $10^{-5}$ baseline and its decayed variants are consistent with smaller rates underusing this budget, while the $10^{-1}$ group reaches a numerically unstable error scale even when cosine decay or a five-epoch warm-up is added. The result is a configuration choice for this experiment, not a universal stability limit. A repeated-seed study and an evaluation of the complete ordinary production recipe would be required to determine whether the small separation among the low-rate candidates persists beyond the recorded sample-level folds.
 
 \newpage
 \subsection{Final production training}
 \label{sec:04_final_training}
 
-The final ordinary training was launched through the production path rather than through one of the search drivers. This distinction is necessary because a tuning winner and the configuration used by the production executable are not automatically identical. In the current \texttt{CNN/main.cpp}, the ordinary model is built with a $5\times5$ convolution having eight output channels and stride five, followed by LeakyReLU with $\alpha=0.05$, flattening, scalar concatenation, and the dense head $(128,64,1)$. The production source defaults use Adam with learning rate $10^{-3}$, physics weight $0.10$, no dropout, no L1 or L2 penalty, gradient clipping at 1, batch size 257, and seed 42. The final SLURM command used 64 MPI ranks and increased the epoch budget to 2500. Early stopping used a validation fraction of 0.10, minimum epoch and patience settings of 20, an overfit ratio of 0.15, and restoration of the best checkpoint.
+The final ordinary training was developed through a sequence of training trials rather than launched as a single fixed experiment. The first trial used a global batch size of 64 with the original range-based batching. Since the ordinary training split contains 1542 samples, this produced 24 batches of 64 samples and a final batch of only 6 samples. With 64 MPI ranks, that last update activated only six ranks, even though the gradients were still combined using the actual sample counts. The behaviour was changed first by balancing the batches, while keeping the requested size equal to 64, and then by increasing the global batch size to 257. The current implementation treats the configured size as an upper bound. If $n$ is the number of training samples and $B$ is this bound, it creates
+\begin{equation}
+    K=\left\lceil\frac{n}{B}\right\rceil,
+    \qquad q=\left\lfloor\frac{n}{K}\right\rfloor,
+    \qquad r=n-Kq,
+    \qquad
+    n_j=\begin{cases}
+        q+1, & j<r,\\
+        q, & j\geq r,
+    \end{cases}
+    \quad j=0,\ldots,K-1,
+    \label{eq:04_final_batch_partition}
+\end{equation}
+where $n_j$ is the size of global batch $j$. Equation~\eqref{eq:04_final_batch_partition} gives 17 batches of 62 and 8 batches of 61 for the balanced 64-sample experiment, while $B=257$ produces six exact batches of 257. The former change removed the small tail without changing the 25 optimizer steps per epoch; the latter also reduced the number of updates per epoch to six. This distinction is important because the global batch size is not multiplied by the MPI rank count, and because the gradient synchronization in \texttt{CNN/src/model/CNNModel.cpp} weights each local gradient by its local sample count before dividing by the global count.
 
-The selected epoch in the recorded final run was 1505. At that checkpoint, the physical training MSE was $0.0004932$ and the validation MSE was $0.0005995$. The independent test evaluation over 429 samples gave $0.0006727$. The test error was $0.0005468$ over the 363 samples with $|\alpha|\leq10^\circ$ and $0.0013653$ over the 66 samples outside that range. The higher error at high angle is consistent with the fact that the SIMM relation is masked there, although the error split alone does not establish the cause. The diagnostic files for this run contained finite metrics, and the training history continued beyond the selected epoch before the best checkpoint was restored.
+The main recorded outcomes of this sequence are collected in Table~\ref{tab:04_final_training_trials}. All errors in the table are physical-unit MSE values. ``Completed'' is the number of epochs present in the diagnostic history, while ``selected'' is the epoch whose weights were retained for the reported metrics. The first four rows belong to the seed-42 development sequence. The three 20/20 rows are the comparable-step reruns with different seeds, and the last two rows show the longer seed-42 runs that led to the final production result.
 
-The final run should not be compared numerically with every cross-validation value without qualification. The tuning experiments use fold-specific normalization and approximately 80 percent of the training samples in each fold, whereas ordinary training uses a 90/10 split and the final refit uses the complete training set before evaluating the test data. In addition, the production source still contains the smaller $(128,64)$ head, while the topology search selected the larger head. The final numbers are therefore the performance of the recorded production configuration, not a test score for the large topology winner. They are nevertheless the appropriate values for describing the executable that was finally used.
+\begin{table}[h!]
+    \centering
+    \scriptsize
+    \setlength{\tabcolsep}{3pt}
+    \begin{tabularx}{\linewidth}{@{}Xrrrrrr@{}}
+        \hline
+        Stage & $B$ & Completed & Selected & Train MSE & Val. MSE & Test MSE \\
+        \hline
+        Initial tail, \texttt{trial 1} & 64 & 200 & 195 & 0.002202 & 0.001889 & 0.001824 \\
+        Balanced, \texttt{trial 2} & 64 & 200 & 190 & 0.002408 & 0.001953 & 0.002030 \\
+        Exact batches, \texttt{trial 3} & 257 & 200 & 198 & 0.003572 & 0.003105 & 0.002636 \\
+        Old stopping rule, \texttt{trial 4} & 257 & 527 & 470 & 0.002064 & 0.002011 & 0.001924 \\
+        20/20 policy, seed 0 & 257 & 834 & 743 & 0.001673 & 0.001499 & 0.001542 \\
+        20/20 policy, seed 1 & 257 & 210 & 190 & 0.003172 & 0.005345 & 0.002700 \\
+        20/20 policy, seed 42 & 257 & 834 & 831 & 0.001321 & 0.001325 & 0.001377 \\
+        \texttt{trial 5}, seed 42 & 257 & 1200 & 1191 & 0.000719 & 0.000850 & 0.000754 \\
+        Final production, seed 42 & 257 & 1525 & 1505 & 0.000493 & 0.000599 & 0.000673 \\
+        \hline
+    \end{tabularx}
+    \caption{Chronology of the ordinary-training trials. Values are read from the corresponding \texttt{final\_metrics.csv} files under \texttt{results/ordinary-training}; the batch sizes and completed epochs are checked against each run's metadata and diagnostic history. The old stopping-rule row predates the 20/20 policy.}
+    \label{tab:04_final_training_trials}
+\end{table}
+
+The initial run showed recurrent physical-MSE excursions that affected training and validation together. In \texttt{slurm-55367279\_trial\_1}, the history contains the reported spike at epoch 93, where training and validation MSE reached $0.0159286$ and $0.0164889$, respectively. This pattern is consistent with a noisy update affecting the model as a whole rather than with validation-only overfitting. After the batches were balanced, the large three-to-four-fold excursions disappeared and the largest non-initial training MSE fell to approximately $0.00819$, while the largest final gradient and update ratio also decreased. The final test MSE nevertheless changed from $0.0018235$ to $0.0020304$. Consequently, balancing improved the numerical behaviour without improving the final accuracy for this pair of runs; stability and accuracy must be considered separately.
+
+The move to $B=257$ removed the tail completely because $1542=6\times257$. However, a 200-epoch run then contained only $1200$ Adam updates, compared with $5000$ updates for the 64-sample runs. Its final test MSE of $0.0026358$ is therefore not a clean measurement of batch size alone. The larger-batch trial was subsequently extended to 834 epochs, giving $834\times6=5004$ updates, which is comparable with the original 5000-update budget. The seed-42 run with the earlier stopping rule reached epoch 527 and retained epoch 470, with a test MSE of $0.0019236$. This comparison motivated changing the stopping policy rather than treating the first longer run as the final answer.
+
+The overfitting check is based on the physical training and validation MSE evaluated after the optimizer updates at every epoch. An epoch satisfies the gap condition in Equation~\eqref{eq:04_final_overfit_rule} when
+\begin{equation}
+    \mathrm{MSE}_{\mathrm{val},e}
+    > (1+\rho)\,\mathrm{MSE}_{\mathrm{train},e},
+    \qquad \rho=0.15,
+    \label{eq:04_final_overfit_rule}
+\end{equation}
+but this condition is not sufficient by itself in the current implementation. The earlier rule stopped at the first qualifying epoch. With the 834-epoch configuration, that rule stopped the seed-0 and seed-1 reruns at epochs 2 and 4, after the initial optimizer transient, and their test MSE values were $0.0170249$ and $0.0132663$. The seed-1 run illustrates the role of checkpoint restoration: training reached epoch 4, but its best validation checkpoint was epoch 1. These results indicate that a single noisy excursion can be mistaken for sustained overfitting.
+
+The revised policy retains the same $15\%$ ratio but requires at least 20 completed epochs and 20 consecutive qualifying epochs. A new validation minimum resets the streak, as does a return below the ratio, and the model stores a parameter snapshot whenever the validation MSE improves. Once the streak reaches 20, \texttt{Trainer} stops and broadcasts the best stored parameters before recomputing the final training and validation metrics. This policy was tested with the same six-batch, 834-epoch configuration for seeds 0, 1, and 42. Seed 0 completed the budget and selected epoch 743, seed 1 stopped at epoch 210 after the epochs 191--210 formed the qualifying streak and restored epoch 190, and seed 42 completed the budget and selected epoch 831. The corresponding test MSE values were $0.0015422$, $0.0026997$, and $0.0013773$. Their mean decreased from $0.0107383$ with the old rule to $0.0018730$ with the 20/20 policy, an $82.56\%$ reduction. The remaining seed dependence shows that the policy addresses premature termination and checkpoint choice, but does not remove all variation caused by the holdout split and initialization.
+
+The final production run used the ordinary path in \texttt{CNN/main.cpp}, not the large topology selected in the separate topology search. It used a $5\times5$ convolution with eight channels and stride five, LeakyReLU with $\alpha=0.05$, scalar concatenation, and the dense head $(128,64,1)$. The command recorded in \texttt{training.sh} used Adam with learning rate $10^{-3}$, physics weight $0.10$, no dropout or L1 or L2 penalty, element-wise gradient clipping at 1, global batch size 257, seed 42, 64 MPI ranks, and a maximum of 2500 epochs. The ordinary split contains 1542 training samples and 171 validation samples; the 429-sample test set is loaded only after training and checkpoint restoration.
+
+The final history begins with the same finite optimizer transient seen in the larger-batch trials: training and validation MSE were $0.0549925$ and $0.0571277$ at epoch 1, and $0.0593714$ and $0.0644453$ at epoch 2. They fell to $0.0187334$ and $0.0188926$ at epoch 3 and then continued downward on a much longer update budget. At epoch 1505, the retained checkpoint had training MSE $0.000493208$ and validation MSE $0.000599464$. Epochs 1506--1525 all satisfied the gap condition without improving the validation minimum, so the run stopped at epoch 1525 and restored epoch 1505. Figure~\ref{fig:04_final_training_history} shows the complete physical-MSE history in both linear and logarithmic y-axis views and distinguishes these two epochs. The SIMM training objective is not plotted because it is a different standardized quantity from the physical MSE.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.95\linewidth]{Images/Chapter04/final_training/final_training_history.png}
+    \caption{Physical training and validation MSE for the final production run. The left panel uses a linear y-axis and the right panel uses a logarithmic y-axis; both contain all 1525 completed epochs. The dashed line marks the selected epoch 1505 and the dotted line marks the stopping epoch 1525. Both panels use physical-unit MSE, while the standardized SIMM objective is not shown.}
+    \label{fig:04_final_training_history}
+\end{figure}
+
+The restored production model was then evaluated on the test set, with the result separated according to the same $10^\circ$ angle threshold used by the SIMM mask. The implementation assigns a sample to the high-angle group only when $|\alpha|>10^\circ$, so samples exactly at $\pm10^\circ$ remain in the low-angle group. Table~\ref{tab:04_final_angle_results} reports the complete split. The high-angle MSE was $0.000818557$ larger than the low-angle MSE and was $2.497$ times as large. In RMSE terms, taking the square root of the two stored MSE values gives $0.02338$ and $0.03695$ for the low- and high-angle groups. The high-angle samples are only $66/429=15.38\%$ of the test set, but they account for approximately $31.22\%$ of the total squared error. Their larger error is consistent with the SIMM relation being inactive outside the low-angle regime, although this split alone does not establish that the mask is the cause; the high-angle group also contains fewer samples and a broader target range.
+
+\begin{table}[h!]
+    \centering
+    \scriptsize
+    \setlength{\tabcolsep}{4pt}
+    \begin{tabular}{lrrrr}
+        \hline
+        Test subset & Samples & Physical MSE & Difference vs. low & High / low MSE \\
+        \hline
+        Overall & 429 & 0.000672714 & -- & -- \\
+        $|\alpha|\leq10^\circ$ & 363 & 0.000546783 & -- & -- \\
+        $|\alpha|>10^\circ$ & 66 & 0.001365339 & +0.000818557 & 2.497 \\
+        \hline
+    \end{tabular}
+    \caption{Angle-of-attack split of the final production test metrics read from \texttt{test\_metrics.csv}. The high-angle difference and ratio are computed from the two stored subset MSE values; no per-sample residual spread was recorded.}
+    \label{tab:04_final_angle_results}
+\end{table}
+
+Figure~\ref{fig:04_final_test_mse_by_angle} gives the same comparison graphically and includes the overall test MSE as a reference. It is a comparison of two physically defined test subsets, not a comparison of two separately trained models. The test set was not used to select the stopping epoch, and the figure therefore describes the aggregate subset error of the one restored production model rather than a new tuning criterion.
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.78\linewidth]{Images/Chapter04/final_training/test_mse_by_angle.png}
+    \caption{Untouched-test physical MSE for the restored seed-42 production model, split into the low-angle ($|\alpha|\leq10^\circ$) and high-angle ($|\alpha|>10^\circ$) regimes. The bars are based on 363 and 66 samples, respectively, and the dashed line marks the overall MSE over all 429 test samples.}
+    \label{fig:04_final_test_mse_by_angle}
+\end{figure}
+
+The final values should not be compared with every cross-validation value without qualification. The tuning experiments use fold-specific normalization and approximately 80 percent of the 1713 training samples in each fold, whereas ordinary training uses a 90/10 split with 1542 training samples and 171 validation samples. The production source also retains the smaller $(128,64)$ head, while the topology search selected the larger head. The final numbers are therefore the performance of the recorded production configuration, not a test score for the large topology winner. They are nevertheless the appropriate values for describing the executable that was finally used.
 \newpage
 \subsection{Conclusions}
 \label{sec:04_tuning_conclusions}
@@ -552,4 +804,4 @@ The tuning campaign shows that the largest improvement among the structural choi
 
 The regularization results were different from what might be expected for a large network. Both dropout and weight penalties increased the recorded validation error, and the physics-weight sweep also selected the zero-weight reference. The dropout and physics-weight values must be read as historical results from the earlier $(128,64)$ head, because those searches were completed before their C++ drivers were corrected to construct the selected large topology. The mismatch is explicitly documented beside the result trees, and no corrected numerical claim is made without a new run. For the large topology, the L1 and L2 study likewise selected zero penalty, indicating that at the tested learning rate and 100-epoch budget the reduction in the training and weight norms did not compensate for the loss in fitting accuracy.
 
-The final ordinary training produced a substantially lower physical test MSE of $0.0006727$ after refitting the production model and restoring its best checkpoint. This value reflects the full training procedure, the longer 2500-epoch budget, the 90/10 ordinary split, and the production defaults in \texttt{CNN/main.cpp}; it is not an unbiased test estimate for every tuning candidate. Overall, the experiments demonstrate that the accuracy of the surrogate depends on a coordinated choice of topology, optimizer, activation, and learning rate rather than on adding regularization indiscriminately. They also show why numerical diagnostics and explicit provenance are necessary: a low validation value is meaningful only when the topology, split, metric, and training configuration that produced it are stated alongside the result.
+The final ordinary training produced a substantially lower physical test MSE of $0.0006727$ after training the production model and restoring its best checkpoint. The high-angle test subset remained more difficult, with an MSE $2.497$ times the low-angle value, although it represented only 66 of the 429 test samples. The final result reflects the full training procedure, the longer 2500-epoch budget, the 90/10 ordinary split, and the production defaults in \texttt{CNN/main.cpp}; it is not an unbiased test estimate for every tuning candidate. Overall, the experiments demonstrate that the accuracy of the surrogate depends on a coordinated choice of topology, optimizer, activation, learning rate, batch construction, and stopping policy rather than on adding regularization indiscriminately. They also show why numerical diagnostics and explicit provenance are necessary: a low validation value is meaningful only when the topology, split, metric, and training configuration that produced it are stated alongside the result.
