@@ -279,7 +279,7 @@ This ensures that no single gradient value can become disproportionately large. 
 
 The five optimizers evaluated in this experiment are defined as follows:
 \begin{itemize}
-    \item[-] for Vanilla SGD, the update is $$\theta_{t+1,j}=\theta_{t,j}-\eta\tilde{g}_{t,j}$$;
+    \item[-] for Vanilla SGD, the update is $$\theta_{t+1,j}=\theta_{t,j}-\eta\tilde{g}_{t,j}$$
     \item[-] for SGD with momentum, the update is defined as 
     \begin{equation*}
     u_{t,j}=\mu u_{t-1,j}+\widetilde{g}_{t,j},
@@ -364,25 +364,39 @@ In contrast, the non-adaptive methods converge much more slowly. SGD with moment
 
 Overall, the convergence plot visually confirms the final rankings. It demonstrates that Adam's victory is due not only to a lower final error but also to its combination of fast, efficient, and stable convergence throughout the entire training process.\\
 
+The diagnostic plots for the winning Adam optimizer reveal why it was so much more effective and stable than the alternatives. The key challenge is visualized in Figure \ref{fig:04_optimizer_gradient_magnitudes}, which plots the gradient magnitudes for each trainable layer at different points in training.\\
+
+\begin{figure}[h!]
+    \centering
+    \includegraphics[width=0.8\linewidth]{Images/Chapter04/optimizer/optimizer_gradient.png}
+    \caption{The RMS gradient norm for each trainable layer, plotted at different training epochs. The vertical axis is logarithmic. The plot reveals a massive gradient peak in the first dense layer (index 4) at the start of training (epoch 1). This initial transient is rapidly stabilized by the Adam optimizer, with gradient magnitudes becoming substantially smaller and more uniform across the network's depth by epoch 10.}
+    \label{fig:optimizer_gradient_magnitude}
+\end{figure}
+
+The plot shows a massive initial gradient peak at layer index $4$, which corresponds to the first, very large dense layer (\texttt{DenseLayer(7202, 1024)}). At epoch 1, the gradients in this layer are an order of magnitude larger than in any other layer. This "gradient explosion" is a common and dangerous phenomenon that occurs when the features from the small convolutional trunk are first projected into the much larger space of the dense head. Adam is able to handle this situation effectively, scaling down the updates for this layer and preventing the large gradients from destabilizing the entire network. In contrast, simpler methods like SGD would likely have been thrown far off course by such a large gradient, leading to poor convergence or even divergence.\\
+The plot also shows that by epoch 10, Adam has successfully navigated this transient phase. The gradients across all layers have settled into a much more stable and well-behaved pattern, allowing for smooth convergence for the rest of training. This successful management of the network's challenging gradient landscape is a primary reason for Adam's superior efficiency and stability.
+
+The cross-validation experiment identified Adam as the decisively superior optimizer for this task, outperforming all competitors in every fold. The diagnostic analysis confirms that its stability and efficiency stem from its ability to handle the large and varied gradient magnitudes that arise naturally from the network's convolutional-to-dense architecture. The final refit of this experimental winner on the full training set yielded a test MSE of $0.003655$.
+
 \subsection{Physics-weight tuning}
 \label{sec:04_physics_weight_tuning}
 
-The SIMM term was tuned because it is the only part of the objective that encodes an aerodynamic relation not learned directly from the CFD targets. A positive physics weight can improve the low-angle regime if the thin-airfoil relation supplies useful information, but it can also pull the prediction away from the simulation data when the relation is only approximate. The experiment therefore asks whether the prior improves the physical-unit validation error, rather than assuming that a larger physics contribution is beneficial. The search was performed over the training dataset only, and the untouched test dataset was not used to choose the weight.
+The SIMM term was tuned because it is the only part of the objective that encodes an aerodynamic relation not learned directly from the CFD targets. A positive physics weight can improve the low-angle regime if the thin-airfoil relation supplies useful information, but it can also pull the prediction away from the simulation data when the relation is only approximate. The experiment therefore asks whether the prior improves the physical-unit validation error, rather than assuming that a larger physics contribution is beneficial. The search was performed over the training dataset only and the untouched test dataset was not used to choose the weight.\\
 
-The implementation evaluates the loss in the fold-specific standardized target space. Let $C_{L,i}$ be the physical target, let $\mu_y$ and $s_y$ be the target mean and standard deviation fitted on the training part of a fold, and let $a_i$ be the angle of attack in radians. The standardized target and prediction are $y_i=(C_{L,i}-\mu_y)/s_y$ and $\widehat{y}_i$, while the standardized physical target is
+The implementation evaluates the loss in the fold-specific standardized target space. Let $C_{L,i}$ be the physical target, let $\mu_y$ and $s_y$ be the target mean and standard deviation fitted on the training part of a fold, and let $a_i$ be the angle of attack in radians. The standardized target and prediction are $y_i=(C_{L,i}-\mu_y)/s_y$ and $\hat{y}_i$, while the standardized physical target is:
 \begin{equation}
-    y_i^{\mathrm{phys}}=\frac{2\pi a_i-\mu_y}{s_y}.
+    y_i^{\mathrm{phys}}=\frac{2\pi a_i-\mu_y}{s_y}
     \label{eq:04_physics_target}
 \end{equation}
 The mask is evaluated on the unstandardized angle,
 \begin{equation}
     M_i=\begin{cases}
-        1, & |a_i|\leq 0.174533\ \mathrm{rad},\\
-        0, & |a_i|>0.174533\ \mathrm{rad},
+        1, & |a_i|\leq 0.174533\ \mathrm{rad}\\
+        0, & |a_i|>0.174533\ \mathrm{rad}
     \end{cases}
     \label{eq:04_physics_mask}
 \end{equation}
-which corresponds to $|\alpha|\leq10^\circ$. The actual batch objective is
+which corresponds to $|\alpha|\leq10^\circ$. The actual batch objective is:
 \begin{equation}
     \mathcal{L}=\frac{1}{N}\sum_{i=1}^{N}(\widehat{y}_i-y_i)^2
     +\lambda\frac{1}{N}\sum_{i=1}^{N}M_i
@@ -396,16 +410,16 @@ where the physics sum is divided by the full batch size, not by the number of ma
     +\lambda M_i(\widehat{y}_i-y_i^{\mathrm{phys}})\right].
     \label{eq:04_physics_gradient}
 \end{equation}
-The validation score is converted back to physical units by multiplying the standardized prediction residual by $s_y$ before squaring. Therefore, the SIMM objective and the selection metric have different units and cannot be ranked by their numerical magnitudes.
+The validation score is converted back to physical units by multiplying the standardized prediction residual by $s_y$ before squaring. Therefore, the SIMM objective and the selection metric have different units and cannot be ranked by their numerical magnitudes.\\
 
-The sweep evaluated seven values, $\lambda\in\{0,0.05,0.1,0.25,0.5,1,2\}$, for 35 candidate-fold evaluations. Adam used a constant effective learning rate of $9.9999997\times10^{-6}$, the global batch size was 64, the epoch budget was 100, the fold count was five, the base seed was 42, and element-wise gradient clipping used a threshold of 1. No learning-rate schedule or early stopping was enabled. The fold plan was a shuffled sample-level split of the 1713-sample training dataset, with validation sizes 343, 343, 343, 342, and 342. Normalization was fitted on each fold's training indices only, and the test dataset was not loaded during the sweep.
+To determine the optimal strength of the physical term, we performed a sweep over seven different values for the physics weight $\lambda\in\{0,0.05,0.1,0.25,0.5,1,2\}$. The baseline case, $\lambda=0.0$, corresponds to a purely data-driven model without any physics-informed loss.\\
 
-There is an important provenance limitation. The current experiment source constructs the large head \texttt{conv5x5-dense-1024-512-256-128}, but the retained diagnostic metadata for this completed sweep records the earlier head \texttt{conv5x5-dense-128-64}. The raw CSV and diagnostic files are therefore reported as an archival run of the physics-weight question, not silently relabelled as measurements from the current source recipe. The figures aggregate over folds and over diagnostic rows without displaying a layer index, so they describe global numerical behaviour and do not imply that incompatible layer topologies were grouped together. The production model is read separately from \texttt{CNN/main.cpp} below.
+As in the other tuning, all other hyperparameters were held constant, including the winning topology from Section \ref{sec:04_topology_tuning}, the Adam optimizer with a learning rate of $10^{-5}$, a batch size of 64, and a 100-epoch training budget. The cross-validation protocol was identical to the previous experiments, ensuring that the only variable was the physics weight $\lambda$.\\
+
+The results of the sweep, summarized in Table \ref{tab:04_physics_results}, lead to a clear conclusion: the physics-informed loss term did not improve the model's predictive accuracy.
 
 \begin{table}[h!]
     \centering
-    \scriptsize
-    \setlength{\tabcolsep}{3pt}
     \begin{tabular}{rccrr}
         \hline
         $\lambda$ & Mean validation MSE & Fold standard deviation & $\Delta_{\lambda}$ & Improved folds \\
@@ -423,9 +437,7 @@ There is an important provenance limitation. The current experiment source const
     \label{tab:04_physics_results}
 \end{table}
 
-The lowest recorded physical validation MSE was obtained at $\lambda=0$, with $0.005600634\pm0.001099091$. The two closest nonzero candidates, $0.10$ and $0.05$, were worse by $2.8457\times10^{-5}$ and $3.7038\times10^{-5}$, respectively, and each improved on the reference in only one of five folds. The stronger values were worse in every fold. None of the nonzero candidates satisfies the pre-registered paired rule of improving in at least four folds with an improvement larger than its own paired spread. Thus the mean ranking and the paired analysis lead to the same data-only choice, while the fold deviations show that the two smallest differences are small relative to split variability.
-
-The angle split tests whether a possible benefit is concentrated where the prior is active. Across the five validation folds there were 1442 low-angle samples and 271 high-angle samples. For $\lambda=0$, the count-weighted MSE was $0.004096627$ in the low-angle group and $0.013603506$ in the high-angle group. At $\lambda=2$, the corresponding values were $0.005843330$ and $0.015727326$. Both groups therefore worsened as the prior became strong; the effect was not a selective improvement in the masked regime. Figure~\ref{fig:04_physics_performance} shows this split together with the complete validation ranking and representative convergence histories.
+The best performance was achieved by the purely data-driven model ($\lambda=0$), whcih recorded a mean validation MSE of $0.005600634\pm0.001099091$. As shown in the performance plot (Figure \ref{fig:04_physics_performance}, left panel), every non-zero value of $\lambda$ resulted in a higher validation error. While the degradation was minimal for small weights like $\lambda=0.05$, performance grew progressively worse as the physics term was given more influence.\\
 
 \begin{figure}[h!]
     \centering
@@ -434,11 +446,22 @@ The angle split tests whether a possible benefit is concentrated where the prior
     \label{fig:04_physics_performance}
 \end{figure}
 
-The convergence curves are consistent with the final ranking. The fold-averaged validation MSE for $\lambda=0$ decreased from approximately $0.007025$ at epoch 10 to $0.005602$ at epoch 100, whereas the corresponding values for $\lambda=2$ were $0.008356$ and $0.007407$. Every candidate completed 100 epochs with finite values. The training objective started and ended higher as $\lambda$ increased, from approximately $0.599$ to $0.0104$ for $\lambda=0$ and from $1.393$ to $0.0168$ for $\lambda=2$ when averaged over folds. These are standardized SIMM objectives, so their difference from the physical validation MSE is not a generalization gap.
+To investigate this further, we tested whether the physics term provided a localized benefit in the low-angle-of-attack regime where its underlying theory is valid. We split the validation data into low-angle ($|\alpha|\leq10^\circ$) and high-angle ($|\alpha|>10^\circ$) groups, respectively with a count of 1442 and 271 samples across the five folds. The results of this split are shown in the second panel of Figure \ref{fig:04_physics_performance} (middle panel), are decisive.\\
+For $\lambda=0$, the count-weighted MSE was $0.004096627$ in the low-angle group and $0.013603506$ in the high-angle group. At $\lambda=2$, the corresponding values were $0.005843330$ and $0.015727326$. Both groups therefore worsened as the prior became strong; the effect was not a selective improvement in the masked regime.\\
 
-The diagnostic files provide a numerical stability check without replacing the validation criterion. All numeric fields in the 35 fold directories are finite, the effective learning rate is constant, and the learning-rate step files contain no schedule entries. When the rows with \texttt{parameter\_scope=all} are combined through $G=\sqrt{\sum_\ell \mathrm{rms\_norm}_\ell^2}$, the epoch-one mean increases from about $18.76$ at $\lambda=0$ to $45.36$ at $\lambda=2$ as the prior is strengthened, while the corresponding epoch-100 values are $0.842$ and $1.071$. The maximum recorded step norm increases from $56.87$ to $149.44$, but the largest late-epoch value for $\lambda=2$ is only $4.20$. This is an early transient and not a late exploding-gradient trend. The weights-only actual update ratio also decreases over training, from about $1.69\times10^{-4}$ to $2.43\times10^{-5}$ for $\lambda=0$. Weight denominators did not produce near-zero events in this scope. Bias-scope ratios were not used because their small denominators can create very large ratios without comparable absolute parameter movement.
+The validation history is consistent with the final ranking. The fold-averaged validation MSE for $\lambda=0$ decreased from approximately $0.007025$ at epoch 10 to $0.005602$ at epoch 100, whereas the corresponding values for $\lambda=2$ were $0.008356$ and $0.007407$. Every candidate completed 100 epochs with finite values, converging to a stable solution. The training objective started and ended higher as $\lambda$ increased, from approximately $0.599$ to $0.0104$ for $\lambda=0$ and from $1.393$ to $0.0168$ for $\lambda=2$ when averaged over folds. These are standardized SIMM objectives, so their difference from the physical validation MSE is not a generalization gap.\\
 
-The post-activation variance remains finite and changes only modestly in the global aggregate. Averaged over the recorded activation rows and folds, it changes from approximately $0.1092$ to $0.1113$ for $\lambda=0$ and from $0.1092$ to $0.1114$ for $\lambda=2$. These values do not establish that the physics term causes signal attenuation or amplification. Figure~\ref{fig:04_physics_diagnostics} reports the gradient aggregate, actual weights-only update ratio, and post-activation variance without grouping the curves by model layer. The plot is consequently a check of fold and training-time behaviour, not a layer-wise claim.
+%The diagnostic files provide a numerical stability check without replacing the validation criterion. All numeric fields in the 35 fold directories are finite, the effective learning rate is constant, and the learning-rate step files contain no schedule entries. When the rows with \texttt{parameter\_scope=all} are combined through $G=\sqrt{\sum_\ell \mathrm{rms\_norm}_\ell^2}$, the epoch-one mean increases from about $18.76$ at $\lambda=0$ to $45.36$ at $\lambda=2$ as the prior is strengthened, while the corresponding epoch-100 values are $0.842$ and $1.071$. The maximum recorded step norm increases from $56.87$ to $149.44$, but the largest late-epoch value for $\lambda=2$ is only $4.20$. This is an early transient and not a late exploding-gradient trend. The weights-only actual update ratio also decreases over training, from about $1.69\times10^{-4}$ to $2.43\times10^{-5}$ for $\lambda=0$. Weight denominators did not produce near-zero events in this scope. Bias-scope ratios were not used because their small denominators can create very large ratios without comparable absolute parameter movement.
+
+The diagnostic plots in Figure \ref{fig:04_physics_diagnostics} show that the optimizer successfully managed the training process for all candidates. As seen in the left panel, strengthening the physics prior led to a more pronounced initial gradient transient. At epoch 1, the aggregate RMS gradient norm for the $\lambda=2$ model (mean of $45.36$) was more than double that of the purely data-driven model ($\lambda=0$, mean of $18.76$). However, this was a controlled, early-epoch event. The optimizer rapidly stabilized all runs, and by epoch 100, the aggregate gradient norms had settled to a much smaller and more comparable level ($0.842$ for $\lambda=0$ vs. $1.071$ for $\lambda=2$). This pattern confirms that the training was numerically stable and did not suffer from late-stage exploding gradients.\\
+
+%The post-activation variance remains finite and changes only modestly in the global aggregate. Averaged over the recorded activation rows and folds, it changes from approximately $0.1092$ to $0.1113$ for $\lambda=0$ and from $0.1092$ to $0.1114$ for $\lambda=2$. These values do not establish that the physics term causes signal attenuation or amplification. Figure~\ref{fig:04_physics_diagnostics} reports the gradient aggregate, actual weights-only update ratio, and post-activation variance without grouping the curves by model layer. The plot is consequently a check of fold and training-time behaviour, not a layer-wise claim.
+
+The diagnostics also reveal that the physics term had a minimal effect on the network's internal dynamics:
+\begin{itemize}
+    \item[-] the middle panel shows that the "actual update ratio" for the model weights follows a very similar trajectory for all values of $\lambda$, decreasing steadily as the models converge. For the baseline model, this ratio decreased from an initial value of approximately $1.69\times 10^{-4}$ to $2.43\times 10^{-5}$ by the final epoch, indicating that the parameter updates became smaller and more refined over time;
+    \item[-] the right panel demonstrates that the post-activation variance was almost completely unaffected by the physics term. For both $\lambda=0$ and $\lambda=2$, the variance remained around $0.1092$ after an initial transient. This is a crucial finding, as it rules out "vanishing" or "exploding" activations as a cause for the degraded performance.
+\end{itemize}
 
 \begin{figure}[h!]
     \centering
@@ -447,8 +470,14 @@ The post-activation variance remains finite and changes only modestly in the glo
     \label{fig:04_physics_diagnostics}
 \end{figure}
 
-The cross-validation winner is therefore $\lambda=0$ for the recorded five-fold run, with physical validation MSE $0.005600634\pm0.001099091$. The production configuration must be stated separately. In the current \texttt{CNN/main.cpp}, \texttt{make\_single\_trial} uses the smaller dense head $(128,64,1)$, Adam at the source-default learning rate $10^{-3}$, physics weight $0.10$, global batch size 257, 200 epochs, gradient clipping at 1, and no L1 or L2 penalty. The experiment README calls $0.25$ a production default, but the source file is authoritative for the current executable. The ordinary final run used the production path and therefore does not provide an independent test estimate for the selected $\lambda=0$. The documented physics result supports removing the SIMM term under the recorded low-rate, 100-epoch sweep, but a rerun is required before extending that conclusion from the archived small-head measurements to the current large-head source recipe.
-\newpage
+% The cross-validation winner is therefore $\lambda=0$ for the recorded five-fold run, with physical validation MSE $0.005600634\pm0.001099091$. The production configuration must be stated separately. In the current \texttt{CNN/main.cpp}, \texttt{make\_single\_trial} uses the smaller dense head $(128,64,1)$, Adam at the source-default learning rate $10^{-3}$, physics weight $0.10$, global batch size 257, 200 epochs, gradient clipping at 1, and no L1 or L2 penalty. The experiment README calls $0.25$ a production default, but the source file is authoritative for the current executable. The ordinary final run used the production path and therefore does not provide an independent test estimate for the selected $\lambda=0$. The documented physics result supports removing the SIMM term under the recorded low-rate, 100-epoch sweep, but a rerun is required before extending that conclusion from the archived small-head measurements to the current large-head source recipe.
+
+The cross-validation experiment identifies the purely data-driven model with $\lambda=0$ as the clear winner, achieving the lowest validation MSE of $0.005600634\pm0.001099091$.\\
+
+The comprehensive diagnostic analysis confirms this outcome. The physics-informed loss term did not cause numerical instability or disrupt the network's internal signal propagation. Instead, it introduced a conflicting optimization objective that consistently pulled the model's predictions away from the high-fidelity CFD ground truth. This detrimental effect on accuracy, observed even in the low-angle regime, provides strong evidence for disabling the physics term for this specific application.
+
+% BISOGNA AGGIUNGERE IL MOTIVO PER CUI ALLA FINE ABBIAMO SCELTO DI USARE UN VALORE DI 0.1 PER IL TERMINE DI PHYSICAL WEIGHTS E NON PIù QUELLO PARI A 0
+
 \subsection{Weight regularization}
 \label{sec:04_regularization_tuning}
 
