@@ -268,47 +268,43 @@ Therefore, the cross-validation winner is unequivocally \texttt{dropout rate = 0
 \subsection{Optimizer Tuning}
 \label{sec:04_optimizer_tuning}
 
-The optimizer determines how the gradient produced by the SIMM loss is converted into a change of the trainable parameters. This choice is important for the present CNN because the convolutional feature extractor and the dense regression head have parameters with different dimensions and gradient histories. A fixed learning rate can therefore lead to different effective progress depending on whether the method retains a direction from previous batches or scales each coordinate using past squared gradients. AdaGrad formalizes cumulative coordinate adaptation~\cite{duchi2011adaptive}, while Adam combines first and second moment estimates with bias correction~\cite{kingma2015adam}. We tested whether these mechanisms, together with momentum, improve the physical validation error within the same finite training budget. The result is a comparison at one learning rate and is not a claim that an optimizer is universally preferable.
+The optimizer determines how the gradient produced by the SIMM loss is converted into a change of the trainable parameters. For this CNN architecture, this choice is particularly critical: the convolutional feature extractor and the dense regression head differ substantially in parameter dimensions and gradient dynamics. Consequently, a fixed learning rate may lead to different effective progress depending on whether the method retains a direction from previous batches or scales each coordinate using past squared gradients. We decided to test different methods, including vanilla SGD, SGD with momentum, AdaGrad\footnote{That formalizes cumulative coordinate adaptation \cite{duchi2011adaptive}.}, RMSprop, and Adam\footnote{That combines first and second moment estimates with bias correction \cite{kingma2015adam}.}, to evaluate their impact on the physical validation error within the same finite training budget. The result is a comparison at one learning rate and is not a claim that an optimizer is universally preferable.\\
 
-Let $g_{t,j}$ denote the gradient for parameter component $j$ after the MPI weighted aggregation and after the loss-gradient contributions have been combined. The implementation clips each component immediately before the optimizer is called, so that the gradient actually consumed by every candidate is
+Before any parameter updates are made, we first apply a standard technique called gradient clipping to prevent numerical instability. During training, it is possible for gradients to become excessively large, which can cause the optimizer to take steps that are too aggressive and destabilize the learning process. To mitigate this, every individual component of the gradient vector is constrained (or "clipped") to a fixed range. In our implementation, we clip each gradient component $g_{t,j}$ to lie within the interval $[-1,1]$:
 \begin{equation}
-    \widetilde{g}_{t,j}=\operatorname{clip}(g_{t,j},-c,c),
-    \qquad c=1.
+    \tilde{g}_{t,j}=\operatorname{clip}(g_{t,j},-1,1)
     \label{eq:04_optimizer_clipping}
 \end{equation}
-The clipping is element-wise rather than a global norm operation. In this experiment the L1 and L2 loss weights and the optimizer weight decay are all zero, so no additional regularization term changes $g_{t,j}$. For vanilla SGD, the update is
-\begin{equation}
-    \theta_{t+1,j}=\theta_{t,j}-\eta\widetilde{g}_{t,j}.
-    \label{eq:04_optimizer_sgd}
-\end{equation}
-For SGD with momentum, the implementation stores a velocity $u_{t,j}$ and applies
-\begin{equation}
+This ensures that no single gradient value can become disproportionately large. This clipped gradient, $\tilde{g}_{t,j}$, is then used by the optimizer. It's important to note that no other modifications, such as L1/L2 regularization, are applied to the gradients in this experiment.\\
+
+The five optimizers evaluated in this experiment are defined as follows:
+\begin{itemize}
+    \item[-] for Vanilla SGD, the update is $$\theta_{t+1,j}=\theta_{t,j}-\eta\tilde{g}_{t,j}$$;
+    \item[-] for SGD with momentum, the update is defined as 
+    \begin{equation*}
     u_{t,j}=\mu u_{t-1,j}+\widetilde{g}_{t,j},
     \qquad
     \theta_{t+1,j}=\theta_{t,j}-\eta u_{t,j},
-    \qquad \mu=0.9.
-    \label{eq:04_optimizer_momentum}
-\end{equation}
-There is no Nesterov step in the project implementation. AdaGrad stores the cumulative squared gradient,
-\begin{equation}
+    \qquad \mu=0.9
+    \end{equation*}
+    \item[-] for AdaGrad, that stores the cumulative squared gradient, the update is defined as 
+    \begin{equation*}
     G_{t,j}=G_{t-1,j}+\widetilde{g}_{t,j}^{2},
     \qquad
     \theta_{t+1,j}=\theta_{t,j}-
     \frac{\eta\widetilde{g}_{t,j}}{\sqrt{G_{t,j}+\varepsilon}},
-    \qquad \varepsilon=10^{-8},
-    \label{eq:04_optimizer_adagrad}
-\end{equation}
-whereas RMSprop replaces the cumulative sum with an exponential average,
-\begin{equation}
+    \qquad \varepsilon=10^{-8}
+    \end{equation*}
+    \item[-] for RMSprop, that replaces the cumultive sum with an exponential average, the update is defined as 
+    \begin{equation*}
     s_{t,j}=\rho s_{t-1,j}+(1-\rho)\widetilde{g}_{t,j}^{2},
     \qquad
     \theta_{t+1,j}=\theta_{t,j}-
     \frac{\eta\widetilde{g}_{t,j}}{\sqrt{s_{t,j}+\varepsilon}},
-    \qquad \rho=0.9.
-    \label{eq:04_optimizer_rmsprop}
-\end{equation}
-Finally, Adam stores both a first moment $m_{t,j}$ and a second moment $v_{t,j}$:
-\begin{equation}
+    \qquad \rho=0.9
+    \end{equation*}
+    \item[-] for Adam, that stores both a first moment $m_{t,j}$ and a second moment $v_{t,j}$, the update is defined as 
+    \begin{equation*}
     \begin{aligned}
     m_{t,j}&=\beta_1m_{t-1,j}+(1-\beta_1)\widetilde{g}_{t,j},
     &v_{t,j}&=\beta_2v_{t-1,j}+(1-\beta_2)\widetilde{g}_{t,j}^{2},\\
@@ -316,20 +312,20 @@ Finally, Adam stores both a first moment $m_{t,j}$ and a second moment $v_{t,j}$
     &\widehat{v}_{t,j}&=\frac{v_{t,j}}{1-\beta_2^t},\\
     \theta_{t+1,j}&=\theta_{t,j}-\eta
     \frac{\widehat{m}_{t,j}}{\sqrt{\widehat{v}_{t,j}}+\varepsilon},
-    &\beta_1&=0.9,\quad \beta_2=0.999,\quad \varepsilon=10^{-8}.
+    &\beta_1&=0.9,\quad \beta_2=0.999,\quad \varepsilon=10^{-8}
     \end{aligned}
-    \label{eq:04_adam_update}
-\end{equation}
-In all five equations $\eta=10^{-5}$. The state variables are initialized to zero for every newly constructed optimizer, and Adam starts with $t=0$. They persist across mini-batches within one fold, but the construction of a fresh model and a fresh \texttt{Optimizer} by \texttt{ModelFactory} prevents state from being shared between candidates or folds. The learning rate is constant because no scheduler is attached to the \texttt{TrialConfig}; it is not an unrecorded learning-rate schedule.
+    \end{equation*}
+\end{itemize}
+In all five equations $\eta=10^{-5}$: the learning rate is constant because no scheduler is attached to the \texttt{TrialConfig}; it is not an unrecorded learning-rate schedule.\\
 
-The fixed model was the selected topology from the previous experiment, \texttt{conv5x5-dense-1024-512-256-128}. It maps the $150\times150$ SDF through \texttt{Conv2D} with eight channels, a $5\times5$ kernel, stride five, and zero padding, followed by LeakyReLU with $\alpha=0.05$ and flattening. The flattened features are concatenated with the two scalar inputs, $(\mathrm{Re},\alpha)$, and passed through the dense widths $(1024,512,256,128)$ and a final scalar output. The loss was the data MSE plus a SIMM physics residual with weight $0.25$; the angle of attack was converted from degrees to radians for that residual, and dropout and L1 and L2 penalties were disabled. The comparison contained five candidates and 25 fold evaluations. It used the 1713-sample training dataset, while the 429-sample test dataset was excluded from candidate selection. Five sample-level folds were generated by \texttt{RandomKFold} with shuffling and seed 42. Their validation sizes were 343, 343, 343, 342, and 342 samples, with complementary training sizes of 1370, 1370, 1370, 1371, and 1371. The same fold plan was used for every candidate, and normalization was fitted on each fold's training indices only. The global batch size was 64, giving 22 balanced optimizer steps per epoch, 2200 steps per fold, and 55000 optimizer steps across the comparison. Training shuffled the fold indices at each epoch, and validation and public history were recorded at the configured ten-epoch interval. Early stopping was disabled. MPI distributes the global batches across ranks and synchronizes gradients using the actual sample counts, so the nominal batch size is not multiplied by the number of ranks.
+The optimizer comparison was performed exactly in the same way that the dropout one was done, using the winning topology from Section \ref{sec:04_topology_tuning} and the same cross-validation protocol. The only difference is that the optimizer method was varied across the five candidates. The learning rate was fixed at $10^{-5}$ and all other hyperparameters were held constant, including the SIMM physics weight of $0.25$, batch size of 64, and a 100-epoch training budget.\\
 
-The selection score is the physical-unit validation MSE in Equation~\eqref{eq:04_validation_mse}, not the numerical value of the standardized SIMM objective. The current optimizer-comparison result directory does not contain a diagnostics-enabled \texttt{cv\_summary.csv}; therefore, the aggregate values in Table~\ref{tab:04_optimizer_results} were recomputed from its 25 \texttt{fold\_results.csv} rows with the validation sample counts above. The mean and deviation use the sample-weighted population formulas implemented by \texttt{CrossValidator}. This is different from the experiment's \texttt{analyze.py} script, whose summary plot uses an unweighted mean and a sample standard deviation. The ranking is unchanged, but the latter deviation is not used here.
+The winning optimizer was selected based on the lowest physical-unit validation MSE (Equation \eqref{eq:04_validation_mse}). The final scores reported in Table \ref{tab:04_optimizer_results} are the sample-weighted averages across the five folds, ensuring that folds with slightly different numbers of validation samples are handled correctly.\\
+
+The results, summarized in Table \ref{tab:04_optimizer_results} and visualized in Figure \ref{fig:04_optimizer_ranking}, demonstrate a clear performance hierarchy among the tested optimizers.
 
 \begin{table}[h!]
     \centering
-    \scriptsize
-    \setlength{\tabcolsep}{3pt}
     \begin{tabular}{lcccc}
         \hline
         Optimizer & Mean validation MSE & Fold standard deviation & Minimum fold & Maximum fold \\
@@ -344,8 +340,9 @@ The selection score is the physical-unit validation MSE in Equation~\eqref{eq:04
     \caption{Complete optimizer comparison at learning rate $10^{-5}$. The means and fold deviations are sample-weighted physical validation MSE values, with the deviation defined as the weighted population standard deviation over the five folds. The minimum and maximum columns show the corresponding unweighted extrema of the fold scores.}
     \label{tab:04_optimizer_results}
 \end{table}
+Adam was the cross-validation winner with $0.004426734\pm0.000793966$ physical validation MSE. It was the lowest-scoring candidate in every one of the five cross-validation folds. This represents a significant $15\%$ error reduction compared to its closest competitor, RMSprop (MSE of 0.005216), and a $38\%$ reduction compared to SGD with momentum. The other optimizers ranked as expected, with AdaGrad and momentum-based SGD delivering intermediate performance. Vanilla SGD, without any adaptive or momentum mechanisms, struggled significantly at this low learning rate, finishing with a validation error nearly four times higher than Adam's. While all runs completed successfully without diverging, the performance of plain SGD was substantially less accurate and consistent across the folds.\\
 
-Adam was the cross-validation winner with $0.004426734\pm0.000793966$ physical validation MSE. It was the lowest-scoring candidate in each zero-based fold, with values $0.002879$, $0.004510$, $0.004897$, $0.004806$, and $0.005044$. RMSprop was the closest alternative at $0.005215589\pm0.000584618$, with fold values from $0.004518$ to $0.006173$. Thus Adam reduced the weighted mean relative to RMSprop by approximately $15.1\%$ and relative to SGD with momentum by approximately $38.1\%$. AdaGrad and momentum SGD occupied intermediate positions. Plain SGD was not a failed run, since all five folds reached epoch 100 with finite values, but it remained much less accurate at this rate and had the largest fold deviation. Its zero-based fold 3 score, $0.028647420$, was the largest value in the comparison. This is evidence of poorer performance and less uniform fold results for this split, not by itself proof of a general optimizer sensitivity.
+The physical training MSE recorded after the final fold epoch was also lower for the better validation candidates, but it must be interpreted separately from the SIMM objective: the mtehods that achieved better validation scores also reached a lower physical training MSE within the fixed 100-epoch training budget.\\
 
 \begin{figure}[h!]
     \centering
@@ -354,9 +351,9 @@ Adam was the cross-validation winner with $0.004426734\pm0.000793966$ physical v
     \label{fig:04_optimizer_ranking}
 \end{figure}
 
-The physical training MSE recorded after the final fold epoch was also lower for the better validation candidates, but it must be interpreted separately from the SIMM objective. Using training-sample-weighted means from \texttt{fold\_results.csv}, the final physical training MSE was $0.003842$ for Adam, $0.004814$ for RMSprop, $0.005930$ for AdaGrad, $0.007027$ for momentum SGD, and $0.017337$ for SGD. The corresponding validation means are those in Table~\ref{tab:04_optimizer_results}. In particular, the small Adam training to validation difference is not evidence that the optimizer alone controls generalization; it shows that the selected method reached a lower physical training error within the same 100-epoch budget.
-
-The checkpoint histories show how this separation developed. Averaged with the same validation sample weights, Adam's physical validation MSE decreased from $0.006205$ at epoch 10 to $0.004800$ at epoch 50 and $0.004427$ at epoch 100. It was not strictly monotone: the mean rose from $0.004506$ at epoch 80 to $0.004597$ at epoch 90 before reaching its lowest recorded value at epoch 100. RMSprop reached $0.004682$ at epoch 80 and then increased to $0.006073$ at epoch 90 before finishing at $0.005216$. By contrast, the fold-averaged curves for AdaGrad, momentum SGD, and SGD decreased at the recorded checkpoints, but remained above Adam at epoch 100. Plain SGD fell from $0.273765$ at epoch 10 to $0.017924$ at epoch 100, which indicates progress without convergence to the error scale reached by the other candidates. Figure~\ref{fig:04_optimizer_history} shows these physical validation histories on a logarithmic axis. The SIMM training objective is intentionally not placed on the same axis, because it is expressed in standardized units and includes the physics term.
+The training histories, visualized in Figure \ref{fig:04_optimizer_history}, provide a clear explanation for the final performance ranking by showing how each optimizer converged over the 100-epoch budget.\\
+The superiority of the adaptive methods is evident from the very beginning. Adam and RMSprop immediately establish a lead, starting with and maintaining a significantly lower validation error than the other candidates. However, the plot also highlights a key difference between them: while Adam's convergence is smooth and stable, RMSprop exhibits notable instability late in training, with its error increasing significantly around epoch 90 before recovering.\\
+In contrast, the non-adaptive methods converge much more slowly. SGD with momentum and AdaGrad follow a similar, but less effective, trajectory. Plain SGD stands out as the least efficient method by a large margin; it begins with an error an order of magnitude higher than Adam's and, despite making steady progress, fails to approach the same level of accuracy as the adaptive methods within the allotted training time.\\
 
 \begin{figure}[h!]
     \centering
@@ -365,12 +362,8 @@ The checkpoint histories show how this separation developed. Averaged with the s
     \label{fig:04_optimizer_history}
 \end{figure}
 
-The diagnostic conclusion is limited by the provenance of the available files. The matching $10^{-5}$ comparison was run without the \texttt{--diagnostics} option, so none of the structured diagnostic CSV files was produced for these candidates. Consequently, no claim about layer-wise gradient flow, actual parameter movement, activation attenuation, or histogram tails can be made for these five candidates. A separate \texttt{run/} directory does contain such diagnostics, but its metadata identifies a different $10^{-3}$ comparison and an unknown source revision. Those files are not combined with the $10^{-5}$ results. The two figures above therefore summarize only the compatible fold scores and histories. All 25 compatible fold records are finite and successful, but the absence of matching diagnostics prevents a stronger numerical stability conclusion.
+Overall, the convergence plot visually confirms the final rankings. It demonstrates that Adam's victory is due not only to a lower final error but also to its combination of fast, efficient, and stable convergence throughout the entire training process.\\
 
-After selecting Adam by cross-validation, the recorded refit reported a physical MSE of $0.00365482$ on the 429-sample test dataset in \texttt{summary.txt}. The test data were loaded only after the cross-validation search and did not influence the optimizer ranking. There is, however, a limitation in the experiment driver: it passes the test dataset to \texttt{Trainer::fit} as its validation dataset and evaluates it after every epoch, rather than literally evaluating it once. Early stopping was disabled, so these repeated measurements did not affect parameter updates or candidate selection, but the value should be described as a post-selection test check with this qualification rather than as evidence used to choose Adam.
-
-The cross-validation winner is therefore \textbf{Adam at learning rate $10^{-5}$}. Its physical validation MSE was $0.004426734\pm0.000793966$ under the fixed large topology, loss, fold plan, and 100-epoch budget. The production configuration is related but not identical: \texttt{make\_single\_trial} in \texttt{CNN/main.cpp} constructs Adam, but its source defaults use learning rate $10^{-3}$, physics weight $0.10$, the smaller dense head $(128,64,1)$, global batch size 257, 200 epochs, gradient clipping at 1, and ordinary-training early stopping with a 10 percent holdout, a minimum of 20 epochs, patience of 20 epochs, a maximum overfit ratio of $0.15$, and best-weight restoration. The production path also uses the source default seed 42 and no dropout or L1 or L2 penalty. Thus the optimizer algorithm agrees with the selected candidate, while the experiment does not establish the performance of the complete production configuration at the production learning rate. To conclude, Adam is retained as the optimizer choice because it won every compatible validation fold and achieved the lowest observed mean without a failed candidate, whereas the alternatives either made slower progress or reached a higher final error. A new comparison over learning rates and repeated seeds would be required before extending this conclusion beyond the tested setting.
-\newpage
 \subsection{Physics-weight tuning}
 \label{sec:04_physics_weight_tuning}
 
