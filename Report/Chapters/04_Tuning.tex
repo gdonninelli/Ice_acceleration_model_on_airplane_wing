@@ -1,37 +1,61 @@
+% !TEX root = ../main.tex
 \section{Tuning}
 \label{sec:04_Tuning}
 
-The Convolutional Neural Network described and implemented in Chapter~\ref{sec:03_Convolutional_Neural_Network} provides the starting point for the numerical study presented in this chapter. Although the initial model is already able to approximate the lift coefficient from the airfoil geometry and the flow parameters, our objective is not limited to obtaining a working implementation. We also want to understand which choices of architecture, optimization algorithm, regularization, activation function, and learning rate allow the surrogate model to obtain more accurate and more reliable predictions. For this reason, we performed a sequence of controlled tuning experiments. In each experiment one group of quantities was varied, while the other settings were kept fixed as far as the corresponding driver allowed. The results were then analysed not only through the final validation error, but also through the evolution of the training objective, the physical validation error, the gradient norms, the actual parameter updates, and the activation distributions.
+The Convolutional Neural Network, described and implemented in Chapter \ref{sec:03_Convolutional_Neural_Network}, provides the starting point for the numerical study presented in this Chapter. Although the initial model is already able to approximate the lift coefficient from the airfoil geometry and the flow parameters, we decided to understand which choice of architecture, optimization algorithm, regularization, activation function and learning rate allow the surrogate model to obtain more accurate and more reliable predictions. For this reason, we performed a sequence of controlled tuning experiments. In each experiment one group of quantities was varied, while the other settings were kept fixed. The results were then analysed not only through the final validation error, but also through the evolution of the training objective, the physical validation error, the gradient norms, the actual parameter updates and the activation distributions.\\
 
-The order of the study follows the development of the model. First, we investigated the topology of the network, because the feature representation and the capacity of the regression head influence every subsequent experiment. We then considered dropout, the optimizer, the weight of the SIMM physical term, and L1 and L2 regularization. Once these settings had been examined, we compared the available activation functions and finally studied both the magnitude and the schedule of the learning rate. The last part of the chapter describes the long ordinary training run performed with the production executable and collects the conclusions that can be drawn from the complete tuning campaign.
+The order of the study follows the development of the model:
+\begin{itemize}
+    \item[-] first, we investigated the topology of the network, because the feature representation and the capacity of the regression head influence every subsequent experiment;
+    \item[-] then, we considered dropout, the optimizer, the weight of the SIMM physical term, and L1 and L2 regularization;
+    \item[-] next, we compared the available activation functions;
+    \item[-] as last thing, we studied the magnitude and the schedule of the learning rate.
+\end{itemize}
+The last part of the Chapter (Section \ref{sec:04_final_training}) describes the ordinary training run performed with the production executable and collects the conclusions that can be drawn from the complete tuning.
+
 \subsection{Cross-validation and diagnostic methodology}
 \label{sec:04_cross_validation}
 
-All the tuning experiments use the training dataset stored in \texttt{dataset/cnn\_dataset\_train.npz}, which contains 1713 samples. Each sample consists of a $150\times150$ Signed Distance Function, the scalar pair $(\mathrm{Re},\alpha)$, and the corresponding lift coefficient $C_L$. The separate file \texttt{dataset/cnn\_dataset\_test.npz}, containing 429 samples, is not used to compare candidates. In the intended procedure, it is loaded only after a candidate has been selected and the selected model has been refitted on the complete training dataset. This separation is important because using test data during the search would turn the final error into a selection quantity rather than an independent estimate.
+All the tuning experiments use the training dataset stored in \texttt{dataset/cnn\_dataset\_train.npz}\footnote{Both the training and test datasets are generated according to the procedure detailed in Section \ref{sec:02_Navier-Stokes_Simulation}.}, which contains 1713 samples. Each sample consists of a $150\times150$ Signed Distance Function\footnote{See Section \ref{sec:03_SDF} for details about the implementation.}, the scalar pair $(\mathrm{Re},\alpha)$ and the corresponding lift coefficient $C_L$. The separate file \texttt{dataset/cnn\_dataset\_test.npz}, containing 429 samples, is not used to compare candidates. In the intended procedure, it is loaded only after a candidate has been selected and the selected model has been refitted on the complete training dataset. This separation is important because using test data during the search would turn the final error into a selection quantity rather than an independent estimate.\\
 
-The comparisons are performed with the project implementation of \texttt{RandomKFold}. The samples are shuffled with seed $42$ and divided into five folds. The splitter works at sample level, rather than keeping all observations belonging to one airfoil in the same fold. Consequently, the experiment measures interpolation over the sampled dataset and does not constitute a strict test of generalization to an entirely unseen airfoil family. In every fold, approximately eighty percent of the samples are used for training and the remaining twenty percent for validation. In the recorded runs, the validation sets contain 342 or 343 samples and the training sets contain 1370 or 1371 samples. The fold plan is generated once and reused for every candidate within a tuning experiment, so two candidates are compared on exactly the same validation observations.
+The comparisons are performed with the project implementation of \texttt{RandomKFold}. The samples are shuffled with a fixed seed and divided into five folds. An important detail is that the data is spli on a per-sample basis, meaning individual simulation results are distributed randomly rather than grouping all data from a single airfoil into one fold. This means that for any given fold, data from the same airfoil (e.g., NACA 0012) can appear in both the training and validation sets. In this way, the tunings experiments measure the model's ability to interpolate within the dataset, rather than its capacity for generalization to entirely new airfoil families.\\
+In every fold, approximately eighty percent of the samples are used for training and the remaining twenty percent for validation. In the recorded runs, the validation sets contain 342 (or 343 samples) and the training sets contain 1370 (or 1371 samples). The fold plan is generated once and reused for every candidate within a tuning experiment, guaranteein that every candidate model is benchmarked on the exact same data for a direct comparison.\\
 
-Before a fold is trained, the normalization statistics are fitted only on that fold's training indices. The same statistics are subsequently applied to the corresponding validation samples. The angle of attack is read in degrees from the scalar input and converted to radians before it is used in the SIMM residual. Every candidate and every fold constructs a fresh model and a fresh optimizer. Therefore, neither the weights, the activation caches, nor the optimizer moments are transferred from another candidate or fold. The distributed training uses a global batch size, so changing the number of MPI ranks changes the distribution of the work but not the nominal batch size or the definition of the metrics.
+The experimental procedure enforces the following key principles, in order to ensure reproducible comparisons.\\
+First of all, the normalization statistics (such as mean and standard deviation) are calculated exclusively from the training data. These same statistics are then used to scale the validation data. We also added a minor preprocessing step to convert the angle of attack from degrees to radians, which is necessary for the physics-informed loss function.\\
+Next, every trial is completely independent. For each candidate model and each fold, a new instance of the network and optimizer is created from scratch, in order to not carry over any learned parameters, optimizer moments or any other state from previous runs.\\
+Finally, the distributed training framework is designed to be consistent. The global batch size is fixed for all experiments, and increasing the number of MPI processes simply divides this global batch into smaller sub-batches for each worker. This ensures that the results and metrics are independent of the number of parallel ranks used.\\
 
-The primary selection quantity is the physical-unit mean squared error on the validation samples. If $\widehat{C}_{L,i}$ is the predicted coefficient and $C_{L,i}$ is the CFD value, the physical MSE of fold $k$ is
+With this experimental framework established, we evaluate each candidate using a primary selection metric, supplemented by a series of diagnostic quantities to analyze model behavior.\\
+
+The primary selection quantity is the physical-unit mean squared error on the validation samples. If $\hat{C}_{L,i}$ is the predicted coefficient and $C_{L,i}$ is the CFD value, the physical MSE of fold $k$ is computed as:
 \begin{equation}
     \mathrm{MSE}_{\mathrm{val}}^{(k)} =
     \frac{1}{n_k}\sum_{i\in\mathcal{V}_k}
-    \left(\widehat{C}_{L,i}-C_{L,i}\right)^2,
+    \left(\hat{C}_{L,i}-C_{L,i}\right)^2
     \label{eq:04_validation_mse}
 \end{equation}
-where $\mathcal{V}_k$ is the validation subset and $n_k$ is its number of samples. The candidate score is the sample-weighted aggregation returned by \texttt{CrossValidator}, rather than a comparison of the standardized SIMM objective. This distinction matters because the training objective contains a data term and, in some experiments, a physics term expressed in fold-specific standardized target units, whereas Equation~\eqref{eq:04_validation_mse} is expressed in the squared physical lift-coefficient units. The fold standard deviation is reported together with the mean to show the sensitivity to the data split.
+where $\mathcal{V}_k$ is the validation subset and $n_k$ is its number of samples.\\
+The final score for a candidate is the sample-weighted 
+average of this MSE across all five folds, as returned by \texttt{CrossValidator}. This distinction matters because the training objective contains a data term and, in some experiments, a physics term expressed in fold-specific standardized target units, while Equation \eqref{eq:04_validation_mse} is expressed in the squared physical lift-coefficient units. To assess the sensitivity of a model to the specific data split, the standard deviation of the MSE across folds is also reported alongside the mean.\\
 
-The training objective is monitored through \texttt{train\_objective}, while the physical training and validation errors are read from \texttt{epoch\_metrics.csv}. The public cross-validation history is normally stored every ten epochs, although diagnostics contain a validation value at every epoch. The following diagnostic quantities are used throughout the chapter. The gradient norm is read from rows with \texttt{parameter\_scope=all}; it is measured after the MPI weighted gradient aggregation and before clipping and the optimizer update. The parameter update ratio is the actual movement of the parameters relative to their norm,
-\begin{equation}
+Beyond the primary selection metric, we monitor several diagnostic quantities to ensure numerical stability and understand the training dynamics. The training objective is monitored through \texttt{train\_objective}, while the physical training and validation errors are read from \texttt{epoch\_metrics.csv}. The cross-validation history is normally stored every ten epochs, although diagnostics contain a validation value at every epoch.\\
+The following diagnostic quantities are used throughout the chapter:
+\begin{itemize}
+    \item[-] the gradient norm is read from rows with \texttt{parameter\_scope=all} and it is measured after the MPI weighted gradient aggregation and before clipping and the optimizer update. This metric indicates whether gradients are naturally vanishing or exploding;
+    \item[-] the parameter update ratio is the actual movement of the parameters relative to their norm, computed as:
+    \begin{equation}
     r_{\theta} =
     \frac{\lVert\theta_{\mathrm{after}}-\theta_{\mathrm{before}}\rVert_2}
     {\max\left(\lVert\theta_{\mathrm{before}}\rVert_2,10^{-12}\right)},
     \label{eq:04_update_ratio}
 \end{equation}
-and is not simply a learning rate multiplied by a gradient. It includes the optimizer moments, clipping, decay, the numerical epsilon, and the current parameter values. Finally, activation statistics are distinguished between the pre-activation tensor entering a non-linearity and the post-activation tensor returned by it. Their mean, variance, minimum, maximum, and fixed-bin histograms are used to identify signal attenuation, saturation, or growth of the activation scale. In all cases, we checked the raw CSV files for non-finite values and for late-epoch increases before describing a run as numerically stable.
-
-\newpage
+    where $\theta_{\mathrm{before}}$ and $\theta_{\mathrm{after}}$ are the parameter vectors before and after the optimizer update, respectively.\\
+    A healthy value typically hovers around $10^{-3}$. Excessively high values point to numerical instability or an overly aggressive learning rate, whereas excessively low values indicate training stagnation. The $10^{-12}$ term serves as a safety epsilon to prevent division by zero.
+    \item[-] the pre-activation and post-activation statistics are computed for every layer, including the mean, variance, minimum, maximum, and fixed-bin histograms of the activation tensors;
+    \item[-] the activation statistics are distinguished between the pre-activation tensor entering a non-linearity and the post-activation tensor returned by it. Their mean, variance, minimum, maximum and fixed-bin histograms are used to identify signal attenuation, saturation, or growth of the activation scale.
+\end{itemize}
+In all cases, we checked the raw CSV files for non-finite values and for late-epoch increases before describing a run as numerically stable.
 \subsection{Topology tuning}
 \label{sec:04_topology_tuning}
 
