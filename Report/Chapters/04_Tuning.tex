@@ -481,32 +481,28 @@ The comprehensive diagnostic analysis confirms this outcome. The physics-informe
 \subsection{Weight regularization}
 \label{sec:04_regularization_tuning}
 
-Weight regularization was tested because the dense head contains millions of trainable weights, so reducing unnecessary parameter magnitude could in principle improve validation performance. L1 regularization is associated with sparsity and L2 regularization with continuous shrinkage~\cite{tibshirani1996lasso,hoerl1970ridge}. These expectations motivate the experiment, but they do not determine the result: a penalty can also slow optimization or introduce bias when the unregularized model is not overfitting within the available training budget.
+Weight regularization was tested because the dense head contains millions of trainable weights, so reducing unnecessary parameter magnitude could in principle improve validation performance. As we can see in \cite{tibshirani1996lasso,hoerl1970ridge}, L1 regularization is associated with sparsity and L2 regularization with continuous shrinkage. The central question was whether these penalties could provide a benefit, or if they would instead hinder optimization or introduce unnecessary bias, particularly if the unregularized model was not significantly overfitting.\\
 
-For every convolutional and dense weight tensor $W_\ell$, the implementation defines the two penalties as
+For every convolutional and dense weight tensor $W_\ell$, the implementation defines the two penalties as:
 \begin{equation}
     R_{\mathrm{L1}}=\lambda_1\sum_{\ell}\sum_{w\in W_\ell}|w|,
     \qquad
     R_{\mathrm{L2}}=\lambda_2\sum_{\ell}\sum_{w\in W_\ell}w^2.
     \label{eq:04_regularization}
 \end{equation}
-Biases are excluded, the sums are not normalized by parameter count or batch size, and the two coefficients were varied independently. The corresponding gradient contribution is
-\begin{equation}
-    \frac{\partial(R_{\mathrm{L1}}+R_{\mathrm{L2}})}{\partial w}
-    =\lambda_1\,\operatorname{sign}(w)+2\lambda_2 w,
-    \qquad \operatorname{sign}(0)=0.
-    \label{eq:04_regularization_gradient}
-\end{equation}
-The trainer adds this contribution after synchronized MPI gradient averaging and before element-wise clipping and the Adam update. It is therefore different from Adam weight decay. The recorded \texttt{train\_objective} remains the SIMM objective; the final L1 and L2 penalty values are reported separately.
+The regularization is applied to the weights only, without consider the biases. The corresponding gradient term, $\lambda_1\,\operatorname{sign}(w)+2\lambda_2 w$, was added to the main loss gradient after MPI synchronization but before gradient clipping and the Adam update step. This implementation is distinct from the weight decay mechanism built into some optimizers.\\
 
-The current experiment source fixes \texttt{conv5x5-dense-1024-512-256-128}, LeakyReLU with $\alpha=0.05$, Adam at $10^{-5}$, physics weight $0.25$, global batch size 64, seed 42, gradient clipping at 1, and 100 epochs. It evaluates eight L1 values, $\{0,6.75\times10^{-7},2.13\times10^{-6},6.75\times10^{-6},2.13\times10^{-5},6.75\times10^{-5},2.13\times10^{-4},6.75\times10^{-4}\}$, and eight L2 values, $\{0,10^{-4},3.16\times10^{-4},10^{-3},3.16\times10^{-3},10^{-2},3.16\times10^{-2},10^{-1}\}$. Each axis is a separate one-dimensional sweep with zero as its own reference, giving 16 candidates and 80 fold evaluations. The test dataset was not part of the search.
+To isolate the effects of regularization, we performed two independent, one-dimensional sweeps for the L1 and L2 coefficients ($\lambda_1$ and $\lambda_2$), starting from a baseline of zero for both:
+\begin{itemize}
+    \item[-] for L1, we evaluated eight values from $6.75\times 10^{-7}$ to $6.75\times 10^{-4}$, with zero as the reference;
+    \item[-] for L2, we evaluated eight values from $10^{-4}$ to $10^{-1}$, with zero as the reference. 
+\end{itemize}
+All other hyperparameters were held constant. The full comparison followed the rigorous cross-validation framework detailed in Section \ref{sec:04_cross_validation}.\\
 
-The numerical provenance differs from the physics sweep. The current result directory does not contain the raw regularization CSVs or metadata. The complete candidate values and aggregate results below are the documented Reference Results in \texttt{CNN/experiments/regularization\_tuning/README.md}, which identifies a large-topology CINECA run. Raw CSVs retained in an older Git revision belong to the earlier $(128,64)$ head and are not merged with these values. The tables should therefore be read as a documented historical result, not as a newly recomputed sample-weighted summary. This limitation does not change the direction of the documented ranking, but it prevents an independent reconstruction of every fold statistic from the current worktree.
+The results from both the L1 and L2 sweeps, presented in Tables \ref{tab:04_l1_results} and \ref{tab:04_l2_results}, point to the same clear conclusion: weight regularization did not improve model performance.
 
 \begin{table}[h!]
     \centering
-    \scriptsize
-    \setlength{\tabcolsep}{3pt}
     \begin{tabular}{rccrr}
         \hline
         $\lambda_1$ & Mean validation MSE & Fold standard deviation & $\Delta_{\lambda_1}$ & Improved folds \\
@@ -527,8 +523,6 @@ The numerical provenance differs from the physics sweep. The current result dire
 
 \begin{table}[h!]
     \centering
-    \scriptsize
-    \setlength{\tabcolsep}{3pt}
     \begin{tabular}{rccrr}
         \hline
         $\lambda_2$ & Mean validation MSE & Fold standard deviation & $\Delta_{\lambda_2}$ & Improved folds \\
@@ -547,9 +541,12 @@ The numerical provenance differs from the physics sweep. The current result dire
     \label{tab:04_l2_results}
 \end{table}
 
-In both documented axes the zero-penalty candidate had the lowest observed validation MSE. The nearest L1 candidates were only $5.3\times10^{-6}$ and $1.78\times10^{-5}$ worse in the reported mean and improved in two folds, so neither meets the four-fold paired criterion or exceeds its own paired spread. The nearest L2 candidate, $10^{-4}$, improved in one fold and was worse by $6.44\times10^{-5}$ in the reported mean. The degradation then increased across the tested grids. The penalties were active rather than numerically inert: the documented $\sum w^2$ decreased from approximately 2993 at zero penalty to 587 for the largest L1 value and 582 for the largest L2 value, while $\lVert w-w_0\rVert$ increased from about 0.91 to 41.18 and 36.46, respectively. At the same time, the validation minus training gap decreased, but the training MSE rose faster, indicating that shrinkage restricted the fit more than it corrected overfitting in this fixed 100-epoch regime.
-
-The recorded diagnostic summaries, also preserved only in the README, are consistent with this interpretation. The largest gradient norm is reported as approximately 22.54 across the L1 axis and most of the L2 axis, with only the strongest L2 values increasing it to 24.08. The reported post-activation variance changes from 0.1441 at zero L1 to 0.1654 at the largest L1 and from 0.1441 at zero L2 to 0.1686 at the largest L2. Because the underlying diagnostic CSVs are absent, these values are not used to make a layer-wise stability claim. No new regularization diagnostic plot is included; the tables and provenance statement are the reproducible evidence that remains in the current repository.
+In both experiments, the baseline model with zero penalty ($\lambda=0$) achieved the lowest mean validation MSE of $0.004419 \pm 0.000794$; 
+\begin{itemize}
+    \item[-] the nearest L1 candidates were only $5.3\times10^{-6}$ and $1.78\times10^{-5}$ worse in the reported mean and improved in two folds, so neither meets the four-fold paired criterion or exceeds its own paired spread;
+    \item[-] the nearest L2 candidate, $10^{-4}$, improved in one fold and was worse by $6.44\times10^{-5}$ in the reported mean. The degradation then increased across the tested grids.
+\end{itemize}
+At the same time, the validation minus training gap decreased, but the training MSE rose faster, indicating that shrinkage restricted the fit more than it corrected overfitting in this fixed 100-epoch regime.\\
 
 The documented cross-validation winner is therefore $\lambda_1=0$ and $\lambda_2=0$, with reported mean physical validation MSE $0.004419\pm0.000794$. The current production source also sets both penalties to zero, so the direction of this choice agrees with \texttt{CNN/main.cpp}. The production run nevertheless differs in head width, learning rate, physics weight, batch size, and epoch or early-stopping policy, and no regularization-specific test estimate exists. To conclude, the retained evidence supports not adding L1 or L2 at Adam learning rate $10^{-5}$ and 100 epochs. A new diagnostics-enabled run would be required to attach stronger numerical stability claims or to test whether the answer changes after the production learning rate and training budget are used.
 
