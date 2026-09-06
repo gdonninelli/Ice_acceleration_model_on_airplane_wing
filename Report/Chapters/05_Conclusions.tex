@@ -15,38 +15,51 @@ Nevertheless, certain limitations inherent to each method must be acknowledged. 
 
 Looking forward, the framework developed here opens up promising avenues for engineering design and analysis. The speed of the trained CNN makes it ideal for real-time applications and rapid design iterations on consumer-grade hardware, completely bypassing the need for constant HPC access. This capability is particularly relevant for the agile aerodynamic design and field-testing of components for Unmanned Aerial Vehicles and quadcopters, where on-the-fly performance evaluation can accelerate development cycles. The simulation pipeline itself is now poised to serve as a data engine for training future surrogate models on more complex geometries, such as the iced airfoils that motivated this study.
 
+
 \section{Contributors}
 \label{sec:06_Contributors}
+
 \begin{table}[H]
     \centering
-    \begin{tabular}{|c|c|}
+    \resizebox{\textwidth}{!}{%
+    \begin{tabular}{|l|ccccccccccc|}
         \hline
-        \textbf{Contribution} & \textbf{Name} \\
-        \hline
-        CNN API in CPP & Giulio Enzo Donninelli, Alessia Rigoni \\
-        \hline
-        Data Structure for diagnostic purposes & Giulio Enzo Donninelli \\
-        \hline
-        Topology Tuning & Giulio Enzo Donninelli, Alessandro Verrengia \\
-        \hline
-        Dropout Implementation & Alessia Rigoni, Vittorio Sironi \\
-        \hline
-        Optimizer Comparison & Alessia Rigoni \\
-        \hline
-        Physics-weight Tuning & Alessia Rigoni, Vittorio Sironi \\
-        \hline
-        Weight regularization & Giulio Enzo Donninelli \\
-        \hline
-        Activation-function Tuning & Giulio Enzo Donninelli \\
-        \hline
-        Learning Rate Tuning & Alessia Rigoni \\
-        \hline
-        Training & Giulio Enzo Donninelli \\
-        \hline
-        Report Writing & Giulio Enzo Donninelli, Alessia Rigoni \\
+        \scriptsize\textbf{Name}
+        & \rotatebox{90}{\scriptsize \textbf{CNN API}}
+        & \rotatebox{90}{\scriptsize \textbf{Topology}}
+        & \rotatebox{90}{\scriptsize \textbf{Dropout}}
+        & \rotatebox{90}{\scriptsize \textbf{Physics Weights}}
+        & \rotatebox{90}{\scriptsize \textbf{Report}}
+        & \rotatebox{90}{\scriptsize \textbf{Data Struct.}}
+        & \rotatebox{90}{\scriptsize \textbf{Optimizer}}
+        & \rotatebox{90}{\scriptsize \textbf{Regularization}}
+        & \rotatebox{90}{\scriptsize \textbf{Activation}}
+        & \rotatebox{90}{\scriptsize \textbf{Learning Rate}}
+        & \rotatebox{90}{\scriptsize \textbf{Training}} \\
         \hline
 
-    \end{tabular}
-    \caption{Contributors to the work presented in this report.}
+        \scriptsize\textbf{Giulio Enzo Donninelli}
+        & $\checkmark$ & $\checkmark$ & & & $\checkmark$
+        & $\checkmark$ & & $\checkmark$ & $\checkmark$ & & $\checkmark$ \\
+        \hline
+
+        \scriptsize\textbf{Alessia Rigoni}
+        & $\checkmark$ & & $\checkmark$ & $\checkmark$ & $\checkmark$
+        & & $\checkmark$ & & & $\checkmark$ & \\
+        \hline
+
+        \scriptsize\textbf{Vittorio Sironi}
+        & & & $\checkmark$ & $\checkmark$ & &
+        & & & & & \\
+        \hline
+
+        \scriptsize\textbf{Alessandro Verrengia}
+        & & $\checkmark$ & & & &
+        & & & & & \\
+        \hline
+
+    \end{tabular}%
+    }
+    \caption{Contributions to the work presented in this report. A checkmark indicates participation in the corresponding task.}
     \label{tab:contributors}
 \end{table}
