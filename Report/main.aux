@@ -204,22 +204,22 @@
 \@writefile{toc}{\contentsline {subsection}{\numberline {4.1}Cross-validation and diagnostic methodology}{31}{subsection.4.1}\protected@file@percent }
 \newlabel{sec:04_cross_validation}{{4.1}{31}{Cross-validation and diagnostic methodology}{subsection.4.1}{}}
 \newlabel{sec:04_cross_validation@cref}{{[subsection][1][4]4.1}{[1][31][]31}{}{}{}}
+\citation{glorot2010understanding}
 \newlabel{eq:04_validation_mse}{{45}{32}{Cross-validation and diagnostic methodology}{equation.45}{}}
 \newlabel{eq:04_validation_mse@cref}{{[equation][45][]45}{[1][31][]32}{}{}{}}
 \newlabel{eq:04_update_ratio}{{46}{32}{Cross-validation and diagnostic methodology}{equation.46}{}}
 \newlabel{eq:04_update_ratio@cref}{{[equation][46][]46}{[1][32][]32}{}{}{}}
-\citation{glorot2010understanding}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Topology tuning}{33}{subsection.4.2}\protected@file@percent }
-\newlabel{sec:04_topology_tuning}{{4.2}{33}{Topology tuning}{subsection.4.2}{}}
-\newlabel{sec:04_topology_tuning@cref}{{[subsection][2][4]4.2}{[1][33][]33}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.2}Topology tuning}{32}{subsection.4.2}\protected@file@percent }
+\newlabel{sec:04_topology_tuning}{{4.2}{32}{Topology tuning}{subsection.4.2}{}}
+\newlabel{sec:04_topology_tuning@cref}{{[subsection][2][4]4.2}{[1][32][]32}{}{}{}}
 \newlabel{eq:04_topology_convolution}{{47}{33}{Topology tuning}{equation.47}{}}
-\newlabel{eq:04_topology_convolution@cref}{{[equation][47][]47}{[1][33][]33}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Representative topology candidates in ranked order. The ranking was performed over the complete 18 candidate grid by sample-weighted mean physical validation MSE. The omitted intermediate candidates fall between the rows shown and do not change the conclusions.}}{34}{table.caption.94}\protected@file@percent }
-\newlabel{tab:04_topology_results}{{5}{34}{Representative topology candidates in ranked order. The ranking was performed over the complete 18 candidate grid by sample-weighted mean physical validation MSE. The omitted intermediate candidates fall between the rows shown and do not change the conclusions}{table.caption.94}{}}
-\newlabel{tab:04_topology_results@cref}{{[table][5][]5}{[1][33][]34}{}{}{}}
+\newlabel{eq:04_topology_convolution@cref}{{[equation][47][]47}{[1][32][]33}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {5}{\ignorespaces Representative topology candidates in ranked order. The ranking was performed over the complete 18 candidate grid by sample-weighted mean physical validation MSE. The omitted intermediate candidates fall between the rows shown and do not change the conclusions.}}{33}{table.caption.94}\protected@file@percent }
+\newlabel{tab:04_topology_results}{{5}{33}{Representative topology candidates in ranked order. The ranking was performed over the complete 18 candidate grid by sample-weighted mean physical validation MSE. The omitted intermediate candidates fall between the rows shown and do not change the conclusions}{table.caption.94}{}}
+\newlabel{tab:04_topology_results@cref}{{[table][5][]5}{[1][33][]33}{}{}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {12}{\ignorespaces Layer tuning ranking by sample-weighted mean physical validation MSE over five folds. Error bars show the fold standard deviation. The leftmost candidate is the selected \texttt  {conv5x5-dense-1024-512-256-128}. The plot summarizes \texttt  {summary.csv} and does not imply a fitted scaling law.}}{34}{figure.caption.95}\protected@file@percent }
 \newlabel{fig:04_topology_ranking}{{12}{34}{Layer tuning ranking by sample-weighted mean physical validation MSE over five folds. Error bars show the fold standard deviation. The leftmost candidate is the selected \texttt {conv5x5-dense-1024-512-256-128}. The plot summarizes \texttt {summary.csv} and does not imply a fitted scaling law}{figure.caption.95}{}}
-\newlabel{fig:04_topology_ranking@cref}{{[figure][12][]12}{[1][33][]34}{}{}{}}
+\newlabel{fig:04_topology_ranking@cref}{{[figure][12][]12}{[1][34][]34}{}{}{}}
 \@writefile{lof}{\contentsline {figure}{\numberline {13}{\ignorespaces Paired kernel comparison at three matched dense heads. Bars show the sample-weighted mean physical validation MSE and dots show the five per fold values from \texttt  {aggregated.csv}. All three pairs favour $5\times 5$ with stride five over $3\times 3$ with stride three at zero padding.}}{35}{figure.caption.96}\protected@file@percent }
 \newlabel{fig:04_topology_kernel_paired}{{13}{35}{Paired kernel comparison at three matched dense heads. Bars show the sample-weighted mean physical validation MSE and dots show the five per fold values from \texttt {aggregated.csv}. All three pairs favour $5\times 5$ with stride five over $3\times 3$ with stride three at zero padding}{figure.caption.96}{}}
 \newlabel{fig:04_topology_kernel_paired@cref}{{[figure][13][]13}{[1][34][]35}{}{}{}}
@@ -227,172 +227,172 @@
 \newlabel{fig:04_topology_history}{{14}{35}{Fold averaged physical validation MSE at public checkpoints every ten epochs, parsed from \texttt {run\_leonardo\_51807287.log}. Curves are shown for the winner \texttt {conv5x5-dense-1024-512-256-128}, the depth two candidate \texttt {conv5x5-dense-1024-512}, the baseline \texttt {conv5x5-dense-128-64}, and the $3\times 3$ mate \texttt {conv3x3-dense-512-256}. The training objective is omitted because it uses different standardized units}{figure.caption.97}{}}
 \newlabel{fig:04_topology_history@cref}{{[figure][14][]14}{[1][34][]35}{}{}{}}
 \citation{srivastava2014dropout}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Dropout tuning}{37}{subsection.4.3}\protected@file@percent }
-\newlabel{sec:04_dropout_tuning}{{4.3}{37}{Dropout tuning}{subsection.4.3}{}}
-\newlabel{sec:04_dropout_tuning@cref}{{[subsection][3][4]4.3}{[1][37][]37}{}{}{}}
-\newlabel{eq:04_dropout}{{48}{37}{Dropout tuning}{equation.48}{}}
-\newlabel{eq:04_dropout@cref}{{[equation][48][]48}{[1][37][]37}{}{}{}}
-\newlabel{eq:04_dropout_backward}{{49}{37}{Dropout tuning}{equation.49}{}}
-\newlabel{eq:04_dropout_backward@cref}{{[equation][49][]49}{[1][37][]37}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Complete recorded dropout sweep. Mean validation MSE and fold standard deviation are the sample-weighted values from \texttt  {cv\_summary.csv}. Paired differences, training MSE, and validation minus training gaps are calculated from \texttt  {sweep\_dropout.csv}; a positive paired difference means that the rate is worse than the $p=0$ reference.}}{38}{table.caption.100}\protected@file@percent }
-\newlabel{tab:04_dropout_results}{{6}{38}{Complete recorded dropout sweep. Mean validation MSE and fold standard deviation are the sample-weighted values from \texttt {cv\_summary.csv}. Paired differences, training MSE, and validation minus training gaps are calculated from \texttt {sweep\_dropout.csv}; a positive paired difference means that the rate is worse than the $p=0$ reference}{table.caption.100}{}}
-\newlabel{tab:04_dropout_results@cref}{{[table][6][]6}{[1][37][]38}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces Dropout-rate ranking from the official \texttt  {cv\_summary.csv}. Points are sample-weighted mean physical validation MSE and error bars are the weighted standard deviations over the five folds. The $p=0$ reference is highlighted in red.}}{38}{figure.caption.101}\protected@file@percent }
-\newlabel{fig:04_dropout_ranking}{{15}{38}{Dropout-rate ranking from the official \texttt {cv\_summary.csv}. Points are sample-weighted mean physical validation MSE and error bars are the weighted standard deviations over the five folds. The $p=0$ reference is highlighted in red}{figure.caption.101}{}}
-\newlabel{fig:04_dropout_ranking@cref}{{[figure][15][]15}{[1][38][]38}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces Paired physical validation MSE differences relative to the $p=0$ reference, computed from \texttt  {sweep\_dropout.csv}. Coloured curves show the five zero-based folds, while black markers and error bars show the mean paired difference and its sample standard deviation. Positive values indicate deterioration relative to the reference.}}{39}{figure.caption.102}\protected@file@percent }
-\newlabel{fig:04_dropout_paired}{{16}{39}{Paired physical validation MSE differences relative to the $p=0$ reference, computed from \texttt {sweep\_dropout.csv}. Coloured curves show the five zero-based folds, while black markers and error bars show the mean paired difference and its sample standard deviation. Positive values indicate deterioration relative to the reference}{figure.caption.102}{}}
-\newlabel{fig:04_dropout_paired@cref}{{[figure][16][]16}{[1][38][]39}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {17}{\ignorespaces Means over the five recorded folds for the training SIMM objective and the physical validation MSE. The training objective is recorded at every epoch, whereas the validation values in the committed diagnostic files occur at ten-epoch checkpoints. The two panels use separate units, and the curves describe the recorded dropout sweep.}}{39}{figure.caption.103}\protected@file@percent }
-\newlabel{fig:04_dropout_history}{{17}{39}{Means over the five recorded folds for the training SIMM objective and the physical validation MSE. The training objective is recorded at every epoch, whereas the validation values in the committed diagnostic files occur at ten-epoch checkpoints. The two panels use separate units, and the curves describe the recorded dropout sweep}{figure.caption.103}{}}
-\newlabel{fig:04_dropout_history@cref}{{[figure][17][]17}{[1][39][]39}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {18}{\ignorespaces Diagnostics for the recorded dropout sweep. The aggregate gradient norm, actual update ratio, and post-activation variance panels show means with minimum to maximum bands over five folds at epochs 1 and 100; the horizontal axis is dropout rate and the first two vertical axes are logarithmic. The final panel shows the largest recorded \texttt  {maximum\_norm} with \texttt  {parameter\_scope=all} over all folds and epochs for each dropout rate. Diagnostic rows are aggregated and individual layers are not distinguished.}}{40}{figure.caption.104}\protected@file@percent }
-\newlabel{fig:04_dropout_stability}{{18}{40}{Diagnostics for the recorded dropout sweep. The aggregate gradient norm, actual update ratio, and post-activation variance panels show means with minimum to maximum bands over five folds at epochs 1 and 100; the horizontal axis is dropout rate and the first two vertical axes are logarithmic. The final panel shows the largest recorded \texttt {maximum\_norm} with \texttt {parameter\_scope=all} over all folds and epochs for each dropout rate. Diagnostic rows are aggregated and individual layers are not distinguished}{figure.caption.104}{}}
-\newlabel{fig:04_dropout_stability@cref}{{[figure][18][]18}{[1][40][]40}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.3}Dropout tuning}{36}{subsection.4.3}\protected@file@percent }
+\newlabel{sec:04_dropout_tuning}{{4.3}{36}{Dropout tuning}{subsection.4.3}{}}
+\newlabel{sec:04_dropout_tuning@cref}{{[subsection][3][4]4.3}{[1][36][]36}{}{}{}}
+\newlabel{eq:04_dropout}{{48}{36}{Dropout tuning}{equation.48}{}}
+\newlabel{eq:04_dropout@cref}{{[equation][48][]48}{[1][36][]36}{}{}{}}
+\newlabel{eq:04_dropout_backward}{{49}{36}{Dropout tuning}{equation.49}{}}
+\newlabel{eq:04_dropout_backward@cref}{{[equation][49][]49}{[1][36][]36}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {6}{\ignorespaces Complete recorded dropout sweep. Mean validation MSE and fold standard deviation are the sample-weighted values from \texttt  {cv\_summary.csv}. Paired differences, training MSE, and validation minus training gaps are calculated from \texttt  {sweep\_dropout.csv}; a positive paired difference means that the rate is worse than the $p=0$ reference.}}{37}{table.caption.100}\protected@file@percent }
+\newlabel{tab:04_dropout_results}{{6}{37}{Complete recorded dropout sweep. Mean validation MSE and fold standard deviation are the sample-weighted values from \texttt {cv\_summary.csv}. Paired differences, training MSE, and validation minus training gaps are calculated from \texttt {sweep\_dropout.csv}; a positive paired difference means that the rate is worse than the $p=0$ reference}{table.caption.100}{}}
+\newlabel{tab:04_dropout_results@cref}{{[table][6][]6}{[1][36][]37}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {15}{\ignorespaces Dropout-rate ranking from the official \texttt  {cv\_summary.csv}. Points are sample-weighted mean physical validation MSE and error bars are the weighted standard deviations over the five folds. The $p=0$ reference is highlighted in red.}}{37}{figure.caption.101}\protected@file@percent }
+\newlabel{fig:04_dropout_ranking}{{15}{37}{Dropout-rate ranking from the official \texttt {cv\_summary.csv}. Points are sample-weighted mean physical validation MSE and error bars are the weighted standard deviations over the five folds. The $p=0$ reference is highlighted in red}{figure.caption.101}{}}
+\newlabel{fig:04_dropout_ranking@cref}{{[figure][15][]15}{[1][37][]37}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {16}{\ignorespaces Paired physical validation MSE differences relative to the $p=0$ reference, computed from \texttt  {sweep\_dropout.csv}. Coloured curves show the five zero-based folds, while black markers and error bars show the mean paired difference and its sample standard deviation. Positive values indicate deterioration relative to the reference.}}{38}{figure.caption.102}\protected@file@percent }
+\newlabel{fig:04_dropout_paired}{{16}{38}{Paired physical validation MSE differences relative to the $p=0$ reference, computed from \texttt {sweep\_dropout.csv}. Coloured curves show the five zero-based folds, while black markers and error bars show the mean paired difference and its sample standard deviation. Positive values indicate deterioration relative to the reference}{figure.caption.102}{}}
+\newlabel{fig:04_dropout_paired@cref}{{[figure][16][]16}{[1][37][]38}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {17}{\ignorespaces Means over the five recorded folds for the training SIMM objective and the physical validation MSE. The training objective is recorded at every epoch, whereas the validation values in the committed diagnostic files occur at ten-epoch checkpoints. The two panels use separate units, and the curves describe the recorded dropout sweep.}}{38}{figure.caption.103}\protected@file@percent }
+\newlabel{fig:04_dropout_history}{{17}{38}{Means over the five recorded folds for the training SIMM objective and the physical validation MSE. The training objective is recorded at every epoch, whereas the validation values in the committed diagnostic files occur at ten-epoch checkpoints. The two panels use separate units, and the curves describe the recorded dropout sweep}{figure.caption.103}{}}
+\newlabel{fig:04_dropout_history@cref}{{[figure][17][]17}{[1][38][]38}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {18}{\ignorespaces Diagnostics for the recorded dropout sweep. The aggregate gradient norm, actual update ratio, and post-activation variance panels show means with minimum to maximum bands over five folds at epochs 1 and 100; the horizontal axis is dropout rate and the first two vertical axes are logarithmic. The final panel shows the largest recorded \texttt  {maximum\_norm} with \texttt  {parameter\_scope=all} over all folds and epochs for each dropout rate. Diagnostic rows are aggregated and individual layers are not distinguished.}}{39}{figure.caption.104}\protected@file@percent }
+\newlabel{fig:04_dropout_stability}{{18}{39}{Diagnostics for the recorded dropout sweep. The aggregate gradient norm, actual update ratio, and post-activation variance panels show means with minimum to maximum bands over five folds at epochs 1 and 100; the horizontal axis is dropout rate and the first two vertical axes are logarithmic. The final panel shows the largest recorded \texttt {maximum\_norm} with \texttt {parameter\_scope=all} over all folds and epochs for each dropout rate. Diagnostic rows are aggregated and individual layers are not distinguished}{figure.caption.104}{}}
+\newlabel{fig:04_dropout_stability@cref}{{[figure][18][]18}{[1][39][]39}{}{}{}}
 \citation{duchi2011adaptive}
 \citation{kingma2015adam}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Optimizer comparison}{42}{subsection.4.4}\protected@file@percent }
-\newlabel{sec:04_optimizer_tuning}{{4.4}{42}{Optimizer comparison}{subsection.4.4}{}}
-\newlabel{sec:04_optimizer_tuning@cref}{{[subsection][4][4]4.4}{[1][42][]42}{}{}{}}
-\newlabel{eq:04_optimizer_clipping}{{50}{42}{Optimizer comparison}{equation.50}{}}
-\newlabel{eq:04_optimizer_clipping@cref}{{[equation][50][]50}{[1][42][]42}{}{}{}}
-\newlabel{eq:04_optimizer_sgd}{{51}{42}{Optimizer comparison}{equation.51}{}}
-\newlabel{eq:04_optimizer_sgd@cref}{{[equation][51][]51}{[1][42][]42}{}{}{}}
-\newlabel{eq:04_optimizer_momentum}{{52}{42}{Optimizer comparison}{equation.52}{}}
-\newlabel{eq:04_optimizer_momentum@cref}{{[equation][52][]52}{[1][42][]42}{}{}{}}
-\newlabel{eq:04_optimizer_adagrad}{{53}{42}{Optimizer comparison}{equation.53}{}}
-\newlabel{eq:04_optimizer_adagrad@cref}{{[equation][53][]53}{[1][42][]42}{}{}{}}
-\newlabel{eq:04_optimizer_rmsprop}{{54}{42}{Optimizer comparison}{equation.54}{}}
-\newlabel{eq:04_optimizer_rmsprop@cref}{{[equation][54][]54}{[1][42][]42}{}{}{}}
-\newlabel{eq:04_adam_update}{{55}{42}{Optimizer comparison}{equation.55}{}}
-\newlabel{eq:04_adam_update@cref}{{[equation][55][]55}{[1][42][]42}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Complete optimizer comparison at learning rate $10^{-5}$. The means and fold deviations are sample-weighted physical validation MSE values, with the deviation defined as the weighted population standard deviation over the five folds. The minimum and maximum columns show the corresponding unweighted extrema of the fold scores.}}{43}{table.caption.111}\protected@file@percent }
-\newlabel{tab:04_optimizer_results}{{7}{43}{Complete optimizer comparison at learning rate $10^{-5}$. The means and fold deviations are sample-weighted physical validation MSE values, with the deviation defined as the weighted population standard deviation over the five folds. The minimum and maximum columns show the corresponding unweighted extrema of the fold scores}{table.caption.111}{}}
-\newlabel{tab:04_optimizer_results@cref}{{[table][7][]7}{[1][43][]43}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {19}{\ignorespaces Optimizer ranking from the five-fold comparison at learning rate $10^{-5}$. Dark points are individual physical validation MSE values, boxes summarize the five folds, and red points with bars show the sample-weighted mean and weighted population standard deviation. The vertical axis is logarithmic.}}{43}{figure.caption.112}\protected@file@percent }
-\newlabel{fig:04_optimizer_ranking}{{19}{43}{Optimizer ranking from the five-fold comparison at learning rate $10^{-5}$. Dark points are individual physical validation MSE values, boxes summarize the five folds, and red points with bars show the sample-weighted mean and weighted population standard deviation. The vertical axis is logarithmic}{figure.caption.112}{}}
-\newlabel{fig:04_optimizer_ranking@cref}{{[figure][19][]19}{[1][43][]43}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {20}{\ignorespaces Physical validation MSE at the ten-epoch history checkpoints for the five optimizer candidates. Lines and shaded regions are the sample-weighted means and weighted population standard deviations over the five folds. The vertical axis is logarithmic; the SIMM training objective and the test set are not shown.}}{44}{figure.caption.113}\protected@file@percent }
-\newlabel{fig:04_optimizer_history}{{20}{44}{Physical validation MSE at the ten-epoch history checkpoints for the five optimizer candidates. Lines and shaded regions are the sample-weighted means and weighted population standard deviations over the five folds. The vertical axis is logarithmic; the SIMM training objective and the test set are not shown}{figure.caption.113}{}}
-\newlabel{fig:04_optimizer_history@cref}{{[figure][20][]20}{[1][44][]44}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Physics-weight tuning}{46}{subsection.4.5}\protected@file@percent }
-\newlabel{sec:04_physics_weight_tuning}{{4.5}{46}{Physics-weight tuning}{subsection.4.5}{}}
-\newlabel{sec:04_physics_weight_tuning@cref}{{[subsection][5][4]4.5}{[1][46][]46}{}{}{}}
-\newlabel{eq:04_physics_target}{{56}{46}{Physics-weight tuning}{equation.56}{}}
-\newlabel{eq:04_physics_target@cref}{{[equation][56][]56}{[1][46][]46}{}{}{}}
-\newlabel{eq:04_physics_mask}{{57}{46}{Physics-weight tuning}{equation.57}{}}
-\newlabel{eq:04_physics_mask@cref}{{[equation][57][]57}{[1][46][]46}{}{}{}}
-\newlabel{eq:04_simm_loss}{{58}{46}{Physics-weight tuning}{equation.58}{}}
-\newlabel{eq:04_simm_loss@cref}{{[equation][58][]58}{[1][46][]46}{}{}{}}
-\newlabel{eq:04_physics_gradient}{{59}{46}{Physics-weight tuning}{equation.59}{}}
-\newlabel{eq:04_physics_gradient@cref}{{[equation][59][]59}{[1][46][]46}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Recorded physics-weight sweep. The mean and deviation are the sample-weighted physical validation values in \texttt  {cv\_summary.csv}. $\Delta _{\lambda }$ is the paired candidate minus reference validation MSE, so positive values are worse than $\lambda =0$.}}{46}{table.caption.118}\protected@file@percent }
-\newlabel{tab:04_physics_results}{{8}{46}{Recorded physics-weight sweep. The mean and deviation are the sample-weighted physical validation values in \texttt {cv\_summary.csv}. $\Delta _{\lambda }$ is the paired candidate minus reference validation MSE, so positive values are worse than $\lambda =0$}{table.caption.118}{}}
-\newlabel{tab:04_physics_results@cref}{{[table][8][]8}{[1][46][]46}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {21}{\ignorespaces Global summaries of the recorded physics-weight sweep. The first panel shows sample-weighted mean physical validation MSE with fold deviations, the second separates the count-weighted low-angle and high-angle validation errors, and the third shows physical validation histories for $\lambda =0$, $0.25$, and $2$ with fold-spread bands. The training SIMM objective is not placed on the validation-MSE axis.}}{47}{figure.caption.119}\protected@file@percent }
-\newlabel{fig:04_physics_performance}{{21}{47}{Global summaries of the recorded physics-weight sweep. The first panel shows sample-weighted mean physical validation MSE with fold deviations, the second separates the count-weighted low-angle and high-angle validation errors, and the third shows physical validation histories for $\lambda =0$, $0.25$, and $2$ with fold-spread bands. The training SIMM objective is not placed on the validation-MSE axis}{figure.caption.119}{}}
-\newlabel{fig:04_physics_performance@cref}{{[figure][21][]21}{[1][47][]47}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {22}{\ignorespaces Layer-agnostic diagnostics for the recorded physics-weight sweep. Curves are means over folds and comparable diagnostic rows, with minimum to maximum fold bands. The gradient panel uses the square root of the sum of squared per-layer RMS norms for the all-parameter scope, the update panel uses the actual weights-scope update ratio, and the variance panel uses post-activation population variance. No layer index is shown.}}{48}{figure.caption.120}\protected@file@percent }
-\newlabel{fig:04_physics_diagnostics}{{22}{48}{Layer-agnostic diagnostics for the recorded physics-weight sweep. Curves are means over folds and comparable diagnostic rows, with minimum to maximum fold bands. The gradient panel uses the square root of the sum of squared per-layer RMS norms for the all-parameter scope, the update panel uses the actual weights-scope update ratio, and the variance panel uses post-activation population variance. No layer index is shown}{figure.caption.120}{}}
-\newlabel{fig:04_physics_diagnostics@cref}{{[figure][22][]22}{[1][47][]48}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.4}Optimizer comparison}{41}{subsection.4.4}\protected@file@percent }
+\newlabel{sec:04_optimizer_tuning}{{4.4}{41}{Optimizer comparison}{subsection.4.4}{}}
+\newlabel{sec:04_optimizer_tuning@cref}{{[subsection][4][4]4.4}{[1][41][]41}{}{}{}}
+\newlabel{eq:04_optimizer_clipping}{{50}{41}{Optimizer comparison}{equation.50}{}}
+\newlabel{eq:04_optimizer_clipping@cref}{{[equation][50][]50}{[1][41][]41}{}{}{}}
+\newlabel{eq:04_optimizer_sgd}{{51}{41}{Optimizer comparison}{equation.51}{}}
+\newlabel{eq:04_optimizer_sgd@cref}{{[equation][51][]51}{[1][41][]41}{}{}{}}
+\newlabel{eq:04_optimizer_momentum}{{52}{41}{Optimizer comparison}{equation.52}{}}
+\newlabel{eq:04_optimizer_momentum@cref}{{[equation][52][]52}{[1][41][]41}{}{}{}}
+\newlabel{eq:04_optimizer_adagrad}{{53}{41}{Optimizer comparison}{equation.53}{}}
+\newlabel{eq:04_optimizer_adagrad@cref}{{[equation][53][]53}{[1][41][]41}{}{}{}}
+\newlabel{eq:04_optimizer_rmsprop}{{54}{41}{Optimizer comparison}{equation.54}{}}
+\newlabel{eq:04_optimizer_rmsprop@cref}{{[equation][54][]54}{[1][41][]41}{}{}{}}
+\newlabel{eq:04_adam_update}{{55}{41}{Optimizer comparison}{equation.55}{}}
+\newlabel{eq:04_adam_update@cref}{{[equation][55][]55}{[1][41][]41}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {7}{\ignorespaces Complete optimizer comparison at learning rate $10^{-5}$. The means and fold deviations are sample-weighted physical validation MSE values, with the deviation defined as the weighted population standard deviation over the five folds. The minimum and maximum columns show the corresponding unweighted extrema of the fold scores.}}{42}{table.caption.111}\protected@file@percent }
+\newlabel{tab:04_optimizer_results}{{7}{42}{Complete optimizer comparison at learning rate $10^{-5}$. The means and fold deviations are sample-weighted physical validation MSE values, with the deviation defined as the weighted population standard deviation over the five folds. The minimum and maximum columns show the corresponding unweighted extrema of the fold scores}{table.caption.111}{}}
+\newlabel{tab:04_optimizer_results@cref}{{[table][7][]7}{[1][42][]42}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {19}{\ignorespaces Optimizer ranking from the five-fold comparison at learning rate $10^{-5}$. Dark points are individual physical validation MSE values, boxes summarize the five folds, and red points with bars show the sample-weighted mean and weighted population standard deviation. The vertical axis is logarithmic.}}{42}{figure.caption.112}\protected@file@percent }
+\newlabel{fig:04_optimizer_ranking}{{19}{42}{Optimizer ranking from the five-fold comparison at learning rate $10^{-5}$. Dark points are individual physical validation MSE values, boxes summarize the five folds, and red points with bars show the sample-weighted mean and weighted population standard deviation. The vertical axis is logarithmic}{figure.caption.112}{}}
+\newlabel{fig:04_optimizer_ranking@cref}{{[figure][19][]19}{[1][42][]42}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {20}{\ignorespaces Physical validation MSE at the ten-epoch history checkpoints for the five optimizer candidates. Lines and shaded regions are the sample-weighted means and weighted population standard deviations over the five folds. The vertical axis is logarithmic; the SIMM training objective and the test set are not shown.}}{43}{figure.caption.113}\protected@file@percent }
+\newlabel{fig:04_optimizer_history}{{20}{43}{Physical validation MSE at the ten-epoch history checkpoints for the five optimizer candidates. Lines and shaded regions are the sample-weighted means and weighted population standard deviations over the five folds. The vertical axis is logarithmic; the SIMM training objective and the test set are not shown}{figure.caption.113}{}}
+\newlabel{fig:04_optimizer_history@cref}{{[figure][20][]20}{[1][43][]43}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.5}Physics-weight tuning}{45}{subsection.4.5}\protected@file@percent }
+\newlabel{sec:04_physics_weight_tuning}{{4.5}{45}{Physics-weight tuning}{subsection.4.5}{}}
+\newlabel{sec:04_physics_weight_tuning@cref}{{[subsection][5][4]4.5}{[1][45][]45}{}{}{}}
+\newlabel{eq:04_physics_target}{{56}{45}{Physics-weight tuning}{equation.56}{}}
+\newlabel{eq:04_physics_target@cref}{{[equation][56][]56}{[1][45][]45}{}{}{}}
+\newlabel{eq:04_physics_mask}{{57}{45}{Physics-weight tuning}{equation.57}{}}
+\newlabel{eq:04_physics_mask@cref}{{[equation][57][]57}{[1][45][]45}{}{}{}}
+\newlabel{eq:04_simm_loss}{{58}{45}{Physics-weight tuning}{equation.58}{}}
+\newlabel{eq:04_simm_loss@cref}{{[equation][58][]58}{[1][45][]45}{}{}{}}
+\newlabel{eq:04_physics_gradient}{{59}{45}{Physics-weight tuning}{equation.59}{}}
+\newlabel{eq:04_physics_gradient@cref}{{[equation][59][]59}{[1][45][]45}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {8}{\ignorespaces Recorded physics-weight sweep. The mean and deviation are the sample-weighted physical validation values in \texttt  {cv\_summary.csv}. $\Delta _{\lambda }$ is the paired candidate minus reference validation MSE, so positive values are worse than $\lambda =0$.}}{45}{table.caption.118}\protected@file@percent }
+\newlabel{tab:04_physics_results}{{8}{45}{Recorded physics-weight sweep. The mean and deviation are the sample-weighted physical validation values in \texttt {cv\_summary.csv}. $\Delta _{\lambda }$ is the paired candidate minus reference validation MSE, so positive values are worse than $\lambda =0$}{table.caption.118}{}}
+\newlabel{tab:04_physics_results@cref}{{[table][8][]8}{[1][45][]45}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {21}{\ignorespaces Global summaries of the recorded physics-weight sweep. The first panel shows sample-weighted mean physical validation MSE with fold deviations, the second separates the count-weighted low-angle and high-angle validation errors, and the third shows physical validation histories for $\lambda =0$, $0.25$, and $2$ with fold-spread bands. The training SIMM objective is not placed on the validation-MSE axis.}}{46}{figure.caption.119}\protected@file@percent }
+\newlabel{fig:04_physics_performance}{{21}{46}{Global summaries of the recorded physics-weight sweep. The first panel shows sample-weighted mean physical validation MSE with fold deviations, the second separates the count-weighted low-angle and high-angle validation errors, and the third shows physical validation histories for $\lambda =0$, $0.25$, and $2$ with fold-spread bands. The training SIMM objective is not placed on the validation-MSE axis}{figure.caption.119}{}}
+\newlabel{fig:04_physics_performance@cref}{{[figure][21][]21}{[1][46][]46}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {22}{\ignorespaces Layer-agnostic diagnostics for the recorded physics-weight sweep. Curves are means over folds and comparable diagnostic rows, with minimum to maximum fold bands. The gradient panel uses the square root of the sum of squared per-layer RMS norms for the all-parameter scope, the update panel uses the actual weights-scope update ratio, and the variance panel uses post-activation population variance. No layer index is shown.}}{47}{figure.caption.120}\protected@file@percent }
+\newlabel{fig:04_physics_diagnostics}{{22}{47}{Layer-agnostic diagnostics for the recorded physics-weight sweep. Curves are means over folds and comparable diagnostic rows, with minimum to maximum fold bands. The gradient panel uses the square root of the sum of squared per-layer RMS norms for the all-parameter scope, the update panel uses the actual weights-scope update ratio, and the variance panel uses post-activation population variance. No layer index is shown}{figure.caption.120}{}}
+\newlabel{fig:04_physics_diagnostics@cref}{{[figure][22][]22}{[1][46][]47}{}{}{}}
 \citation{tibshirani1996lasso,hoerl1970ridge}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.6}Weight regularization}{49}{subsection.4.6}\protected@file@percent }
-\newlabel{sec:04_regularization_tuning}{{4.6}{49}{Weight regularization}{subsection.4.6}{}}
-\newlabel{sec:04_regularization_tuning@cref}{{[subsection][6][4]4.6}{[1][49][]49}{}{}{}}
-\newlabel{eq:04_regularization}{{60}{49}{Weight regularization}{equation.60}{}}
-\newlabel{eq:04_regularization@cref}{{[equation][60][]60}{[1][49][]49}{}{}{}}
-\newlabel{eq:04_regularization_gradient}{{61}{49}{Weight regularization}{equation.61}{}}
-\newlabel{eq:04_regularization_gradient@cref}{{[equation][61][]61}{[1][49][]49}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Documented L1 reference sweep on the large topology. Values are transcribed from the experiment README because the corresponding raw result tree is absent. $\Delta _{\lambda _1}$ is the documented candidate minus reference mean validation MSE.}}{49}{table.caption.123}\protected@file@percent }
-\newlabel{tab:04_l1_results}{{9}{49}{Documented L1 reference sweep on the large topology. Values are transcribed from the experiment README because the corresponding raw result tree is absent. $\Delta _{\lambda _1}$ is the documented candidate minus reference mean validation MSE}{table.caption.123}{}}
-\newlabel{tab:04_l1_results@cref}{{[table][9][]9}{[1][49][]49}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Documented L2 reference sweep on the large topology. Values are transcribed from the experiment README because the corresponding raw result tree is absent. $\Delta _{\lambda _2}$ is the documented candidate minus reference mean validation MSE.}}{50}{table.caption.124}\protected@file@percent }
-\newlabel{tab:04_l2_results}{{10}{50}{Documented L2 reference sweep on the large topology. Values are transcribed from the experiment README because the corresponding raw result tree is absent. $\Delta _{\lambda _2}$ is the documented candidate minus reference mean validation MSE}{table.caption.124}{}}
-\newlabel{tab:04_l2_results@cref}{{[table][10][]10}{[1][49][]50}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.6}Weight regularization}{48}{subsection.4.6}\protected@file@percent }
+\newlabel{sec:04_regularization_tuning}{{4.6}{48}{Weight regularization}{subsection.4.6}{}}
+\newlabel{sec:04_regularization_tuning@cref}{{[subsection][6][4]4.6}{[1][48][]48}{}{}{}}
+\newlabel{eq:04_regularization}{{60}{48}{Weight regularization}{equation.60}{}}
+\newlabel{eq:04_regularization@cref}{{[equation][60][]60}{[1][48][]48}{}{}{}}
+\newlabel{eq:04_regularization_gradient}{{61}{48}{Weight regularization}{equation.61}{}}
+\newlabel{eq:04_regularization_gradient@cref}{{[equation][61][]61}{[1][48][]48}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {9}{\ignorespaces Documented L1 reference sweep on the large topology. Values are transcribed from the experiment README because the corresponding raw result tree is absent. $\Delta _{\lambda _1}$ is the documented candidate minus reference mean validation MSE.}}{48}{table.caption.123}\protected@file@percent }
+\newlabel{tab:04_l1_results}{{9}{48}{Documented L1 reference sweep on the large topology. Values are transcribed from the experiment README because the corresponding raw result tree is absent. $\Delta _{\lambda _1}$ is the documented candidate minus reference mean validation MSE}{table.caption.123}{}}
+\newlabel{tab:04_l1_results@cref}{{[table][9][]9}{[1][48][]48}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {10}{\ignorespaces Documented L2 reference sweep on the large topology. Values are transcribed from the experiment README because the corresponding raw result tree is absent. $\Delta _{\lambda _2}$ is the documented candidate minus reference mean validation MSE.}}{49}{table.caption.124}\protected@file@percent }
+\newlabel{tab:04_l2_results}{{10}{49}{Documented L2 reference sweep on the large topology. Values are transcribed from the experiment README because the corresponding raw result tree is absent. $\Delta _{\lambda _2}$ is the documented candidate minus reference mean validation MSE}{table.caption.124}{}}
+\newlabel{tab:04_l2_results@cref}{{[table][10][]10}{[1][48][]49}{}{}{}}
 \citation{glorot2010understanding}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.7}Activation-function tuning}{51}{subsection.4.7}\protected@file@percent }
-\newlabel{sec:04_activation_tuning}{{4.7}{51}{Activation-function tuning}{subsection.4.7}{}}
-\newlabel{sec:04_activation_tuning@cref}{{[subsection][7][4]4.7}{[1][51][]51}{}{}{}}
-\newlabel{eq:04_rectifier_activations}{{62}{51}{Activation-function tuning}{equation.62}{}}
-\newlabel{eq:04_rectifier_activations@cref}{{[equation][62][]62}{[1][51][]51}{}{}{}}
-\newlabel{eq:04_saturating_activations}{{63}{51}{Activation-function tuning}{equation.63}{}}
-\newlabel{eq:04_saturating_activations@cref}{{[equation][63][]63}{[1][51][]51}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Complete activation-function comparison on the fixed large topology. Means and deviations are the sample-weighted physical validation MSE and weighted population standard deviation from \texttt  {cv\_summary.csv}; the ranking was performed over all six candidates.}}{52}{table.caption.127}\protected@file@percent }
-\newlabel{tab:04_activation_results}{{11}{52}{Complete activation-function comparison on the fixed large topology. Means and deviations are the sample-weighted physical validation MSE and weighted population standard deviation from \texttt {cv\_summary.csv}; the ranking was performed over all six candidates}{table.caption.127}{}}
-\newlabel{tab:04_activation_results@cref}{{[table][11][]11}{[1][51][]52}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {23}{\ignorespaces Complete activation-function ranking from the official \texttt  {cv\_summary.csv}. Points are sample-weighted mean physical validation MSE values and horizontal error bars are the corresponding weighted population standard deviations over the five folds. The orange point identifies the lowest observed candidate, LeakyReLU with $\alpha =0.05$.}}{52}{figure.caption.128}\protected@file@percent }
-\newlabel{fig:04_activation_ranking}{{23}{52}{Complete activation-function ranking from the official \texttt {cv\_summary.csv}. Points are sample-weighted mean physical validation MSE values and horizontal error bars are the corresponding weighted population standard deviations over the five folds. The orange point identifies the lowest observed candidate, LeakyReLU with $\alpha =0.05$}{figure.caption.128}{}}
-\newlabel{fig:04_activation_ranking@cref}{{[figure][23][]23}{[1][52][]52}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {24}{\ignorespaces Fold-weighted physical validation MSE at the ten-epoch checkpoints for the six activation candidates. Shaded regions show the positive part of the weighted population standard deviation band over the five folds, and the vertical axis is logarithmic. The standardized SIMM training objective is not plotted on this axis.}}{53}{figure.caption.129}\protected@file@percent }
-\newlabel{fig:04_activation_history}{{24}{53}{Fold-weighted physical validation MSE at the ten-epoch checkpoints for the six activation candidates. Shaded regions show the positive part of the weighted population standard deviation band over the five folds, and the vertical axis is logarithmic. The standardized SIMM training objective is not plotted on this axis}{figure.caption.129}{}}
-\newlabel{fig:04_activation_history@cref}{{[figure][24][]24}{[1][53][]53}{}{}{}}
-\newlabel{eq:04_activation_variance}{{64}{53}{Activation-function tuning}{equation.64}{}}
-\newlabel{eq:04_activation_variance@cref}{{[equation][64][]64}{[1][53][]53}{}{}{}}
-\newlabel{eq:04_activation_chain_gradient}{{65}{54}{Activation-function tuning}{equation.65}{}}
-\newlabel{eq:04_activation_chain_gradient@cref}{{[equation][65][]65}{[1][54][]54}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {25}{\ignorespaces Empirical distributions of the actual pre-activation values $z$ at the first dense nonlinearity (stable model layer 5) for the six activation candidates. Gray bars show epoch 1 and blue step curves show epoch 100, with histograms pooled over the five folds. The black curves show the exact absolute derivative $|f'(z)|$ on the right-hand scale. Orange shading identifies the Tanh and Sigmoid regions with $|f'(z)|\leq 0.01$ and the negative branch for ReLU and LeakyReLU. The epoch-100 mass annotations are approximate because the committed diagnostics store fixed-bin counts; the edge bins include values outside the displayed $[-10,10]$ range.}}{55}{figure.caption.132}\protected@file@percent }
-\newlabel{fig:04_activation_input_distributions}{{25}{55}{Empirical distributions of the actual pre-activation values $z$ at the first dense nonlinearity (stable model layer 5) for the six activation candidates. Gray bars show epoch 1 and blue step curves show epoch 100, with histograms pooled over the five folds. The black curves show the exact absolute derivative $|f'(z)|$ on the right-hand scale. Orange shading identifies the Tanh and Sigmoid regions with $|f'(z)|\leq 0.01$ and the negative branch for ReLU and LeakyReLU. The epoch-100 mass annotations are approximate because the committed diagnostics store fixed-bin counts; the edge bins include values outside the displayed $[-10,10]$ range}{figure.caption.132}{}}
-\newlabel{fig:04_activation_input_distributions@cref}{{[figure][25][]25}{[1][54][]55}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.7}Activation-function tuning}{50}{subsection.4.7}\protected@file@percent }
+\newlabel{sec:04_activation_tuning}{{4.7}{50}{Activation-function tuning}{subsection.4.7}{}}
+\newlabel{sec:04_activation_tuning@cref}{{[subsection][7][4]4.7}{[1][50][]50}{}{}{}}
+\newlabel{eq:04_rectifier_activations}{{62}{50}{Activation-function tuning}{equation.62}{}}
+\newlabel{eq:04_rectifier_activations@cref}{{[equation][62][]62}{[1][50][]50}{}{}{}}
+\newlabel{eq:04_saturating_activations}{{63}{50}{Activation-function tuning}{equation.63}{}}
+\newlabel{eq:04_saturating_activations@cref}{{[equation][63][]63}{[1][50][]50}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {11}{\ignorespaces Complete activation-function comparison on the fixed large topology. Means and deviations are the sample-weighted physical validation MSE and weighted population standard deviation from \texttt  {cv\_summary.csv}; the ranking was performed over all six candidates.}}{51}{table.caption.127}\protected@file@percent }
+\newlabel{tab:04_activation_results}{{11}{51}{Complete activation-function comparison on the fixed large topology. Means and deviations are the sample-weighted physical validation MSE and weighted population standard deviation from \texttt {cv\_summary.csv}; the ranking was performed over all six candidates}{table.caption.127}{}}
+\newlabel{tab:04_activation_results@cref}{{[table][11][]11}{[1][50][]51}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {23}{\ignorespaces Complete activation-function ranking from the official \texttt  {cv\_summary.csv}. Points are sample-weighted mean physical validation MSE values and horizontal error bars are the corresponding weighted population standard deviations over the five folds. The orange point identifies the lowest observed candidate, LeakyReLU with $\alpha =0.05$.}}{51}{figure.caption.128}\protected@file@percent }
+\newlabel{fig:04_activation_ranking}{{23}{51}{Complete activation-function ranking from the official \texttt {cv\_summary.csv}. Points are sample-weighted mean physical validation MSE values and horizontal error bars are the corresponding weighted population standard deviations over the five folds. The orange point identifies the lowest observed candidate, LeakyReLU with $\alpha =0.05$}{figure.caption.128}{}}
+\newlabel{fig:04_activation_ranking@cref}{{[figure][23][]23}{[1][51][]51}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {24}{\ignorespaces Fold-weighted physical validation MSE at the ten-epoch checkpoints for the six activation candidates. Shaded regions show the positive part of the weighted population standard deviation band over the five folds, and the vertical axis is logarithmic. The standardized SIMM training objective is not plotted on this axis.}}{52}{figure.caption.129}\protected@file@percent }
+\newlabel{fig:04_activation_history}{{24}{52}{Fold-weighted physical validation MSE at the ten-epoch checkpoints for the six activation candidates. Shaded regions show the positive part of the weighted population standard deviation band over the five folds, and the vertical axis is logarithmic. The standardized SIMM training objective is not plotted on this axis}{figure.caption.129}{}}
+\newlabel{fig:04_activation_history@cref}{{[figure][24][]24}{[1][52][]52}{}{}{}}
+\newlabel{eq:04_activation_variance}{{64}{52}{Activation-function tuning}{equation.64}{}}
+\newlabel{eq:04_activation_variance@cref}{{[equation][64][]64}{[1][52][]52}{}{}{}}
+\newlabel{eq:04_activation_chain_gradient}{{65}{53}{Activation-function tuning}{equation.65}{}}
+\newlabel{eq:04_activation_chain_gradient@cref}{{[equation][65][]65}{[1][53][]53}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {25}{\ignorespaces Empirical distributions of the actual pre-activation values $z$ at the first dense nonlinearity (stable model layer 5) for the six activation candidates. Gray bars show epoch 1 and blue step curves show epoch 100, with histograms pooled over the five folds. The black curves show the exact absolute derivative $|f'(z)|$ on the right-hand scale. Orange shading identifies the Tanh and Sigmoid regions with $|f'(z)|\leq 0.01$ and the negative branch for ReLU and LeakyReLU. The epoch-100 mass annotations are approximate because the committed diagnostics store fixed-bin counts; the edge bins include values outside the displayed $[-10,10]$ range.}}{54}{figure.caption.132}\protected@file@percent }
+\newlabel{fig:04_activation_input_distributions}{{25}{54}{Empirical distributions of the actual pre-activation values $z$ at the first dense nonlinearity (stable model layer 5) for the six activation candidates. Gray bars show epoch 1 and blue step curves show epoch 100, with histograms pooled over the five folds. The black curves show the exact absolute derivative $|f'(z)|$ on the right-hand scale. Orange shading identifies the Tanh and Sigmoid regions with $|f'(z)|\leq 0.01$ and the negative branch for ReLU and LeakyReLU. The epoch-100 mass annotations are approximate because the committed diagnostics store fixed-bin counts; the edge bins include values outside the displayed $[-10,10]$ range}{figure.caption.132}{}}
+\newlabel{fig:04_activation_input_distributions@cref}{{[figure][25][]25}{[1][53][]54}{}{}{}}
 \citation{loshchilov2017sgdr}
 \citation{goyal2017accurate}
-\@writefile{lof}{\contentsline {figure}{\numberline {26}{\ignorespaces Diagnostics for the activation-function search. The upper panels show, for each candidate, the maximum gradient \texttt  {maximum\_norm} with \texttt  {parameter\_scope=all} and the maximum actual weight update ratio with \texttt  {parameter\_scope=weights}, taken over all five folds, layers, and epochs. The lower left panel shows fold-averaged RMS gradient norms for the selected candidate at epochs 1 and 100 over stable trainable layer indices. The lower right panel shows post-activation population variances for the selected candidate at epochs 1, 50, and 100, pooled over folds from the recorded population moments.}}{56}{figure.caption.133}\protected@file@percent }
-\newlabel{fig:04_activation_diagnostics}{{26}{56}{Diagnostics for the activation-function search. The upper panels show, for each candidate, the maximum gradient \texttt {maximum\_norm} with \texttt {parameter\_scope=all} and the maximum actual weight update ratio with \texttt {parameter\_scope=weights}, taken over all five folds, layers, and epochs. The lower left panel shows fold-averaged RMS gradient norms for the selected candidate at epochs 1 and 100 over stable trainable layer indices. The lower right panel shows post-activation population variances for the selected candidate at epochs 1, 50, and 100, pooled over folds from the recorded population moments}{figure.caption.133}{}}
-\newlabel{fig:04_activation_diagnostics@cref}{{[figure][26][]26}{[1][54][]56}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.8}Learning-rate and schedule tuning}{56}{subsection.4.8}\protected@file@percent }
-\newlabel{sec:04_learning_rate_tuning}{{4.8}{56}{Learning-rate and schedule tuning}{subsection.4.8}{}}
-\newlabel{sec:04_learning_rate_tuning@cref}{{[subsection][8][4]4.8}{[1][56][]56}{}{}{}}
-\newlabel{eq:04_constant_schedule}{{66}{56}{Learning-rate and schedule tuning}{equation.66}{}}
-\newlabel{eq:04_constant_schedule@cref}{{[equation][66][]66}{[1][56][]56}{}{}{}}
-\newlabel{eq:04_step_schedule}{{67}{56}{Learning-rate and schedule tuning}{equation.67}{}}
-\newlabel{eq:04_step_schedule@cref}{{[equation][67][]67}{[1][56][]56}{}{}{}}
-\newlabel{eq:04_cosine_schedule}{{68}{56}{Learning-rate and schedule tuning}{equation.68}{}}
-\newlabel{eq:04_cosine_schedule@cref}{{[equation][68][]68}{[1][56][]56}{}{}{}}
-\newlabel{eq:04_warmup_cosine_schedule}{{69}{57}{Learning-rate and schedule tuning}{equation.69}{}}
-\newlabel{eq:04_warmup_cosine_schedule@cref}{{[equation][69][]69}{[1][56][]57}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces Complete ranking of the eleven learning-rate candidates. Means and deviations are the sample-weighted physical validation MSE and its weighted population standard deviation over the five folds, as recorded in \texttt  {cv\_summary.csv}; the final column gives the minimum and maximum fold scores.}}{57}{table.caption.138}\protected@file@percent }
-\newlabel{tab:04_learning_rate_results}{{12}{57}{Complete ranking of the eleven learning-rate candidates. Means and deviations are the sample-weighted physical validation MSE and its weighted population standard deviation over the five folds, as recorded in \texttt {cv\_summary.csv}; the final column gives the minimum and maximum fold scores}{table.caption.138}{}}
-\newlabel{tab:04_learning_rate_results@cref}{{[table][12][]12}{[1][57][]57}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {27}{\ignorespaces Complete learning-rate schedule ranking. Points show the sample-weighted mean physical validation MSE and horizontal bars show the weighted population standard deviation over five folds. The horizontal axis is logarithmic; orange identifies the selected constant $10^{-3}$ candidate and red identifies candidates whose rates reach $10^{-1}$.}}{58}{figure.caption.139}\protected@file@percent }
-\newlabel{fig:04_learning_rate_ranking}{{27}{58}{Complete learning-rate schedule ranking. Points show the sample-weighted mean physical validation MSE and horizontal bars show the weighted population standard deviation over five folds. The horizontal axis is logarithmic; orange identifies the selected constant $10^{-3}$ candidate and red identifies candidates whose rates reach $10^{-1}$}{figure.caption.139}{}}
-\newlabel{fig:04_learning_rate_ranking@cref}{{[figure][27][]27}{[1][57][]58}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {28}{\ignorespaces Sample-weighted validation histories at the ten-epoch checkpoints recorded for cross-validation. The upper panel contains the six candidates whose rates remain in the low-error scale, while the lower panel contains the five candidates that reach $10^{-1}$. Both vertical axes are logarithmic and show physical-unit MSE.}}{59}{figure.caption.140}\protected@file@percent }
-\newlabel{fig:04_learning_rate_history}{{28}{59}{Sample-weighted validation histories at the ten-epoch checkpoints recorded for cross-validation. The upper panel contains the six candidates whose rates remain in the low-error scale, while the lower panel contains the five candidates that reach $10^{-1}$. Both vertical axes are logarithmic and show physical-unit MSE}{figure.caption.140}{}}
-\newlabel{fig:04_learning_rate_history@cref}{{[figure][28][]28}{[1][57][]59}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {29}{\ignorespaces Effective learning rates from \texttt  {epoch\_metrics.csv} for zero-based fold 0, plotted against completed epoch. The scheduler settings are deterministic and identical across folds. The logarithmic vertical axis makes the constant, step, cosine, and warm-up branches comparable.}}{60}{figure.caption.141}\protected@file@percent }
-\newlabel{fig:04_learning_rate_schedules}{{29}{60}{Effective learning rates from \texttt {epoch\_metrics.csv} for zero-based fold 0, plotted against completed epoch. The scheduler settings are deterministic and identical across folds. The logarithmic vertical axis makes the constant, step, cosine, and warm-up branches comparable}{figure.caption.141}{}}
-\newlabel{fig:04_learning_rate_schedules@cref}{{[figure][29][]29}{[1][58][]60}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {30}{\ignorespaces Learning-rate diagnostics from the complete five-fold run. The upper panels show the maximum over folds, layers, and epochs of \texttt  {maximum\_norm} with \texttt  {parameter\_scope=all} and of the actual \texttt  {mean\_ratio} with \texttt  {parameter\_scope=weights}. The lower-left panel shows the selected candidate's fold-averaged RMS gradient by stable model layer at epochs 1 and 100. The lower-right panel shows the selected candidate's pooled post-activation population variance at epochs 1, 50, and 100. All vertical axes are logarithmic.}}{61}{figure.caption.142}\protected@file@percent }
-\newlabel{fig:04_learning_rate_diagnostics}{{30}{61}{Learning-rate diagnostics from the complete five-fold run. The upper panels show the maximum over folds, layers, and epochs of \texttt {maximum\_norm} with \texttt {parameter\_scope=all} and of the actual \texttt {mean\_ratio} with \texttt {parameter\_scope=weights}. The lower-left panel shows the selected candidate's fold-averaged RMS gradient by stable model layer at epochs 1 and 100. The lower-right panel shows the selected candidate's pooled post-activation population variance at epochs 1, 50, and 100. All vertical axes are logarithmic}{figure.caption.142}{}}
-\newlabel{fig:04_learning_rate_diagnostics@cref}{{[figure][30][]30}{[1][58][]61}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.9}Final production training}{61}{subsection.4.9}\protected@file@percent }
-\newlabel{sec:04_final_training}{{4.9}{61}{Final production training}{subsection.4.9}{}}
-\newlabel{sec:04_final_training@cref}{{[subsection][9][4]4.9}{[1][61][]61}{}{}{}}
-\newlabel{eq:04_final_batch_partition}{{70}{61}{Final production training}{equation.70}{}}
-\newlabel{eq:04_final_batch_partition@cref}{{[equation][70][]70}{[1][61][]61}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {13}{\ignorespaces Chronology of the ordinary-training trials. Values are read from the corresponding \texttt  {final\_metrics.csv} files under \texttt  {results/ordinary-training}; the batch sizes and completed epochs are checked against each run's metadata and diagnostic history. The old stopping-rule row predates the 20/20 policy.}}{62}{table.caption.144}\protected@file@percent }
-\newlabel{tab:04_final_training_trials}{{13}{62}{Chronology of the ordinary-training trials. Values are read from the corresponding \texttt {final\_metrics.csv} files under \texttt {results/ordinary-training}; the batch sizes and completed epochs are checked against each run's metadata and diagnostic history. The old stopping-rule row predates the 20/20 policy}{table.caption.144}{}}
-\newlabel{tab:04_final_training_trials@cref}{{[table][13][]13}{[1][61][]62}{}{}{}}
-\newlabel{eq:04_final_overfit_rule}{{71}{62}{Final production training}{equation.71}{}}
-\newlabel{eq:04_final_overfit_rule@cref}{{[equation][71][]71}{[1][62][]62}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {31}{\ignorespaces Physical training and validation MSE for the final production run. The left panel uses a linear y-axis and the right panel uses a logarithmic y-axis; both contain all 1525 completed epochs. The dashed line marks the selected epoch 1505 and the dotted line marks the stopping epoch 1525. Both panels use physical-unit MSE, while the standardized SIMM objective is not shown.}}{63}{figure.caption.146}\protected@file@percent }
-\newlabel{fig:04_final_training_history}{{31}{63}{Physical training and validation MSE for the final production run. The left panel uses a linear y-axis and the right panel uses a logarithmic y-axis; both contain all 1525 completed epochs. The dashed line marks the selected epoch 1505 and the dotted line marks the stopping epoch 1525. Both panels use physical-unit MSE, while the standardized SIMM objective is not shown}{figure.caption.146}{}}
-\newlabel{fig:04_final_training_history@cref}{{[figure][31][]31}{[1][63][]63}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {14}{\ignorespaces Angle-of-attack split of the final production test metrics read from \texttt  {test\_metrics.csv}. The high-angle difference and ratio are computed from the two stored subset MSE values; no per-sample residual spread was recorded.}}{63}{table.caption.147}\protected@file@percent }
-\newlabel{tab:04_final_angle_results}{{14}{63}{Angle-of-attack split of the final production test metrics read from \texttt {test\_metrics.csv}. The high-angle difference and ratio are computed from the two stored subset MSE values; no per-sample residual spread was recorded}{table.caption.147}{}}
-\newlabel{tab:04_final_angle_results@cref}{{[table][14][]14}{[1][63][]63}{}{}{}}
-\@writefile{lof}{\contentsline {figure}{\numberline {32}{\ignorespaces Untouched-test physical MSE for the restored seed-42 production model, split into the low-angle ($|\alpha |\leq 10^\circ $) and high-angle ($|\alpha |>10^\circ $) regimes. The bars are based on 363 and 66 samples, respectively, and the dashed line marks the overall MSE over all 429 test samples.}}{64}{figure.caption.148}\protected@file@percent }
-\newlabel{fig:04_final_test_mse_by_angle}{{32}{64}{Untouched-test physical MSE for the restored seed-42 production model, split into the low-angle ($|\alpha |\leq 10^\circ $) and high-angle ($|\alpha |>10^\circ $) regimes. The bars are based on 363 and 66 samples, respectively, and the dashed line marks the overall MSE over all 429 test samples}{figure.caption.148}{}}
-\newlabel{fig:04_final_test_mse_by_angle@cref}{{[figure][32][]32}{[1][63][]64}{}{}{}}
-\@writefile{toc}{\contentsline {subsection}{\numberline {4.10}Conclusions}{64}{subsection.4.10}\protected@file@percent }
-\newlabel{sec:04_tuning_conclusions}{{4.10}{64}{Conclusions}{subsection.4.10}{}}
-\newlabel{sec:04_tuning_conclusions@cref}{{[subsection][10][4]4.10}{[1][64][]64}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {26}{\ignorespaces Diagnostics for the activation-function search. The upper panels show, for each candidate, the maximum gradient \texttt  {maximum\_norm} with \texttt  {parameter\_scope=all} and the maximum actual weight update ratio with \texttt  {parameter\_scope=weights}, taken over all five folds, layers, and epochs. The lower left panel shows fold-averaged RMS gradient norms for the selected candidate at epochs 1 and 100 over stable trainable layer indices. The lower right panel shows post-activation population variances for the selected candidate at epochs 1, 50, and 100, pooled over folds from the recorded population moments.}}{55}{figure.caption.133}\protected@file@percent }
+\newlabel{fig:04_activation_diagnostics}{{26}{55}{Diagnostics for the activation-function search. The upper panels show, for each candidate, the maximum gradient \texttt {maximum\_norm} with \texttt {parameter\_scope=all} and the maximum actual weight update ratio with \texttt {parameter\_scope=weights}, taken over all five folds, layers, and epochs. The lower left panel shows fold-averaged RMS gradient norms for the selected candidate at epochs 1 and 100 over stable trainable layer indices. The lower right panel shows post-activation population variances for the selected candidate at epochs 1, 50, and 100, pooled over folds from the recorded population moments}{figure.caption.133}{}}
+\newlabel{fig:04_activation_diagnostics@cref}{{[figure][26][]26}{[1][53][]55}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.8}Learning-rate and schedule tuning}{55}{subsection.4.8}\protected@file@percent }
+\newlabel{sec:04_learning_rate_tuning}{{4.8}{55}{Learning-rate and schedule tuning}{subsection.4.8}{}}
+\newlabel{sec:04_learning_rate_tuning@cref}{{[subsection][8][4]4.8}{[1][55][]55}{}{}{}}
+\newlabel{eq:04_constant_schedule}{{66}{55}{Learning-rate and schedule tuning}{equation.66}{}}
+\newlabel{eq:04_constant_schedule@cref}{{[equation][66][]66}{[1][55][]55}{}{}{}}
+\newlabel{eq:04_step_schedule}{{67}{55}{Learning-rate and schedule tuning}{equation.67}{}}
+\newlabel{eq:04_step_schedule@cref}{{[equation][67][]67}{[1][55][]55}{}{}{}}
+\newlabel{eq:04_cosine_schedule}{{68}{55}{Learning-rate and schedule tuning}{equation.68}{}}
+\newlabel{eq:04_cosine_schedule@cref}{{[equation][68][]68}{[1][55][]55}{}{}{}}
+\newlabel{eq:04_warmup_cosine_schedule}{{69}{56}{Learning-rate and schedule tuning}{equation.69}{}}
+\newlabel{eq:04_warmup_cosine_schedule@cref}{{[equation][69][]69}{[1][55][]56}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {12}{\ignorespaces Complete ranking of the eleven learning-rate candidates. Means and deviations are the sample-weighted physical validation MSE and its weighted population standard deviation over the five folds, as recorded in \texttt  {cv\_summary.csv}; the final column gives the minimum and maximum fold scores.}}{56}{table.caption.138}\protected@file@percent }
+\newlabel{tab:04_learning_rate_results}{{12}{56}{Complete ranking of the eleven learning-rate candidates. Means and deviations are the sample-weighted physical validation MSE and its weighted population standard deviation over the five folds, as recorded in \texttt {cv\_summary.csv}; the final column gives the minimum and maximum fold scores}{table.caption.138}{}}
+\newlabel{tab:04_learning_rate_results@cref}{{[table][12][]12}{[1][56][]56}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {27}{\ignorespaces Complete learning-rate schedule ranking. Points show the sample-weighted mean physical validation MSE and horizontal bars show the weighted population standard deviation over five folds. The horizontal axis is logarithmic; orange identifies the selected constant $10^{-3}$ candidate and red identifies candidates whose rates reach $10^{-1}$.}}{57}{figure.caption.139}\protected@file@percent }
+\newlabel{fig:04_learning_rate_ranking}{{27}{57}{Complete learning-rate schedule ranking. Points show the sample-weighted mean physical validation MSE and horizontal bars show the weighted population standard deviation over five folds. The horizontal axis is logarithmic; orange identifies the selected constant $10^{-3}$ candidate and red identifies candidates whose rates reach $10^{-1}$}{figure.caption.139}{}}
+\newlabel{fig:04_learning_rate_ranking@cref}{{[figure][27][]27}{[1][56][]57}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {28}{\ignorespaces Sample-weighted validation histories at the ten-epoch checkpoints recorded for cross-validation. The upper panel contains the six candidates whose rates remain in the low-error scale, while the lower panel contains the five candidates that reach $10^{-1}$. Both vertical axes are logarithmic and show physical-unit MSE.}}{58}{figure.caption.140}\protected@file@percent }
+\newlabel{fig:04_learning_rate_history}{{28}{58}{Sample-weighted validation histories at the ten-epoch checkpoints recorded for cross-validation. The upper panel contains the six candidates whose rates remain in the low-error scale, while the lower panel contains the five candidates that reach $10^{-1}$. Both vertical axes are logarithmic and show physical-unit MSE}{figure.caption.140}{}}
+\newlabel{fig:04_learning_rate_history@cref}{{[figure][28][]28}{[1][56][]58}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {29}{\ignorespaces Effective learning rates from \texttt  {epoch\_metrics.csv} for zero-based fold 0, plotted against completed epoch. The scheduler settings are deterministic and identical across folds. The logarithmic vertical axis makes the constant, step, cosine, and warm-up branches comparable.}}{59}{figure.caption.141}\protected@file@percent }
+\newlabel{fig:04_learning_rate_schedules}{{29}{59}{Effective learning rates from \texttt {epoch\_metrics.csv} for zero-based fold 0, plotted against completed epoch. The scheduler settings are deterministic and identical across folds. The logarithmic vertical axis makes the constant, step, cosine, and warm-up branches comparable}{figure.caption.141}{}}
+\newlabel{fig:04_learning_rate_schedules@cref}{{[figure][29][]29}{[1][57][]59}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {30}{\ignorespaces Learning-rate diagnostics from the complete five-fold run. The upper panels show the maximum over folds, layers, and epochs of \texttt  {maximum\_norm} with \texttt  {parameter\_scope=all} and of the actual \texttt  {mean\_ratio} with \texttt  {parameter\_scope=weights}. The lower-left panel shows the selected candidate's fold-averaged RMS gradient by stable model layer at epochs 1 and 100. The lower-right panel shows the selected candidate's pooled post-activation population variance at epochs 1, 50, and 100. All vertical axes are logarithmic.}}{60}{figure.caption.142}\protected@file@percent }
+\newlabel{fig:04_learning_rate_diagnostics}{{30}{60}{Learning-rate diagnostics from the complete five-fold run. The upper panels show the maximum over folds, layers, and epochs of \texttt {maximum\_norm} with \texttt {parameter\_scope=all} and of the actual \texttt {mean\_ratio} with \texttt {parameter\_scope=weights}. The lower-left panel shows the selected candidate's fold-averaged RMS gradient by stable model layer at epochs 1 and 100. The lower-right panel shows the selected candidate's pooled post-activation population variance at epochs 1, 50, and 100. All vertical axes are logarithmic}{figure.caption.142}{}}
+\newlabel{fig:04_learning_rate_diagnostics@cref}{{[figure][30][]30}{[1][57][]60}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.9}Final production training}{60}{subsection.4.9}\protected@file@percent }
+\newlabel{sec:04_final_training}{{4.9}{60}{Final production training}{subsection.4.9}{}}
+\newlabel{sec:04_final_training@cref}{{[subsection][9][4]4.9}{[1][60][]60}{}{}{}}
+\newlabel{eq:04_final_batch_partition}{{70}{60}{Final production training}{equation.70}{}}
+\newlabel{eq:04_final_batch_partition@cref}{{[equation][70][]70}{[1][60][]60}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {13}{\ignorespaces Chronology of the ordinary-training trials. Values are read from the corresponding \texttt  {final\_metrics.csv} files under \texttt  {results/ordinary-training}; the batch sizes and completed epochs are checked against each run's metadata and diagnostic history. The old stopping-rule row predates the 20/20 policy.}}{61}{table.caption.144}\protected@file@percent }
+\newlabel{tab:04_final_training_trials}{{13}{61}{Chronology of the ordinary-training trials. Values are read from the corresponding \texttt {final\_metrics.csv} files under \texttt {results/ordinary-training}; the batch sizes and completed epochs are checked against each run's metadata and diagnostic history. The old stopping-rule row predates the 20/20 policy}{table.caption.144}{}}
+\newlabel{tab:04_final_training_trials@cref}{{[table][13][]13}{[1][60][]61}{}{}{}}
+\newlabel{eq:04_final_overfit_rule}{{71}{61}{Final production training}{equation.71}{}}
+\newlabel{eq:04_final_overfit_rule@cref}{{[equation][71][]71}{[1][61][]61}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {31}{\ignorespaces Physical training and validation MSE for the final production run. The left panel uses a linear y-axis and the right panel uses a logarithmic y-axis; both contain all 1525 completed epochs. The dashed line marks the selected epoch 1505 and the dotted line marks the stopping epoch 1525. Both panels use physical-unit MSE, while the standardized SIMM objective is not shown.}}{62}{figure.caption.146}\protected@file@percent }
+\newlabel{fig:04_final_training_history}{{31}{62}{Physical training and validation MSE for the final production run. The left panel uses a linear y-axis and the right panel uses a logarithmic y-axis; both contain all 1525 completed epochs. The dashed line marks the selected epoch 1505 and the dotted line marks the stopping epoch 1525. Both panels use physical-unit MSE, while the standardized SIMM objective is not shown}{figure.caption.146}{}}
+\newlabel{fig:04_final_training_history@cref}{{[figure][31][]31}{[1][62][]62}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {14}{\ignorespaces Angle-of-attack split of the final production test metrics read from \texttt  {test\_metrics.csv}. The high-angle difference and ratio are computed from the two stored subset MSE values; no per-sample residual spread was recorded.}}{62}{table.caption.147}\protected@file@percent }
+\newlabel{tab:04_final_angle_results}{{14}{62}{Angle-of-attack split of the final production test metrics read from \texttt {test\_metrics.csv}. The high-angle difference and ratio are computed from the two stored subset MSE values; no per-sample residual spread was recorded}{table.caption.147}{}}
+\newlabel{tab:04_final_angle_results@cref}{{[table][14][]14}{[1][62][]62}{}{}{}}
+\@writefile{lof}{\contentsline {figure}{\numberline {32}{\ignorespaces Untouched-test physical MSE for the restored seed-42 production model, split into the low-angle ($|\alpha |\leq 10^\circ $) and high-angle ($|\alpha |>10^\circ $) regimes. The bars are based on 363 and 66 samples, respectively, and the dashed line marks the overall MSE over all 429 test samples.}}{63}{figure.caption.148}\protected@file@percent }
+\newlabel{fig:04_final_test_mse_by_angle}{{32}{63}{Untouched-test physical MSE for the restored seed-42 production model, split into the low-angle ($|\alpha |\leq 10^\circ $) and high-angle ($|\alpha |>10^\circ $) regimes. The bars are based on 363 and 66 samples, respectively, and the dashed line marks the overall MSE over all 429 test samples}{figure.caption.148}{}}
+\newlabel{fig:04_final_test_mse_by_angle@cref}{{[figure][32][]32}{[1][62][]63}{}{}{}}
+\@writefile{toc}{\contentsline {subsection}{\numberline {4.10}Conclusions}{63}{subsection.4.10}\protected@file@percent }
+\newlabel{sec:04_tuning_conclusions}{{4.10}{63}{Conclusions}{subsection.4.10}{}}
+\newlabel{sec:04_tuning_conclusions@cref}{{[subsection][10][4]4.10}{[1][63][]63}{}{}{}}
 \citation{ladson1988}
 \citation{mccroskey1988}
 \citation{Cuozzo2026AIDriven}
 \citation{Cuozzo2026AIDriven}
-\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusions}{65}{section.5}\protected@file@percent }
-\newlabel{sec:05_Conclusions}{{5}{65}{Conclusions}{section.5}{}}
-\newlabel{sec:05_Conclusions@cref}{{[section][5][]5}{[1][64][]65}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {5}Conclusions}{64}{section.5}\protected@file@percent }
+\newlabel{sec:05_Conclusions}{{5}{64}{Conclusions}{section.5}{}}
+\newlabel{sec:05_Conclusions@cref}{{[section][5][]5}{[1][63][]64}{}{}{}}
 \bibdata{bibliography}
 \bibcite{africa2024lifex}{{1}{2024}{{Africa et~al.}}{{Africa, Fumagalli, Bucelli, Zingaro, Fedele, Ded\`e, and Quarteroni}}}
 \bibcite{Cuozzo2026AIDriven}{{2}{2026}{{Cuozzo et~al.}}{{Cuozzo, Cusati, De~Marco, Corcione, Page, and Zanon}}}
@@ -406,11 +406,11 @@
 \bibcite{mccroskey1988}{{10}{1988}{{McCroskey}}{{}}}
 \bibcite{spalart1992}{{11}{1992}{{Spalart and Allmaras}}{{}}}
 \bibcite{srivastava2014dropout}{{12}{2014}{{Srivastava et~al.}}{{Srivastava, Hinton, Krizhevsky, Sutskever, and Salakhutdinov}}}
-\@writefile{toc}{\contentsline {section}{\numberline {6}Contributors}{66}{section.6}\protected@file@percent }
-\newlabel{sec:06_Contributors}{{6}{66}{Contributors}{section.6}{}}
-\newlabel{sec:06_Contributors@cref}{{[section][6][]6}{[1][65][]66}{}{}{}}
-\@writefile{lot}{\contentsline {table}{\numberline {15}{\ignorespaces Contributors to the work presented in this report.}}{66}{table.caption.149}\protected@file@percent }
-\newlabel{tab:contributors}{{15}{66}{Contributors to the work presented in this report}{table.caption.149}{}}
-\newlabel{tab:contributors@cref}{{[table][15][]15}{[1][65][]66}{}{}{}}
+\@writefile{toc}{\contentsline {section}{\numberline {6}Contributors}{65}{section.6}\protected@file@percent }
+\newlabel{sec:06_Contributors}{{6}{65}{Contributors}{section.6}{}}
+\newlabel{sec:06_Contributors@cref}{{[section][6][]6}{[1][64][]65}{}{}{}}
+\@writefile{lot}{\contentsline {table}{\numberline {15}{\ignorespaces Contributors to the work presented in this report.}}{65}{table.caption.149}\protected@file@percent }
+\newlabel{tab:contributors}{{15}{65}{Contributors to the work presented in this report}{table.caption.149}{}}
+\newlabel{tab:contributors@cref}{{[table][15][]15}{[1][64][]65}{}{}{}}
 \bibcite{tibshirani1996lasso}{{13}{1996}{{Tibshirani}}{{}}}
-\gdef \@abspage@last{67}
+\gdef \@abspage@last{66}
