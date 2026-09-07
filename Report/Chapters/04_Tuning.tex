@@ -550,7 +550,6 @@ At the same time, the validation minus training gap decreased, but the training 
 
 The documented cross-validation winner is therefore $\lambda_1=0$ and $\lambda_2=0$, with reported mean physical validation MSE $0.004419\pm0.000794$. The current production source also sets both penalties to zero, so the direction of this choice agrees with \texttt{CNN/main.cpp}. The production run nevertheless differs in head width, learning rate, physics weight, batch size, and epoch or early-stopping policy, and no regularization-specific test estimate exists. To conclude, the retained evidence supports not adding L1 or L2 at Adam learning rate $10^{-5}$ and 100 epochs. A new diagnostics-enabled run would be required to attach stronger numerical stability claims or to test whether the answer changes after the production learning rate and training budget are used.
 
-\newpage
 \subsection{Activation-function tuning}
 \label{sec:04_activation_tuning}
 
@@ -686,46 +685,49 @@ Figure~\ref{fig:04_activation_input_distributions} makes this distributional arg
 The final refit of the selected activation used all 1713 training samples and retained the large search topology. Its training SIMM objective decreased from 0.286768 at epoch 1 to 0.00865917 at epoch 100; the interval was set to 101, so no intermediate test values were written to the final diagnostic history. The summary reports a physical MSE of $0.00273892$ on the untouched 429-sample test set after selection. This is a post-selection estimate for the refitted activation-search model and must not be presented as the test performance of the ordinary production model.
 
 The \textbf{cross-validation winner} is therefore \texttt{LeakyReLU} with $\alpha=0.05$, with physical validation MSE $0.00442742\pm0.00086526$ on the fixed large topology. The \textbf{production configuration} in \texttt{CNN/main.cpp} uses the same activation choice at its source defaults, namely \texttt{LeakyReLU} with $\alpha=0.05$, but it uses the smaller dense head $(128,64,1)$, Adam learning rate $10^{-3}$, physics weight $0.10$, global batch size 257, 200 nominal epochs, no dropout, no L1 or L2 penalty, gradient clipping at 1, and ordinary-training early stopping with a 10 percent holdout. Command-line overrides can change these defaults. Thus, the activation decision agrees between the search and production source, while the activation experiment does not validate the complete production configuration because its topology, learning rate, batch size, and stopping policy differ. To conclude, we retain $\alpha=0.05$ as the selected production activation because it had the lowest observed sample-weighted validation MSE and diagnostics comparable to the neighbouring rectifiers. The small margin over $\alpha=0.01$ and ReLU, the single seed, and the sample-level rather than airfoil-level folds limit the strength of this conclusion beyond the recorded experiment.
-
-\newpage
 \subsection{Learning-rate and schedule tuning}
 \label{sec:04_learning_rate_tuning}
 
-After choosing the topology, optimizer, loss settings, and activation, we studied the learning rate because it controls the scale and duration of the parameter updates. In Adam, the learning rate multiplies the bias-corrected adaptive direction in Equation~\eqref{eq:04_adam_update}; it is therefore not removed by the coordinate-wise denominator, even though that denominator adapts to the history of each parameter. A rate that is too small can leave a finite epoch budget underused, whereas a rate that is too large can amplify the interaction between the SIMM residual, the dense layers, and the optimizer moments. The schedule determines how long each scale is applied. Cosine decay has been studied as part of the SGDR family~\citep{loshchilov2017sgdr}, while warm-up was introduced to address early optimization difficulties in large-minibatch stochastic-gradient training~\citep{goyal2017accurate}. Those references motivate the schedule families tested here, but they do not predict the behaviour of this Adam run: the present experiment uses no warm restarts, a different optimizer, and a different data set.
+After choosing the topology, optimizer, loss settings and activation, we studied the learning rate because it controls the scale and duration of the parameter updates. In Adam, the learning rate multiplies the bias-corrected adaptive direction in Equation \eqref{eq:04_adam_update}; it is therefore not removed by the coordinate-wise denominator, even though that denominator adapts to the history of each parameter. A rate that is too small may lead to slow convergence, falling to reach an optimal solution within the fixed epoch budget. Conversely, a rate that is too large can cause the optimization to become unstable and diverge.\\
 
-Let $e\in\{0,\ldots,E-1\}$ denote the zero-based epoch index and let $E$ be the total number of epochs. The constant candidates use
-\begin{equation}
-    \eta_e=\eta_0,
-    \label{eq:04_constant_schedule}
-\end{equation}
-for every epoch. For step decay, the implementation uses
-\begin{equation}
-    \eta_e=\eta_0\gamma^{\lfloor e/S\rfloor},
-    \label{eq:04_step_schedule}
-\end{equation}
-where $S$ is the step interval and $\gamma$ is the multiplicative factor. The cosine candidate uses
-\begin{equation}
+Beyond the learning rate's magnitude, its schedule, that represents how it changes over time, is also crucial. In addition to a constant rate, we tested step decay, cosine decay\footnote{That has been studied as part of the SGDR family \citep{loshchilov2017sgdr}} and warmp-up, that was introduced to address early optimization difficulties in large-minibatch stochastic-gradient training \citep{goyal2017accurate}. Those references motivate the schedule families tested here, but they do not predict the behaviour of this Adam run: the present experiment uses no warm restarts, a different optimizer and a different data set.\\
+
+The goal was to identify the combination of learning rate and schedule that leads to the fastest and most stable convergence for our specific aerodynamic modeling task.\\
+
+Let $e\in\{0,\ldots,E-1\}$ denote the zero-based epoch index and let $E$ be the total number of epochs. The experiment evaluated four distinct types of learning rate schedules:
+\begin{itemize}
+    \item[-] in the constant rate, the learning rate remains fixed at its initial value $\eta_0$ throughout the training process:
+    \begin{equation*}
+    \eta_e=\eta_0
+    \end{equation*}
+    \item[-] in the step decay, the learning rate is multiplied by a decay factor $\gamma$ at fixed step intervals $S$:
+    \begin{equation*}
+    \eta_e=\eta_0\gamma^{\lfloor e/S\rfloor}
+    \end{equation*}
+    The step schedules change at zero-based indices $e=30,60,90$ for $S=30$, and at $e=15,30,45,60,75,90$ for $S=15$, which correspond to completed epochs 31, 61, 91 and 16, 31, 46, 61, 76, 91, respectively.
+    \item[-] in the cosine decay, the learning rate smoothly anneals from a maximum value $\eta_{\max}$ to a minimum value $\eta_{\min}$ following a cosine curve:
+    \begin{equation*}
     \eta_e=\eta_{\min}+\frac{1}{2}(\eta_{\max}-\eta_{\min})
-    \left[1+\cos\left(\frac{e}{E-1}\pi\right)\right],
-    \label{eq:04_cosine_schedule}
-\end{equation}
-which reaches $\eta_{\max}$ at $e=0$ and $\eta_{\min}$ at $e=E-1$. The warm-up candidate is defined by
-\begin{equation}
+    \left[1+\cos\left(\frac{e}{E-1}\pi\right)\right]
+    \end{equation*}
+    which reaches $\eta_{\max}$ at $e=0$ and $\eta_{\min}$ at $e=E-1$;
+    \item[-] in the warm-up schedule, the training begins with a short linear "warm-up" phase, where the learning rate ramps up to a peak value, before following a cosine decay for the remainder of the training:
+    \begin{equation*}
     \eta_e=\begin{cases}
         \eta_{\mathrm{start}}+\dfrac{e}{W}
         (\eta_{\mathrm{peak}}-\eta_{\mathrm{start}}), & 0\leq e<W,\\[6pt]
         \eta_{\min}+\dfrac{1}{2}(\eta_{\mathrm{peak}}-\eta_{\min})
         \left[1+\cos\left(\dfrac{e-W}{E-W-1}\pi\right)\right], & W\leq e<E,
     \end{cases}
-    \label{eq:04_warmup_cosine_schedule}
-\end{equation}
-where $W$ is the number of warm-up epochs. In the recorded grid, $E=100$, $W=5$, $\eta_{\mathrm{start}}=\eta_{\min}=10^{-5}$, and $\eta_{\mathrm{peak}}=10^{-1}$. Thus, the warm-up branch returns $10^{-5}$ at the first completed epoch and reaches $10^{-1}$ at completed epoch 6. The step schedules change at zero-based indices $e=30,60,90$ for $S=30$, and at $e=15,30,45,60,75,90$ for $S=15$, which correspond to completed epochs 31, 61, 91 and 16, 31, 46, 61, 76, 91, respectively. The configured optimizer rate and the scheduler output are distinct for the warm-up candidate: $\texttt{epoch\_metrics.csv}$ records the former in \texttt{configured\_learning\_rate} and the latter in \texttt{effective\_learning\_rate}. The latter is the rate used in the plots below.
+    \end{equation*}
+    where $W$ is the number of warm-up epochs. In the recorded grid, $E=100$, $W=5$, $\eta_{\mathrm{start}}=\eta_{\min}=10^{-5}$, and $\eta_{\mathrm{peak}}=10^{-1}$. Thus, the warm-up branch returns $10^{-5}$ at the first completed epoch and reaches $10^{-1}$ at completed epoch 6.
+\end{itemize}
+\vspace{2ex}
 
-The C++ driver evaluated the eleven candidates listed in Table~\ref{tab:04_learning_rate_results}. The fixed model was the previously selected topology with dense widths $(1024,512,256,128)$, a $5\times5$ convolution producing eight channels, LeakyReLU with $\alpha=0.05$, Adam with $\beta_1=0.9$, $\beta_2=0.999$, and $\varepsilon=10^{-8}$, SIMM physics weight $0.25$, zero L1 and L2 weights, global batch size 64, 100 epochs, element-wise gradient clipping at 1, and seed 42. The five folds were generated once with shuffled \texttt{RandomKFold}; the validation sets contained 343, 343, 343, 342, and 342 samples. Normalization was fitted on each fold's training subset and then applied to that fold's validation subset. Every candidate and fold constructed a fresh model and optimizer. Each fold processed 22 global batches per epoch, or 2200 optimizer steps, giving 121000 steps over the 55 candidate-fold fits. The diagnostic run recorded the training objective and effective rate at every completed epoch, while the physical validation MSE was checkpointed every ten epochs. Candidate selection used the sample-weighted physical-unit validation MSE, not the standardized SIMM objective, and the test file was not loaded during cross-validation.
+The grid search evaluated eleven candidates, which are summarized in Table \ref{tab:04_learning_rate_results}, combining the schedule types above with three different initial learning rate magnitudes: a low rate ($10^{-5}$), a medium rate ($10^{-3}$) and a high rate ($10^{-1}$). All experiments were performed using the winning activation function, LeakyReLU with $\alpha=0.05$, and the same fixed topology \texttt{conv5x5-dense-1024-512-256-128}. The other hyperparameters were kept constant, including the physics weight $0.1$, L1 and L2 weights $0$, dropout rate $0$, global batch size $64$, gradient clipping at $1$, and no early stopping. Each candidate was evaluated using the same five-fold cross-validation procedure as in the activation search, with 100 epochs per fold.
 
 \begin{table}[h!]
     \centering
-    \scriptsize
     \begin{tabularx}{\linewidth}{@{}lXrr@{}}
         \hline
         Candidate & Configuration & Mean validation MSE $\pm$ SD & Fold range \\
@@ -746,8 +748,13 @@ The C++ driver evaluated the eleven candidates listed in Table~\ref{tab:04_learn
     \caption{Complete ranking of the eleven learning-rate candidates. Means and deviations are the sample-weighted physical validation MSE and its weighted population standard deviation over the five folds, as recorded in \texttt{cv\_summary.csv}; the final column gives the minimum and maximum fold scores.}
     \label{tab:04_learning_rate_results}
 \end{table}
+\vspace{2ex}
 
-The complete ranking is shown in Figure~\ref{fig:04_learning_rate_ranking}. The constant $10^{-3}$ candidate is the cross-validation winner with a mean physical validation MSE of $0.003608841294$ and a weighted population standard deviation of $0.001334569865$. Its five fold values, in zero-based fold order, are $0.002091737$, $0.003001337$, $0.003480483$, $0.006093833$, and $0.003383404$. It is the best candidate in four of the five folds; the fourth fold is the visible high-error exception. Relative to the constant $10^{-5}$ baseline, the selected candidate reduces the weighted mean by approximately 18.3 percent. The nearest alternative is \texttt{step\_s15\_1e-3}, whose mean is $0.004005474214$; its lower dispersion does not compensate for the higher aggregate validation error under the stated selection rule. The step candidates beginning at $10^{-3}$ remain in the same low-error scale, but their final effective rates are $1.5625\times10^{-5}$ for $S=15$ and $10^{-6}$ for $S=30$. The results are consistent with the interpretation that these reductions leave less update magnitude late in the 100-epoch budget, but the experiment does not establish that mechanism causally. Starting at $10^{-5}$ and reducing further gives still smaller final rates, and both schedules perform worse than their constant baseline. Importantly, $10^{-5}$ is the lowest tested rate, so the selected $10^{-3}$ is the lowest observed validation-error setting, not the lowest rate or a universal stability threshold.
+The results of the learning rate sweep, shown also in Figure \ref{fig:04_learning_rate_ranking}, reveal a clear separation between the low-rate candidates and the high-rate candidates that reach $10^{-1}$.\\
+
+The best performance was achieved by the constant learning rate of $10^{-3}$, which secured a mean validation MSE of $0.003609\pm0.001335$. This medium learning rate was consistently effective, winning four of the five cross-validation folds and delivering an $18\%$ error rdeduction compared to the constant $10^{-5}$ baseline. The nearest alternative is \texttt{step\_s15\_1e-3}, whose mean is $0.004005474214$; its lower dispersion does not compensate for the higher aggregate validation error under the stated selection rule.\\
+
+In contrast, all candidates that used a high learning rate of $10^{-1}$ failed catastrophically. As shown by the red markers in Figure \ref{fig:04_learning_rate_ranking}, their validation errors were orders of magnitude higher, ranging from $10^{8}$ to $10^{17}$. This indicates that the optimization process diverged, likely due to the excessive step size in the parameter updates. The warm-up schedule, which initially starts at a low rate and ramps up to $10^{-1}$, also failed, suggesting that even a brief exposure to the high learning rate was sufficient to destabilize training.\\
 
 \begin{figure}[h!]
     \centering
@@ -756,7 +763,14 @@ The complete ranking is shown in Figure~\ref{fig:04_learning_rate_ranking}. The 
     \label{fig:04_learning_rate_ranking}
 \end{figure}
 
-The convergence histories in Figure~\ref{fig:04_learning_rate_history} separate the six candidates that remain in the low-error scale from the five candidates that reach $10^{-1}$. The weighted validation curves for the low-rate group remain close to one another and finish between approximately $0.0036$ and $0.0051$, whereas the high-rate group remains many orders of magnitude above them even when its schedule later decreases. This separation is not an artefact of comparing the training objective with the validation error: the plotted curves use the physical validation column from the diagnostic files, and the SIMM training objective is kept separate. The curves also show why the small difference between the three $10^{-3}$ candidates should be described as a selection within this fold plan and budget rather than as a universal ordering of all possible schedules.
+
+The convergence histories in Figure \ref{fig:04_learning_rate_history} provide a view of the training process and visually confirm the final rankings. The plot is splitted in two panels, distinguishing the behaviour of the stable and unstable learning rate:
+\begin{itemize}
+    \item[-] the top panel shows that all candidates with learning rates of $10^{-5}$ and $10^{-3}$ converge smoothly, with the constant $10^{-3}$ candidate achieving the lowest validation error. This last one also demonstrated converged much more slowly, indicating that it was too small to make optimal progress within the 100-epoch budget;
+    \item[-] the bottom panel shows that the validation error for all the candidates that reach $10^{-1}$ immediately explodes to an extremely high value and remains many orders of magnitude above the stable group for the entire duration of training. Even for schedules that eventually decay the learning rate (like cosine and step decay), the initial instability was so severe that the models could never recover.
+\end{itemize}
+\vspace{2ex}
+This analysis reinforces the conclusion that a learning rate of $10^{-3}$ represents a well-chosen learning rate, offering a balance between rapid convergence and numerical stability.\\
 
 \begin{figure}[h!]
     \centering
@@ -765,7 +779,7 @@ The convergence histories in Figure~\ref{fig:04_learning_rate_history} separate 
     \label{fig:04_learning_rate_history}
 \end{figure}
 
-Figure~\ref{fig:04_learning_rate_schedules} shows the effective rates returned by the scheduler, rather than only the base rate stored in the optimizer recipe. The constant candidate stays at $10^{-3}$, while the $S=15$ and $S=30$ schedules reduce this value at the implementation-specific epoch boundaries given above. The cosine curve begins at $10^{-1}$ and reaches $10^{-5}$ only at the final epoch. The warm-up curve begins at $10^{-5}$, reaches $0.020008$ at completed epoch 2, reaches $0.1$ at completed epoch 6, and then follows the cosine branch. This distinction matters for interpreting the warm-up result: the candidate spends most of the early optimization pass approaching the same high peak that is unstable in the other $10^{-1}$ candidates.
+The convergence histories in Figure \ref{fig:04_learning_rate_history} show that all candidates using a learning rate of $10^{-1}$ failed immediately. The plot of the effective learning rates in Figure \ref{fig:04_learning_rate_schedules} provides additional insight into the dynamics of these candidates. The constant candidate maintains a steady rate of $10^{-3}$, while the step decay schedules reduce the learning rate at predetermined epochs, yet they still start at a high value that leads to instability. The most telling case is the warm-up schedule. Although it was designed to prevent early instability, it ramps up to the peak of $10^{-1}$ by epoch 6. This brief exposure to the overly aggressive learning rate was sufficient to permanently destabilize the optimization process. This confirms that the issue was not the schedule, but the magnitude of the learning rate itself.\\
 
 \begin{figure}[h!]
     \centering
@@ -774,9 +788,14 @@ Figure~\ref{fig:04_learning_rate_schedules} shows the effective rates returned b
     \label{fig:04_learning_rate_schedules}
 \end{figure}
 
-The high-rate candidates should be described as numerically unstable rather than as failed jobs. All 55 candidate-fold fits completed with finite diagnostic values and were included in the official ranking, but the five candidates that reach $10^{-1}$ have validation means from $5.577\times10^8$ to $2.131\times10^{17}$. The diagnostic evidence explains this scale separation. For the selected constant $10^{-3}$ candidate, the maximum gradient norm over all folds, layers, and epochs, using \texttt{parameter\_scope=all}, was $182.5645$ at zero-based fold 2, epoch 1, and layer 0. The corresponding maximum over the final ten epochs was $3.1207$, while the epoch-100 maximum was $1.9627$. In the weight-only update rows, the largest actual mean update ratio was $0.0170216$ at fold 2, epoch 1, and layer 4; the largest epoch-100 value was $0.0022612$, and the largest value over the final ten epochs was $0.0024313$. No near-zero denominator event occurred in the weight-scope rows used for this comparison. These are actual parameter movements, not the learning rate multiplied by a raw gradient. The gradient values are measured after synchronized aggregation and before the optimizer update, whereas the update ratios use the before and after parameter values.
+The high-rate candidates should be described as numerically unstable rather than as failed jobs. All 55 candidate-fold fits completed with finite diagnostic values and were included in the official ranking, but the five candidates that reach $10^{-1}$ have validation means from $5.577\times10^8$ to $2.131\times10^{17}$. The detailed diagnostics, presented in Figure \ref{fig:04_learning_rate_diagnostics}, provide a illustration of this.\\
 
-The corresponding high-rate values are qualitatively different. The constant $10^{-1}$ candidate reaches a maximum gradient norm of $2.1467\times10^{20}$ at zero-based fold 1, epoch 100, and layer 12. The cosine candidate reaches $2.8501\times10^{19}$ at fold 3, epoch 7, and the warm-up candidate reaches $3.2478\times10^{19}$ at fold 3, epoch 24. For the warm-up candidate in fold 0, the training objective increases from $0.3985$ at completed epoch 1 to $3.7331\times10^8$ at epoch 2, when the effective rate is $0.020008$, and to $3.4329\times10^{14}$ at epoch 6, when the peak rate is $0.1$. The later reductions in the cosine and step schedules reduce the error scale relative to constant $10^{-1}$, but do not return the runs to the low-error regime within 100 epochs. These observations support an instability interpretation at the tested high-rate scale; they do not provide a theoretical Lipschitz bound or a general threshold for this architecture.
+In the top left panel, the bar chart represented the "worst-case scenario" for gradients in each run. For every candidate, it searches through all 100 epochs, all five folds and all layers of the network to find the single largest gradient value. We can see a separation between the stable and unstable candidates:
+\begin{itemize}
+    \item[-] for the stable rates ($10^{-5}$) and ($10^{-3}$), the peak gradient norms are controlled, with the winning candidate that has a peak gradient of approximately $183$;
+    \item[-] for the unstable rates ($10^{-1}$), the peak gradient norms are so high that it causes the gradients to grow uncontrollably, leading to a complete failure of the learning process. 
+\end{itemize}
+Moving to the right panel, we can see the consequence of the gradients in the first plot: this plot measures the largest relative change made to the network's weight in a single optimization step\footnote{A value of $0.1$ means the weights were changed by $10\%$ of their total size in one go, and so on.}. While for the stable case we have an update controlled, ate approximately $0.017$ for the $10^{-3}$ candidate, for the unstable $10^{-1}$ candidate we have an update ratio that approaches $100\%$. This means that the optimzer is trying to change the weights by an amount equal to their entire current magnitude, destroying any knowledge the model has acquired.\\
 
 \begin{figure}[h!]
     \centering
@@ -785,15 +804,15 @@ The corresponding high-rate values are qualitatively different. The constant $10
     \label{fig:04_learning_rate_diagnostics}
 \end{figure}
 
-The lower panels of Figure~\ref{fig:04_learning_rate_diagnostics} provide a further check on the selected run. For \texttt{const\_1e-3}, the fold-averaged RMS gradient at epoch 1 is between approximately 19.8 and 37.2 over the stable trainable layer indices, and at epoch 100 it is between approximately $0.0722$ and $0.7793$. The pooled post-activation variance at layer 5 decreases from $1.0967$ at epoch 1 to $0.1053$ at epoch 100, while the corresponding values at layers 7, 9, and 11 decrease from $1.7903$, $1.7415$, and $1.0981$ to $0.1597$, $0.1513$, and $0.0969$. The reductions occur together with decreasing validation error and gradient magnitude, so they are consistent with ordinary convergence and signal attenuation, but they do not by themselves establish harmful vanishing gradients. The diagnostic panels therefore support the performance ranking without replacing physical validation MSE as the selection criterion.
+The lower panels of Figure \ref{fig:04_learning_rate_diagnostics} provide a further check on the selected run.\\
 
-After cross-validation, the tuning driver refitted \texttt{const\_1e-3} on all 1713 training samples. The final metadata records the same large topology, batch size 64, physics weight $0.25$, and 100-epoch budget, and reports a physical MSE of $0.003253844668$ at completed epoch 100. This value agrees with the $0.00325384$ value in \texttt{summary.txt}, but its provenance requires qualification. The final run passes \texttt{dataset/cnn\_dataset\_test.npz} as the validation data set and sets \texttt{validation\_interval=1}, so the test MSE is written after every epoch rather than evaluated strictly once. Candidate selection was completed before this refit and no claim of early stopping from the test curve is made, but the recorded value should still be described as a post-selection refit estimate, not as a strictly untouched one-time test estimate.
+The first plot shows the average gradient magnitude for each trainable layer at the very beginning of training (epoch 1) and at the end of training (epoch 100). The RMS gradient is a measure of how much the weights are being updated during training. A high RMS gradient indicates that the model is learning quickly, while a low RMS gradient suggests that learning has slowed down. The plot shows that the RMS gradient decreases over time, which is expected as the model converges to a solution. Indeed, we can see that the learning process starts in a strong way, with a peak norm of approximately $37$ at epoch 1 but then, by epoch 100, the gradients have naturally decreased, settling in a stable range below $1.0$. This indicates that the model has learned a good representation of the data and is no longer making large updates to the weights.\\
 
-The distinction from ordinary production training is also important. The \textbf{cross-validation winner} is the constant $10^{-3}$ candidate, with physical validation MSE $0.003608841294\pm0.001334569865$ on the fixed large-topology experiment. The \textbf{production configuration} constructed by the ordinary training path in \texttt{CNN/main.cpp} uses the same source-default Adam rate $10^{-3}$ and no attached scheduler, but it uses the smaller dense head $(128,64,1)$, physics weight $0.10$, global batch size 257, nominal epoch count 200, gradient clipping at 1, seed 42, and early stopping on a 10 percent holdout. Thus, the selected learning-rate magnitude agrees with the ordinary source default, while the topology, loss weight, batch size, and stopping policy differ. The $0.00325384$ refit value is consequently not a test score for the ordinary production model, and the learning-rate experiment does not validate the complete production recipe at once.
+About the post-activation variance, the lower-right panel shows the pooled population variance of the activations after the non-linear transformation at each layer. This is a measure of how much the activations vary across different inputs. A high variance indicates that the model is able to capture a wide range of features, while a low variance suggests that the model is not learning effectively. In this case, we can see that at the beginning the signal variance grows as information passes deeper into the network but then, at epoch 50 and epoch 100, the overall variance decreases and stabilizes. It is important to note that the variance never collapses to zero and never explodes.\\
+This two plots confirm that information is flowing effectively through all layers of the deep network for the entire duration of the training and the network is not suffering from vanishing or exploding activations.\\
 
-To conclude, within the fixed large topology, loss, fold plan, seed, and 100-epoch budget, the data support the constant $10^{-3}$ schedule as the lowest observed validation-error configuration. The constant $10^{-5}$ baseline and its decayed variants are consistent with smaller rates underusing this budget, while the $10^{-1}$ group reaches a numerically unstable error scale even when cosine decay or a five-epoch warm-up is added. The result is a configuration choice for this experiment, not a universal stability limit. A repeated-seed study and an evaluation of the complete ordinary production recipe would be required to determine whether the small separation among the low-rate candidates persists beyond the recorded sample-level folds.
+The cross-validation experiment identifies the constant $10^{-3}$ learning rate as the clear winner, achieving a mean validation MSE of $0.003609\pm0.001335$. The analysis confirms that this learning rate represents a robust "sweet spot," offering rapid convergence without triggering the catastrophic numerical instability observed at higher rates like $10^{-1}$. After being refit on the full training set, this winning experimental candidate achieved a final test MSE of $0.003254$.\\
 
-\newpage
 \subsection{Final production training}
 \label{sec:04_final_training}
 
