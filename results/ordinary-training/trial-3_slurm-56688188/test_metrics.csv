@@ -1,0 +1,4 @@
+subset,samples,physical_mse
+overall,429,0.0019977834675850552
+abs_aoa_le_10_deg,363,0.0018958412376448269
+abs_aoa_gt_10_deg,66,0.0025584657322563105
