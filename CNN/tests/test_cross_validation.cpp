@@ -270,6 +270,11 @@ void test_training_diagnostics_artifacts() {
                         metadata.find("\"early_stopping_patience\": 20") !=
                         std::string::npos,
                     "Early-stopping policy is missing from diagnostics metadata");
+            require(metadata.find("\"batch_construction\": \"balanced\"") !=
+                        std::string::npos &&
+                        metadata.find("\"early_stopping_policy\": \"patience\"") !=
+                        std::string::npos,
+                    "Training strategy names are missing from diagnostics metadata");
             const std::string epoch_metrics =
                 read_text_file(directory / "epoch_metrics.csv");
             require(epoch_metrics.starts_with(
@@ -527,6 +532,38 @@ void test_trainer_with_partial_batches() {
     }
 }
 
+void test_historical_range_tail_batching() {
+    Dataset dataset = tiny_dataset(7);
+    const std::vector<size_t> training{0, 1, 2, 3, 4, 5, 6};
+    const std::vector<size_t> validation{5, 6};
+    const NormalizationStats normalization =
+        dataset.fit_normalization(training);
+    TrialConfig balanced = minimal_trial(0.0f);
+    balanced.training.epochs = 1;
+    balanced.training.global_batch_size = 3;
+    balanced.training.shuffle = false;
+
+    TrialConfig range_tail = balanced;
+    range_tail.training.batch_construction = BatchConstruction::RangeTail;
+
+    ModelFactory factory;
+    Trainer trainer(MPI_COMM_WORLD);
+    auto balanced_model = factory.build(
+        balanced, 1, 1, 2, balanced.training.seed, MPI_COMM_WORLD);
+    auto range_tail_model = factory.build(
+        range_tail, 1, 1, 2, range_tail.training.seed, MPI_COMM_WORLD);
+    const TrainingResult balanced_result = trainer.fit(
+        *balanced_model, dataset, training, dataset, validation, normalization,
+        balanced.loss, balanced.training, balanced.training.seed, false);
+    const TrainingResult range_tail_result = trainer.fit(
+        *range_tail_model, dataset, training, dataset, validation, normalization,
+        range_tail.loss, range_tail.training, range_tail.training.seed, false);
+
+    require(std::abs(balanced_result.training_mse -
+                     range_tail_result.training_mse) > 1e-8,
+            "Historical range-tail batching matched balanced batch updates");
+}
+
 void test_early_stopping_policy() {
     Dataset dataset = tiny_dataset(7);
     const std::vector<size_t> training{0, 1, 2, 3, 4};
@@ -592,6 +629,19 @@ void test_early_stopping_policy() {
             "Early stopping did not require consecutive patience epochs");
     require_close(overfit.validation_mse, overfit.history.front().validation_mse,
                   1e-5, "Early stopping did not restore the best checkpoint");
+
+    TrialConfig historical = overfit_config;
+    historical.training.early_stopping_policy =
+        EarlyStoppingPolicy::FirstRatioExceeded;
+    auto historical_model = factory.build(
+        historical, 1, 1, 2, historical.training.seed, MPI_COMM_WORLD);
+    const TrainingResult first_crossing = trainer.fit(
+        *historical_model, overfit_dataset, training, overfit_dataset,
+        validation, overfit_normalization, historical.loss,
+        historical.training, historical.training.seed, false);
+    require(first_crossing.stopped_early &&
+                first_crossing.epochs_completed == 1,
+            "Historical early stopping did not stop at the first ratio crossing");
 
     TrialConfig invalid = overfit_config;
     invalid.training.early_stopping_patience = 0;
@@ -1152,6 +1202,7 @@ int main(int argc, char** argv) {
         test_diagnostics_math_and_activation_capture();
         test_parameter_grid_and_fresh_models();
         test_trainer_with_partial_batches();
+        test_historical_range_tail_batching();
         test_early_stopping_policy();
         test_regularization_config_validation();
         test_dropout_layer_behavior();

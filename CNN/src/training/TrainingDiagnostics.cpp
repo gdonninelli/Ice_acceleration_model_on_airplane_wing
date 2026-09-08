@@ -428,12 +428,18 @@ struct TrainingDiagnosticsRecorder::Impl {
                << ",\n  \"random_seed\": " << context.random_seed
                << ",\n  \"epoch_count\": " << trial.training.epochs
                << ",\n  \"global_batch_size\": " << trial.training.global_batch_size
+               << ",\n  \"batch_construction\": "
+               << json_string(batch_construction_name(
+                      trial.training.batch_construction))
                << ",\n  \"shuffle\": "
                << (trial.training.shuffle ? "true" : "false")
                << ",\n  \"validation_interval\": " << trial.training.validation_interval
                << ",\n  \"gradient_clip\": " << json_number(model.gradient_clip())
                << ",\n  \"early_stopping\": "
                << (trial.training.early_stopping ? "true" : "false")
+               << ",\n  \"early_stopping_policy\": "
+               << json_string(early_stopping_policy_name(
+                      trial.training.early_stopping_policy))
                << ",\n  \"early_stopping_min_epochs\": "
                << trial.training.early_stopping_min_epochs
                << ",\n  \"early_stopping_patience\": "

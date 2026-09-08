@@ -79,6 +79,28 @@ struct LossConfig {
     float l2_weight = 0.0f;
 };
 
+enum class BatchConstruction {
+    Balanced,
+    RangeTail,
+};
+
+enum class EarlyStoppingPolicy {
+    Patience,
+    FirstRatioExceeded,
+};
+
+inline const char* batch_construction_name(BatchConstruction construction) {
+    return construction == BatchConstruction::RangeTail
+        ? "range_tail"
+        : "balanced";
+}
+
+inline const char* early_stopping_policy_name(EarlyStoppingPolicy policy) {
+    return policy == EarlyStoppingPolicy::FirstRatioExceeded
+        ? "first_ratio_exceeded"
+        : "patience";
+}
+
 struct TrainingConfig {
     size_t epochs = 100;
     // The canonical final-training split uses six equal global batches of 257.
@@ -93,6 +115,8 @@ struct TrainingConfig {
     size_t early_stopping_patience = 20;
     double max_overfit_ratio = 0.15;
     bool restore_best_weights = true;
+    BatchConstruction batch_construction = BatchConstruction::Balanced;
+    EarlyStoppingPolicy early_stopping_policy = EarlyStoppingPolicy::Patience;
 };
 
 struct TrialConfig {

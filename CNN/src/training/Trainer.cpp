@@ -78,6 +78,15 @@ size_t balanced_batch_count(size_t sample_count, size_t maximum_batch_size) {
            (sample_count % maximum_batch_size == 0 ? 0 : 1);
 }
 
+size_t training_batch_count(size_t sample_count,
+                            size_t maximum_batch_size,
+                            BatchConstruction construction) {
+    if (construction == BatchConstruction::RangeTail) {
+        return balanced_batch_count(sample_count, maximum_batch_size);
+    }
+    return balanced_batch_count(sample_count, maximum_batch_size);
+}
+
 BatchRange balanced_batch_range(size_t sample_count,
                                 size_t maximum_batch_size,
                                 size_t batch_index) {
@@ -95,6 +104,23 @@ BatchRange balanced_batch_range(size_t sample_count,
     return {
         batch_index * base_size + std::min(batch_index, remainder),
         base_size + (batch_index < remainder ? 1 : 0)};
+}
+
+BatchRange training_batch_range(size_t sample_count,
+                                size_t maximum_batch_size,
+                                size_t batch_index,
+                                BatchConstruction construction) {
+    if (construction == BatchConstruction::Balanced) {
+        return balanced_batch_range(sample_count, maximum_batch_size,
+                                    batch_index);
+    }
+    const size_t batches = training_batch_count(
+        sample_count, maximum_batch_size, construction);
+    if (batch_index >= batches) {
+        throw std::out_of_range("Batch index is outside the training range.");
+    }
+    const size_t offset = batch_index * maximum_batch_size;
+    return {offset, std::min(maximum_batch_size, sample_count - offset)};
 }
 
 void reduce_sum(double local_value,
@@ -173,6 +199,8 @@ void verify_diagnostics_agreement(const TrainingConfig& config,
     append(config.early_stopping_patience);
     append(std::bit_cast<uint64_t>(config.max_overfit_ratio));
     append(config.restore_best_weights ? 1 : 0);
+    append(static_cast<uint64_t>(config.batch_construction));
+    append(static_cast<uint64_t>(config.early_stopping_policy));
 
     const unsigned long long local_hash = hash;
     unsigned long long minimum_hash = 0;
@@ -344,9 +372,9 @@ TrainingResult Trainer::fit(CNNModel& model,
                                  _communicator, true);
     ActivationObserverGuard observer_guard(model);
     std::vector<size_t> ordered_training(training_indices.begin(), training_indices.end());
-    const size_t training_batch_count =
-        balanced_batch_count(ordered_training.size(),
-                             training_config.global_batch_size);
+    const size_t epoch_batch_count = training_batch_count(
+        ordered_training.size(), training_config.global_batch_size,
+        training_config.batch_construction);
     double final_training_objective = 0.0;
     double final_training_physical_mse = 0.0;
     std::vector<EpochMetrics> history;
@@ -444,11 +472,11 @@ TrainingResult Trainer::fit(CNNModel& model,
 
         double local_loss_sum = 0.0;
         unsigned long long local_seen = 0;
-        for (size_t batch_index = 0; batch_index < training_batch_count;
+        for (size_t batch_index = 0; batch_index < epoch_batch_count;
              ++batch_index) {
-            const BatchRange batch = balanced_batch_range(
+            const BatchRange batch = training_batch_range(
                 ordered_training.size(), training_config.global_batch_size,
-                batch_index);
+                batch_index, training_config.batch_construction);
             const size_t batch_offset = batch.offset;
             const size_t global_count = batch.count;
             const Partition local = partition_batch(
@@ -611,14 +639,20 @@ TrainingResult Trainer::fit(CNNModel& model,
             // A single noisy validation excursion should not stop training.
             // Require a post-warm-up streak, and only count epochs that are
             // both above the configured gap and worse than the best checkpoint.
-            if (completed_epoch < training_config.early_stopping_min_epochs ||
-                validation_improved || !ratio_exceeded) {
-                overfit_streak = 0;
+            if (training_config.early_stopping_policy ==
+                EarlyStoppingPolicy::FirstRatioExceeded) {
+                overfit = ratio_exceeded;
             } else {
-                ++overfit_streak;
+                if (completed_epoch < training_config.early_stopping_min_epochs ||
+                    validation_improved || !ratio_exceeded) {
+                    overfit_streak = 0;
+                } else {
+                    ++overfit_streak;
+                }
+                overfit =
+                    overfit_streak >= training_config.early_stopping_patience &&
+                    completed_epoch >= training_config.early_stopping_min_epochs;
             }
-            overfit = overfit_streak >= training_config.early_stopping_patience &&
-                      completed_epoch >= training_config.early_stopping_min_epochs;
         }
 
         if (training_config.early_stopping && overfit) {
@@ -634,7 +668,7 @@ TrainingResult Trainer::fit(CNNModel& model,
                     completed_epoch, final_training_objective,
                     final_training_physical_mse,
                     checkpoint_validation_physical_mse,
-                    static_cast<size_t>(global_seen), training_batch_count);
+                    static_cast<size_t>(global_seen), epoch_batch_count);
             }
         } catch (const std::exception& error) {
             epoch_diagnostics_error = error.what();
@@ -648,7 +682,7 @@ TrainingResult Trainer::fit(CNNModel& model,
             std::cout << "Epoch " << completed_epoch << "/"
                       << training_config.epochs
                       << " | samples=" << global_seen
-                      << " | steps=" << training_batch_count
+                      << " | steps=" << epoch_batch_count
                       << " | train_objective=" << final_training_objective
                       << " | training_physical_mse="
                       << final_training_physical_mse
@@ -683,12 +717,22 @@ TrainingResult Trainer::fit(CNNModel& model,
 
         if (stopped_early) {
             if (distributed.rank == 0 && verbose) {
-                std::cout << "Early stopping at epoch " << completed_epoch
-                          << " after " << training_config.early_stopping_patience
-                          << " consecutive epochs with validation MSE more than "
-                          << training_config.max_overfit_ratio * 100.0
-                          << "% above training MSE without improvement."
-                          << std::endl;
+                std::cout << "Early stopping at epoch " << completed_epoch;
+                if (training_config.early_stopping_policy ==
+                    EarlyStoppingPolicy::FirstRatioExceeded) {
+                    std::cout << ": validation MSE exceeded training MSE by more than ";
+                } else {
+                    std::cout << " after "
+                              << training_config.early_stopping_patience
+                              << " consecutive epochs with validation MSE more than ";
+                }
+                std::cout << training_config.max_overfit_ratio * 100.0
+                          << "% above training MSE";
+                if (training_config.early_stopping_policy ==
+                    EarlyStoppingPolicy::Patience) {
+                    std::cout << " without improvement";
+                }
+                std::cout << '.' << std::endl;
             }
             break;
         }
