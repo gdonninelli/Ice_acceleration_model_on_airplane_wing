@@ -130,7 +130,7 @@ def plot_angle_mse(
     bars = axis.bar(labels, values, color=["tab:blue", "tab:orange"], width=0.58)
     axis.axhline(overall, color="0.25", linestyle="--", linewidth=1.1,
                  label=f"Overall MSE ({overall:.6g})")
-    axis.set_ylabel("Untouched-test physical MSE")
+    axis.set_ylabel("Test physical MSE")
     axis.set_title("Test error by angle-of-attack regime")
     axis.grid(True, axis="y", alpha=0.25)
     axis.legend(frameon=False, loc="upper left")
@@ -151,7 +151,7 @@ def main() -> None:
     parser.add_argument(
         "--run-dir",
         type=Path,
-        default=Path("results/ordinary-training/slurm-final_training"),
+        default=Path("results/ordinary-training/production_slurm-56688223"),
         help="Directory containing final_metrics.csv, test_metrics.csv, and epoch_metrics.csv.",
     )
     parser.add_argument(
