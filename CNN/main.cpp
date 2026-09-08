@@ -468,7 +468,7 @@ TrialConfig make_single_trial(const CommandLineOptions& options,
     TrialConfig trial{
         "single-training",
         make_blueprint(5, 5, 8, options.activation, options.leaky_alpha,
-                       {128, 64}, options.dropout),
+                       {1024, 512, 256, 128}, options.dropout),
         Recipes::adam(options.learning_rate, 0.9f, 0.999f, 1e-8f, 0.0f),
         LossConfig{options.physics_weight, options.l1_weight, options.l2_weight},
         make_training_config(options, early_stopping),
