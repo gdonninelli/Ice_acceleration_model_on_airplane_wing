@@ -1,0 +1,463 @@
+Job ID: 56688192
+Stage: trial-4
+Repository: /leonardo/home/userexternal/gdonnine/Ice_acceleration_model_on_airplane_wing
+Nodes: 1
+MPI tasks: 64
+Loading python/3.11.7
+  Loading requirement: bzip2/1.0.8-ib3znej libmd/1.0.4-2km2lxx
+    libbsd/0.12.1-oocs6an expat/2.6.2-p2t4wry ncurses/6.5-svfl57u
+    readline/8.2-zeda6mx gdbm/1.23-wiol7vk libiconv/1.17-nhc3mhm
+    xz/5.4.6-xxxg42c zlib-ng/2.1.6-jkgunjc libxml2/2.10.3-zbbe7lm
+    pigz/2.8-5bwzpml zstd/1.5.6-uq5yyux tar/1.34-jgektnv gettext/0.22.5-hsxgafg
+    libffi/3.4.6-4vs4jpp libxcrypt/4.4.35-7om46b5 sqlite/3.43.2-4kl5mnp
+    util-linux-uuid/2.38.1-5achpds
+Loading gcc/11.3.0
+  Loading requirement: gmp/6.2.1 mpfr/4.1.0 mpc/1.2.1
+-- The CXX compiler identification is GNU 11.3.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /leonardo/prod/spack/03/install/0.19/linux-rhel8-icelake/gcc-8.5.0/gcc-11.3.0-tm6phj7wkcw7cuy6gjixemkvh5x2mhza/bin/g++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found MPI_CXX: /leonardo/prod/spack/06/install/0.22/linux-rhel8-icelake/gcc-8.5.0/intel-oneapi-mpi-2021.12.1-s5hpfy2ffuow455bu7uzjbfizbfq3znr/mpi/2021.12/lib/libmpicxx.so (found version "3.1") 
+-- Found MPI: TRUE (found version "3.1") found components: CXX 
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /leonardo/home/userexternal/gdonnine/Ice_acceleration_model_on_airplane_wing/build/CNN-re-tuning-56688192
+[  3%] Building CXX object CMakeFiles/cnn_core.dir/src/core/Loss.cpp.o
+[ 10%] Building CXX object CMakeFiles/cnn_core.dir/src/core/Tensor.cpp.o
+[ 10%] Building CXX object CMakeFiles/cnn_core.dir/src/data/Dataset.cpp.o
+[ 17%] Building CXX object CMakeFiles/cnn_core.dir/src/layers/ActivationFactory.cpp.o
+[ 17%] Building CXX object CMakeFiles/cnn_core.dir/src/layers/ActivationLayer.cpp.o
+[ 21%] Building CXX object CMakeFiles/cnn_core.dir/src/layers/ConcatenateLayer.cpp.o
+[ 25%] Building CXX object CMakeFiles/cnn_core.dir/src/layers/Conv2DLayer.cpp.o
+[ 39%] Building CXX object CMakeFiles/cnn_core.dir/src/layers/DropoutLayer.cpp.o
+[ 39%] Building CXX object CMakeFiles/cnn_core.dir/src/layers/FlattenLayer.cpp.o
+[ 39%] Building CXX object CMakeFiles/cnn_core.dir/src/layers/DenseLayer.cpp.o
+[ 50%] Building CXX object CMakeFiles/cnn_core.dir/src/layers/LeakyReLULayer.cpp.o
+[ 50%] Building CXX object CMakeFiles/cnn_core.dir/src/layers/SigmoidLayer.cpp.o
+[ 53%] Building CXX object CMakeFiles/cnn_core.dir/src/layers/ReLULayer.cpp.o
+[ 60%] Building CXX object CMakeFiles/cnn_core.dir/src/model/CNNModel.cpp.o
+[ 64%] Building CXX object CMakeFiles/cnn_core.dir/src/model/ModelFactory.cpp.o
+[ 64%] Building CXX object CMakeFiles/cnn_core.dir/src/optimizers/AdagradOptimizer.cpp.o
+[ 64%] Building CXX object CMakeFiles/cnn_core.dir/src/layers/TanhLayer.cpp.o
+[ 71%] Building CXX object CMakeFiles/cnn_core.dir/src/optimizers/AdamOptimizer.cpp.o
+[ 71%] Building CXX object CMakeFiles/cnn_core.dir/src/tuning/CrossValidator.cpp.o
+[ 75%] Building CXX object CMakeFiles/cnn_core.dir/src/optimizers/LRScheduler.cpp.o
+[ 89%] Building CXX object CMakeFiles/cnn_core.dir/src/optimizers/RMSpropOptimizer.cpp.o
+[ 89%] Building CXX object CMakeFiles/cnn_core.dir/src/training/TrainingDiagnostics.cpp.o
+[ 89%] Building CXX object CMakeFiles/cnn_core.dir/src/training/Trainer.cpp.o
+[ 89%] Building CXX object CMakeFiles/cnn_core.dir/src/optimizers/SGDOptimizer.cpp.o
+[ 89%] Building CXX object CMakeFiles/cnn_core.dir/src/tuning/TrialConfig.cpp.o
+[ 92%] Linking CXX static library libcnn_core.a
+[ 92%] Built target cnn_core
+[ 96%] Building CXX object CMakeFiles/re_tuning.dir/experiments/re_tuning/main.cpp.o
+[100%] Linking CXX executable experiments/re_tuning
+[100%] Built target re_tuning
+Output: results/re-tuning/trial-4_slurm-56688192
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+Re-training stage: trial-4
+Run name: trial-4_slurm-56688192
+Topology: conv5x5, channels 8, dense 1024-512-256-128-1
+Adam learning rate: 1e-3
+Physics weight: 0.10
+Dropout/L1/L2: 0/0/0
+Epoch cap: 834
+Global batch size: 257
+Batch construction: balanced
+Early stopping: enabled
+Early stopping policy: first_ratio_exceeded
+Seed: 42
+Epoch 1/834 | samples=1542 | steps=6 | train_objective=2.42682 | training_physical_mse=0.211601 | validation_physical_mse=0.211338 | lr=0.001 | configured_lr=0.001 | grad_rms=74.8776 | activation_var(mean/min/max)=1.04973/0.104599/1.69423
+Epoch 2/834 | samples=1542 | steps=6 | train_objective=0.234727 | training_physical_mse=0.0390008 | validation_physical_mse=0.0383861 | lr=0.001 | configured_lr=0.001 | grad_rms=33.5334 | activation_var(mean/min/max)=2.13694/0.0733317/3.3682
+Epoch 3/834 | samples=1542 | steps=6 | train_objective=0.0797516 | training_physical_mse=0.0089447 | validation_physical_mse=0.00879359 | lr=0.001 | configured_lr=0.001 | grad_rms=17.0571 | activation_var(mean/min/max)=2.10601/0.0536842/3.39257
+Epoch 4/834 | samples=1542 | steps=6 | train_objective=0.0424596 | training_physical_mse=0.00881953 | validation_physical_mse=0.0092931 | lr=0.001 | configured_lr=0.001 | grad_rms=9.67888 | activation_var(mean/min/max)=1.78834/0.0433413/2.91298
+Epoch 5/834 | samples=1542 | steps=6 | train_objective=0.027739 | training_physical_mse=0.00843127 | validation_physical_mse=0.00842712 | lr=0.001 | configured_lr=0.001 | grad_rms=6.04469 | activation_var(mean/min/max)=1.52834/0.0379976/2.49348
+Epoch 6/834 | samples=1542 | steps=6 | train_objective=0.0217741 | training_physical_mse=0.00807077 | validation_physical_mse=0.00798788 | lr=0.001 | configured_lr=0.001 | grad_rms=3.74741 | activation_var(mean/min/max)=1.31638/0.0347375/2.14428
+Epoch 7/834 | samples=1542 | steps=6 | train_objective=0.0194473 | training_physical_mse=0.00810945 | validation_physical_mse=0.00794859 | lr=0.001 | configured_lr=0.001 | grad_rms=2.80816 | activation_var(mean/min/max)=1.21037/0.0330485/1.96959
+Epoch 8/834 | samples=1542 | steps=6 | train_objective=0.0173318 | training_physical_mse=0.00785223 | validation_physical_mse=0.00763892 | lr=0.001 | configured_lr=0.001 | grad_rms=1.95062 | activation_var(mean/min/max)=1.14377/0.0320168/1.85945
+Epoch 9/834 | samples=1542 | steps=6 | train_objective=0.0167448 | training_physical_mse=0.00814291 | validation_physical_mse=0.00790883 | lr=0.001 | configured_lr=0.001 | grad_rms=1.64229 | activation_var(mean/min/max)=1.0843/0.0312458/1.75975
+Epoch 10/834 | samples=1542 | steps=6 | train_objective=0.0175777 | training_physical_mse=0.00811633 | validation_physical_mse=0.00781788 | lr=0.001 | configured_lr=0.001 | grad_rms=2.0661 | activation_var(mean/min/max)=1.06833/0.0309182/1.73241
+Epoch 11/834 | samples=1542 | steps=6 | train_objective=0.0170431 | training_physical_mse=0.00767689 | validation_physical_mse=0.00746953 | lr=0.001 | configured_lr=0.001 | grad_rms=1.86152 | activation_var(mean/min/max)=1.04968/0.0306157/1.70046
+Epoch 12/834 | samples=1542 | steps=6 | train_objective=0.0161187 | training_physical_mse=0.00759659 | validation_physical_mse=0.00749552 | lr=0.001 | configured_lr=0.001 | grad_rms=1.24754 | activation_var(mean/min/max)=1.02742/0.0303208/1.66232
+Epoch 13/834 | samples=1542 | steps=6 | train_objective=0.0155096 | training_physical_mse=0.00732777 | validation_physical_mse=0.007298 | lr=0.001 | configured_lr=0.001 | grad_rms=1.06232 | activation_var(mean/min/max)=1.02513/0.0301956/1.65821
+Epoch 14/834 | samples=1542 | steps=6 | train_objective=0.0154248 | training_physical_mse=0.00764473 | validation_physical_mse=0.00774501 | lr=0.001 | configured_lr=0.001 | grad_rms=1.06761 | activation_var(mean/min/max)=1.03034/0.0301355/1.66713
+Epoch 15/834 | samples=1542 | steps=6 | train_objective=0.0162219 | training_physical_mse=0.00794239 | validation_physical_mse=0.00805584 | lr=0.001 | configured_lr=0.001 | grad_rms=1.33659 | activation_var(mean/min/max)=1.02086/0.0299828/1.65147
+Epoch 16/834 | samples=1542 | steps=6 | train_objective=0.0163201 | training_physical_mse=0.00844322 | validation_physical_mse=0.00838195 | lr=0.001 | configured_lr=0.001 | grad_rms=1.20993 | activation_var(mean/min/max)=1.00985/0.0298177/1.63268
+Epoch 17/834 | samples=1542 | steps=6 | train_objective=0.0164891 | training_physical_mse=0.00701219 | validation_physical_mse=0.00680047 | lr=0.001 | configured_lr=0.001 | grad_rms=1.26064 | activation_var(mean/min/max)=1.02361/0.0297973/1.65596
+Epoch 18/834 | samples=1542 | steps=6 | train_objective=0.0155332 | training_physical_mse=0.00796919 | validation_physical_mse=0.00797864 | lr=0.001 | configured_lr=0.001 | grad_rms=1.02022 | activation_var(mean/min/max)=1.03731/0.0297915/1.67918
+Epoch 19/834 | samples=1542 | steps=6 | train_objective=0.0158576 | training_physical_mse=0.00721661 | validation_physical_mse=0.00685029 | lr=0.001 | configured_lr=0.001 | grad_rms=1.35156 | activation_var(mean/min/max)=1.0279/0.0295991/1.66356
+Epoch 20/834 | samples=1542 | steps=6 | train_objective=0.0157362 | training_physical_mse=0.00698741 | validation_physical_mse=0.00680212 | lr=0.001 | configured_lr=0.001 | grad_rms=1.49352 | activation_var(mean/min/max)=1.02246/0.0294538/1.65418
+Epoch 21/834 | samples=1542 | steps=6 | train_objective=0.015072 | training_physical_mse=0.00743899 | validation_physical_mse=0.00736482 | lr=0.001 | configured_lr=0.001 | grad_rms=1.13523 | activation_var(mean/min/max)=1.01719/0.0293505/1.64465
+Epoch 22/834 | samples=1542 | steps=6 | train_objective=0.0149869 | training_physical_mse=0.00686933 | validation_physical_mse=0.00677007 | lr=0.001 | configured_lr=0.001 | grad_rms=1.07131 | activation_var(mean/min/max)=1.01909/0.0293031/1.64741
+Epoch 23/834 | samples=1542 | steps=6 | train_objective=0.0145058 | training_physical_mse=0.00685332 | validation_physical_mse=0.00660847 | lr=0.001 | configured_lr=0.001 | grad_rms=0.848458 | activation_var(mean/min/max)=1.01792/0.0292261/1.64491
+Epoch 24/834 | samples=1542 | steps=6 | train_objective=0.0144298 | training_physical_mse=0.00667104 | validation_physical_mse=0.00636308 | lr=0.001 | configured_lr=0.001 | grad_rms=1.0789 | activation_var(mean/min/max)=1.01105/0.0291017/1.6335
+Epoch 25/834 | samples=1542 | steps=6 | train_objective=0.0141082 | training_physical_mse=0.00695575 | validation_physical_mse=0.00687202 | lr=0.001 | configured_lr=0.001 | grad_rms=0.80634 | activation_var(mean/min/max)=1.00279/0.0289975/1.6198
+Epoch 26/834 | samples=1542 | steps=6 | train_objective=0.0144423 | training_physical_mse=0.00660415 | validation_physical_mse=0.00624493 | lr=0.001 | configured_lr=0.001 | grad_rms=1.20642 | activation_var(mean/min/max)=1.00001/0.0289457/1.61513
+Epoch 27/834 | samples=1542 | steps=6 | train_objective=0.0139619 | training_physical_mse=0.00656393 | validation_physical_mse=0.00616757 | lr=0.001 | configured_lr=0.001 | grad_rms=0.783636 | activation_var(mean/min/max)=0.996006/0.0288712/1.60863
+Epoch 28/834 | samples=1542 | steps=6 | train_objective=0.0141942 | training_physical_mse=0.00648277 | validation_physical_mse=0.00627795 | lr=0.001 | configured_lr=0.001 | grad_rms=1.16536 | activation_var(mean/min/max)=0.994424/0.0288086/1.60665
+Epoch 29/834 | samples=1542 | steps=6 | train_objective=0.0139342 | training_physical_mse=0.00640575 | validation_physical_mse=0.00612295 | lr=0.001 | configured_lr=0.001 | grad_rms=1.07652 | activation_var(mean/min/max)=0.987316/0.0287193/1.59482
+Epoch 30/834 | samples=1542 | steps=6 | train_objective=0.0137573 | training_physical_mse=0.00730442 | validation_physical_mse=0.00673253 | lr=0.001 | configured_lr=0.001 | grad_rms=1.03364 | activation_var(mean/min/max)=0.984224/0.0286465/1.58994
+Epoch 31/834 | samples=1542 | steps=6 | train_objective=0.0143906 | training_physical_mse=0.00627348 | validation_physical_mse=0.00593256 | lr=0.001 | configured_lr=0.001 | grad_rms=1.57901 | activation_var(mean/min/max)=0.977033/0.0285527/1.57787
+Epoch 32/834 | samples=1542 | steps=6 | train_objective=0.0136422 | training_physical_mse=0.00634632 | validation_physical_mse=0.0061265 | lr=0.001 | configured_lr=0.001 | grad_rms=1.04702 | activation_var(mean/min/max)=0.971291/0.028445/1.56831
+Epoch 33/834 | samples=1542 | steps=6 | train_objective=0.0135037 | training_physical_mse=0.00652133 | validation_physical_mse=0.00597094 | lr=0.001 | configured_lr=0.001 | grad_rms=1.09375 | activation_var(mean/min/max)=0.965925/0.0283552/1.55919
+Epoch 34/834 | samples=1542 | steps=6 | train_objective=0.0141182 | training_physical_mse=0.00681837 | validation_physical_mse=0.00663828 | lr=0.001 | configured_lr=0.001 | grad_rms=1.60407 | activation_var(mean/min/max)=0.959179/0.028233/1.54805
+Epoch 35/834 | samples=1542 | steps=6 | train_objective=0.0160765 | training_physical_mse=0.00618843 | validation_physical_mse=0.00587218 | lr=0.001 | configured_lr=0.001 | grad_rms=2.52911 | activation_var(mean/min/max)=0.948232/0.0280738/1.52937
+Epoch 36/834 | samples=1542 | steps=6 | train_objective=0.0159106 | training_physical_mse=0.00763959 | validation_physical_mse=0.00703473 | lr=0.001 | configured_lr=0.001 | grad_rms=2.40681 | activation_var(mean/min/max)=0.93354/0.0278675/1.50358
+Epoch 37/834 | samples=1542 | steps=6 | train_objective=0.0142293 | training_physical_mse=0.00624884 | validation_physical_mse=0.00577658 | lr=0.001 | configured_lr=0.001 | grad_rms=1.71111 | activation_var(mean/min/max)=0.902806/0.0274844/1.45161
+Epoch 38/834 | samples=1542 | steps=6 | train_objective=0.0137468 | training_physical_mse=0.00607305 | validation_physical_mse=0.00568235 | lr=0.001 | configured_lr=0.001 | grad_rms=1.41634 | activation_var(mean/min/max)=0.88439/0.0272184/1.42011
+Epoch 39/834 | samples=1542 | steps=6 | train_objective=0.0137012 | training_physical_mse=0.00673027 | validation_physical_mse=0.00615699 | lr=0.001 | configured_lr=0.001 | grad_rms=1.42187 | activation_var(mean/min/max)=0.87322/0.0269986/1.40064
+Epoch 40/834 | samples=1542 | steps=6 | train_objective=0.0135637 | training_physical_mse=0.00700705 | validation_physical_mse=0.00684558 | lr=0.001 | configured_lr=0.001 | grad_rms=1.37898 | activation_var(mean/min/max)=0.86263/0.026786/1.3824
+Epoch 41/834 | samples=1542 | steps=6 | train_objective=0.0138672 | training_physical_mse=0.00592173 | validation_physical_mse=0.00559691 | lr=0.001 | configured_lr=0.001 | grad_rms=1.46628 | activation_var(mean/min/max)=0.861241/0.0266093/1.38035
+Epoch 42/834 | samples=1542 | steps=6 | train_objective=0.013415 | training_physical_mse=0.00632426 | validation_physical_mse=0.00573497 | lr=0.001 | configured_lr=0.001 | grad_rms=1.37532 | activation_var(mean/min/max)=0.851265/0.0263716/1.36435
+Epoch 43/834 | samples=1542 | steps=6 | train_objective=0.0124763 | training_physical_mse=0.00571443 | validation_physical_mse=0.00531988 | lr=0.001 | configured_lr=0.001 | grad_rms=0.93437 | activation_var(mean/min/max)=0.845737/0.0262319/1.35443
+Epoch 44/834 | samples=1542 | steps=6 | train_objective=0.0127048 | training_physical_mse=0.00583058 | validation_physical_mse=0.00527079 | lr=0.001 | configured_lr=0.001 | grad_rms=1.08881 | activation_var(mean/min/max)=0.83246/0.0260502/1.33131
+Epoch 45/834 | samples=1542 | steps=6 | train_objective=0.0127226 | training_physical_mse=0.00643563 | validation_physical_mse=0.00565508 | lr=0.001 | configured_lr=0.001 | grad_rms=1.21225 | activation_var(mean/min/max)=0.823033/0.0258794/1.31574
+Epoch 46/834 | samples=1542 | steps=6 | train_objective=0.0130351 | training_physical_mse=0.00623295 | validation_physical_mse=0.00586936 | lr=0.001 | configured_lr=0.001 | grad_rms=1.50629 | activation_var(mean/min/max)=0.829108/0.0258296/1.32629
+Epoch 47/834 | samples=1542 | steps=6 | train_objective=0.0123823 | training_physical_mse=0.00564772 | validation_physical_mse=0.00502915 | lr=0.001 | configured_lr=0.001 | grad_rms=0.920452 | activation_var(mean/min/max)=0.818841/0.0256711/1.30911
+Epoch 48/834 | samples=1542 | steps=6 | train_objective=0.0119524 | training_physical_mse=0.00544105 | validation_physical_mse=0.00491659 | lr=0.001 | configured_lr=0.001 | grad_rms=0.670763 | activation_var(mean/min/max)=0.815549/0.0255544/1.30377
+Epoch 49/834 | samples=1542 | steps=6 | train_objective=0.0116658 | training_physical_mse=0.00538148 | validation_physical_mse=0.00476654 | lr=0.001 | configured_lr=0.001 | grad_rms=0.485578 | activation_var(mean/min/max)=0.80636/0.0254195/1.28831
+Epoch 50/834 | samples=1542 | steps=6 | train_objective=0.0127309 | training_physical_mse=0.00541219 | validation_physical_mse=0.00502569 | lr=0.001 | configured_lr=0.001 | grad_rms=1.44044 | activation_var(mean/min/max)=0.811083/0.0253974/1.29605
+Epoch 51/834 | samples=1542 | steps=6 | train_objective=0.0120605 | training_physical_mse=0.00593786 | validation_physical_mse=0.00523076 | lr=0.001 | configured_lr=0.001 | grad_rms=1.19598 | activation_var(mean/min/max)=0.798041/0.0252334/1.27464
+Epoch 52/834 | samples=1542 | steps=6 | train_objective=0.0128775 | training_physical_mse=0.00549387 | validation_physical_mse=0.00492521 | lr=0.001 | configured_lr=0.001 | grad_rms=1.23245 | activation_var(mean/min/max)=0.795345/0.025136/1.27097
+Epoch 53/834 | samples=1542 | steps=6 | train_objective=0.0118453 | training_physical_mse=0.00519776 | validation_physical_mse=0.00462288 | lr=0.001 | configured_lr=0.001 | grad_rms=0.72604 | activation_var(mean/min/max)=0.791285/0.0249924/1.26452
+Epoch 54/834 | samples=1542 | steps=6 | train_objective=0.0118403 | training_physical_mse=0.00536155 | validation_physical_mse=0.00464506 | lr=0.001 | configured_lr=0.001 | grad_rms=0.826708 | activation_var(mean/min/max)=0.792561/0.0249275/1.26672
+Epoch 55/834 | samples=1542 | steps=6 | train_objective=0.0115002 | training_physical_mse=0.0053576 | validation_physical_mse=0.00476464 | lr=0.001 | configured_lr=0.001 | grad_rms=0.546432 | activation_var(mean/min/max)=0.787896/0.0248119/1.25961
+Epoch 56/834 | samples=1542 | steps=6 | train_objective=0.0113593 | training_physical_mse=0.00513319 | validation_physical_mse=0.00451761 | lr=0.001 | configured_lr=0.001 | grad_rms=0.61964 | activation_var(mean/min/max)=0.791587/0.0247764/1.26517
+Epoch 57/834 | samples=1542 | steps=6 | train_objective=0.0110911 | training_physical_mse=0.00524258 | validation_physical_mse=0.00453842 | lr=0.001 | configured_lr=0.001 | grad_rms=0.694572 | activation_var(mean/min/max)=0.789145/0.0246976/1.2612
+Epoch 58/834 | samples=1542 | steps=6 | train_objective=0.0110812 | training_physical_mse=0.00504715 | validation_physical_mse=0.00434442 | lr=0.001 | configured_lr=0.001 | grad_rms=0.699609 | activation_var(mean/min/max)=0.782578/0.024622/1.25077
+Epoch 59/834 | samples=1542 | steps=6 | train_objective=0.011321 | training_physical_mse=0.00528667 | validation_physical_mse=0.00461673 | lr=0.001 | configured_lr=0.001 | grad_rms=0.833148 | activation_var(mean/min/max)=0.781117/0.0246159/1.24814
+Epoch 60/834 | samples=1542 | steps=6 | train_objective=0.0111412 | training_physical_mse=0.00510298 | validation_physical_mse=0.00466522 | lr=0.001 | configured_lr=0.001 | grad_rms=0.613644 | activation_var(mean/min/max)=0.786299/0.0246223/1.25727
+Epoch 61/834 | samples=1542 | steps=6 | train_objective=0.0117878 | training_physical_mse=0.00532465 | validation_physical_mse=0.00459869 | lr=0.001 | configured_lr=0.001 | grad_rms=1.08949 | activation_var(mean/min/max)=0.782355/0.0245468/1.24978
+Epoch 62/834 | samples=1542 | steps=6 | train_objective=0.0117237 | training_physical_mse=0.00619882 | validation_physical_mse=0.00558813 | lr=0.001 | configured_lr=0.001 | grad_rms=1.07385 | activation_var(mean/min/max)=0.776062/0.024411/1.24015
+Epoch 63/834 | samples=1542 | steps=6 | train_objective=0.0119754 | training_physical_mse=0.00491149 | validation_physical_mse=0.00439214 | lr=0.001 | configured_lr=0.001 | grad_rms=1.12167 | activation_var(mean/min/max)=0.779218/0.0243194/1.24487
+Epoch 64/834 | samples=1542 | steps=6 | train_objective=0.0111604 | training_physical_mse=0.00538912 | validation_physical_mse=0.00477306 | lr=0.001 | configured_lr=0.001 | grad_rms=0.766195 | activation_var(mean/min/max)=0.764818/0.0240953/1.22025
+Epoch 65/834 | samples=1542 | steps=6 | train_objective=0.0118737 | training_physical_mse=0.00549112 | validation_physical_mse=0.00465204 | lr=0.001 | configured_lr=0.001 | grad_rms=1.12237 | activation_var(mean/min/max)=0.761408/0.0239569/1.21514
+Epoch 66/834 | samples=1542 | steps=6 | train_objective=0.0112593 | training_physical_mse=0.00527613 | validation_physical_mse=0.00459256 | lr=0.001 | configured_lr=0.001 | grad_rms=0.894226 | activation_var(mean/min/max)=0.760973/0.0238429/1.21541
+Epoch 67/834 | samples=1542 | steps=6 | train_objective=0.0108576 | training_physical_mse=0.00520758 | validation_physical_mse=0.00453022 | lr=0.001 | configured_lr=0.001 | grad_rms=0.653248 | activation_var(mean/min/max)=0.755216/0.0237124/1.20537
+Epoch 68/834 | samples=1542 | steps=6 | train_objective=0.0108451 | training_physical_mse=0.00512541 | validation_physical_mse=0.00452882 | lr=0.001 | configured_lr=0.001 | grad_rms=0.683802 | activation_var(mean/min/max)=0.751657/0.0236079/1.20018
+Epoch 69/834 | samples=1542 | steps=6 | train_objective=0.0113649 | training_physical_mse=0.00481637 | validation_physical_mse=0.00412082 | lr=0.001 | configured_lr=0.001 | grad_rms=0.941249 | activation_var(mean/min/max)=0.758084/0.0235891/1.21183
+Epoch 70/834 | samples=1542 | steps=6 | train_objective=0.010815 | training_physical_mse=0.00474422 | validation_physical_mse=0.00418407 | lr=0.001 | configured_lr=0.001 | grad_rms=0.679546 | activation_var(mean/min/max)=0.758156/0.0235268/1.21212
+Epoch 71/834 | samples=1542 | steps=6 | train_objective=0.0106747 | training_physical_mse=0.0051738 | validation_physical_mse=0.00496863 | lr=0.001 | configured_lr=0.001 | grad_rms=0.586298 | activation_var(mean/min/max)=0.75043/0.0233649/1.19928
+Epoch 72/834 | samples=1542 | steps=6 | train_objective=0.0112779 | training_physical_mse=0.00565945 | validation_physical_mse=0.00498097 | lr=0.001 | configured_lr=0.001 | grad_rms=1.14876 | activation_var(mean/min/max)=0.751549/0.0233002/1.20172
+Epoch 73/834 | samples=1542 | steps=6 | train_objective=0.0108813 | training_physical_mse=0.00618919 | validation_physical_mse=0.00585266 | lr=0.001 | configured_lr=0.001 | grad_rms=0.941652 | activation_var(mean/min/max)=0.744605/0.0231644/1.19027
+Epoch 74/834 | samples=1542 | steps=6 | train_objective=0.0118704 | training_physical_mse=0.00542169 | validation_physical_mse=0.00465722 | lr=0.001 | configured_lr=0.001 | grad_rms=1.48035 | activation_var(mean/min/max)=0.737092/0.0230226/1.1776
+Epoch 75/834 | samples=1542 | steps=6 | train_objective=0.0119845 | training_physical_mse=0.00495675 | validation_physical_mse=0.00434435 | lr=0.001 | configured_lr=0.001 | grad_rms=1.60797 | activation_var(mean/min/max)=0.722869/0.022824/1.15251
+Epoch 76/834 | samples=1542 | steps=6 | train_objective=0.0107038 | training_physical_mse=0.00505647 | validation_physical_mse=0.00431791 | lr=0.001 | configured_lr=0.001 | grad_rms=0.970424 | activation_var(mean/min/max)=0.699835/0.0225214/1.11422
+Epoch 77/834 | samples=1542 | steps=6 | train_objective=0.0109296 | training_physical_mse=0.00492074 | validation_physical_mse=0.00426834 | lr=0.001 | configured_lr=0.001 | grad_rms=0.988577 | activation_var(mean/min/max)=0.692976/0.0223698/1.10295
+Epoch 78/834 | samples=1542 | steps=6 | train_objective=0.0104964 | training_physical_mse=0.00458048 | validation_physical_mse=0.00393113 | lr=0.001 | configured_lr=0.001 | grad_rms=0.981105 | activation_var(mean/min/max)=0.694724/0.0222829/1.10586
+Epoch 79/834 | samples=1542 | steps=6 | train_objective=0.0108684 | training_physical_mse=0.00454364 | validation_physical_mse=0.00405332 | lr=0.001 | configured_lr=0.001 | grad_rms=1.28052 | activation_var(mean/min/max)=0.686185/0.022138/1.09195
+Epoch 80/834 | samples=1542 | steps=6 | train_objective=0.0110018 | training_physical_mse=0.004472 | validation_physical_mse=0.00394832 | lr=0.001 | configured_lr=0.001 | grad_rms=1.33406 | activation_var(mean/min/max)=0.671314/0.0219488/1.06641
+Epoch 81/834 | samples=1542 | steps=6 | train_objective=0.0112074 | training_physical_mse=0.00451233 | validation_physical_mse=0.0039362 | lr=0.001 | configured_lr=0.001 | grad_rms=1.5258 | activation_var(mean/min/max)=0.665159/0.0218392/1.05529
+Epoch 82/834 | samples=1542 | steps=6 | train_objective=0.0106268 | training_physical_mse=0.00462835 | validation_physical_mse=0.00401063 | lr=0.001 | configured_lr=0.001 | grad_rms=1.27994 | activation_var(mean/min/max)=0.651048/0.0216398/1.03188
+Epoch 83/834 | samples=1542 | steps=6 | train_objective=0.00996961 | training_physical_mse=0.00435624 | validation_physical_mse=0.00371364 | lr=0.001 | configured_lr=0.001 | grad_rms=0.836523 | activation_var(mean/min/max)=0.637931/0.0214462/1.01024
+Epoch 84/834 | samples=1542 | steps=6 | train_objective=0.00990943 | training_physical_mse=0.00434816 | validation_physical_mse=0.00383277 | lr=0.001 | configured_lr=0.001 | grad_rms=0.870518 | activation_var(mean/min/max)=0.633772/0.0213559/1.00291
+Epoch 85/834 | samples=1542 | steps=6 | train_objective=0.0107688 | training_physical_mse=0.00531207 | validation_physical_mse=0.00468125 | lr=0.001 | configured_lr=0.001 | grad_rms=1.35654 | activation_var(mean/min/max)=0.619566/0.0212106/0.979477
+Epoch 86/834 | samples=1542 | steps=6 | train_objective=0.0107815 | training_physical_mse=0.0046364 | validation_physical_mse=0.00426718 | lr=0.001 | configured_lr=0.001 | grad_rms=1.23859 | activation_var(mean/min/max)=0.611626/0.0210603/0.966352
+Epoch 87/834 | samples=1542 | steps=6 | train_objective=0.00985514 | training_physical_mse=0.00450963 | validation_physical_mse=0.00395859 | lr=0.001 | configured_lr=0.001 | grad_rms=0.71178 | activation_var(mean/min/max)=0.604144/0.0209301/0.953504
+Epoch 88/834 | samples=1542 | steps=6 | train_objective=0.00971383 | training_physical_mse=0.00459843 | validation_physical_mse=0.00408711 | lr=0.001 | configured_lr=0.001 | grad_rms=0.643813 | activation_var(mean/min/max)=0.609017/0.020882/0.96145
+Epoch 89/834 | samples=1542 | steps=6 | train_objective=0.00957522 | training_physical_mse=0.0041186 | validation_physical_mse=0.00355946 | lr=0.001 | configured_lr=0.001 | grad_rms=0.69642 | activation_var(mean/min/max)=0.598809/0.020756/0.94479
+Epoch 90/834 | samples=1542 | steps=6 | train_objective=0.00967846 | training_physical_mse=0.00480883 | validation_physical_mse=0.00424054 | lr=0.001 | configured_lr=0.001 | grad_rms=0.845558 | activation_var(mean/min/max)=0.601215/0.0207528/0.949013
+Epoch 91/834 | samples=1542 | steps=6 | train_objective=0.00976415 | training_physical_mse=0.0042112 | validation_physical_mse=0.00368651 | lr=0.001 | configured_lr=0.001 | grad_rms=0.963185 | activation_var(mean/min/max)=0.601304/0.020732/0.948709
+Epoch 92/834 | samples=1542 | steps=6 | train_objective=0.00947773 | training_physical_mse=0.0047889 | validation_physical_mse=0.00396561 | lr=0.001 | configured_lr=0.001 | grad_rms=0.854959 | activation_var(mean/min/max)=0.590739/0.0206118/0.931752
+Epoch 93/834 | samples=1542 | steps=6 | train_objective=0.0101419 | training_physical_mse=0.00438673 | validation_physical_mse=0.00385831 | lr=0.001 | configured_lr=0.001 | grad_rms=1.01465 | activation_var(mean/min/max)=0.583341/0.0205411/0.919899
+Epoch 94/834 | samples=1542 | steps=6 | train_objective=0.00970784 | training_physical_mse=0.00420369 | validation_physical_mse=0.00359577 | lr=0.001 | configured_lr=0.001 | grad_rms=0.894095 | activation_var(mean/min/max)=0.583359/0.020482/0.920455
+Epoch 95/834 | samples=1542 | steps=6 | train_objective=0.00994011 | training_physical_mse=0.00429699 | validation_physical_mse=0.00398087 | lr=0.001 | configured_lr=0.001 | grad_rms=1.10488 | activation_var(mean/min/max)=0.579616/0.0203783/0.914526
+Epoch 96/834 | samples=1542 | steps=6 | train_objective=0.0110712 | training_physical_mse=0.00414482 | validation_physical_mse=0.00342737 | lr=0.001 | configured_lr=0.001 | grad_rms=1.5238 | activation_var(mean/min/max)=0.568115/0.0202284/0.896332
+Epoch 97/834 | samples=1542 | steps=6 | train_objective=0.0118888 | training_physical_mse=0.00435334 | validation_physical_mse=0.00370371 | lr=0.001 | configured_lr=0.001 | grad_rms=1.75836 | activation_var(mean/min/max)=0.547191/0.0200026/0.86415
+Epoch 98/834 | samples=1542 | steps=6 | train_objective=0.0094613 | training_physical_mse=0.0045335 | validation_physical_mse=0.00389612 | lr=0.001 | configured_lr=0.001 | grad_rms=0.826232 | activation_var(mean/min/max)=0.537719/0.0198005/0.851292
+Epoch 99/834 | samples=1542 | steps=6 | train_objective=0.00957842 | training_physical_mse=0.00442684 | validation_physical_mse=0.00384005 | lr=0.001 | configured_lr=0.001 | grad_rms=0.841076 | activation_var(mean/min/max)=0.52499/0.0195419/0.831442
+Epoch 100/834 | samples=1542 | steps=6 | train_objective=0.00991378 | training_physical_mse=0.00403704 | validation_physical_mse=0.00347738 | lr=0.001 | configured_lr=0.001 | grad_rms=0.966285 | activation_var(mean/min/max)=0.528684/0.0194201/0.837056
+Epoch 101/834 | samples=1542 | steps=6 | train_objective=0.00966057 | training_physical_mse=0.0041226 | validation_physical_mse=0.00359644 | lr=0.001 | configured_lr=0.001 | grad_rms=0.797568 | activation_var(mean/min/max)=0.530768/0.0192898/0.840674
+Epoch 102/834 | samples=1542 | steps=6 | train_objective=0.00945914 | training_physical_mse=0.00389168 | validation_physical_mse=0.00341354 | lr=0.001 | configured_lr=0.001 | grad_rms=0.834791 | activation_var(mean/min/max)=0.526477/0.0191535/0.833403
+Epoch 103/834 | samples=1542 | steps=6 | train_objective=0.00922271 | training_physical_mse=0.00426045 | validation_physical_mse=0.00362685 | lr=0.001 | configured_lr=0.001 | grad_rms=0.666318 | activation_var(mean/min/max)=0.512834/0.0190072/0.812164
+Epoch 104/834 | samples=1542 | steps=6 | train_objective=0.00951388 | training_physical_mse=0.00452577 | validation_physical_mse=0.00417038 | lr=0.001 | configured_lr=0.001 | grad_rms=0.938993 | activation_var(mean/min/max)=0.514317/0.018939/0.814436
+Epoch 105/834 | samples=1542 | steps=6 | train_objective=0.0100221 | training_physical_mse=0.00500017 | validation_physical_mse=0.00426877 | lr=0.001 | configured_lr=0.001 | grad_rms=1.2358 | activation_var(mean/min/max)=0.512811/0.0188552/0.812296
+Epoch 106/834 | samples=1542 | steps=6 | train_objective=0.0100144 | training_physical_mse=0.00403356 | validation_physical_mse=0.00360475 | lr=0.001 | configured_lr=0.001 | grad_rms=1.21963 | activation_var(mean/min/max)=0.503234/0.0186899/0.796463
+Epoch 107/834 | samples=1542 | steps=6 | train_objective=0.00881724 | training_physical_mse=0.00375491 | validation_physical_mse=0.00319476 | lr=0.001 | configured_lr=0.001 | grad_rms=0.734792 | activation_var(mean/min/max)=0.490194/0.0185405/0.775911
+Epoch 108/834 | samples=1542 | steps=6 | train_objective=0.00860871 | training_physical_mse=0.00386257 | validation_physical_mse=0.00326284 | lr=0.001 | configured_lr=0.001 | grad_rms=0.586859 | activation_var(mean/min/max)=0.495769/0.0184907/0.786466
+Epoch 109/834 | samples=1542 | steps=6 | train_objective=0.00874087 | training_physical_mse=0.00414753 | validation_physical_mse=0.00361387 | lr=0.001 | configured_lr=0.001 | grad_rms=0.686082 | activation_var(mean/min/max)=0.497138/0.0184428/0.78914
+Epoch 110/834 | samples=1542 | steps=6 | train_objective=0.00936011 | training_physical_mse=0.00457369 | validation_physical_mse=0.00393107 | lr=0.001 | configured_lr=0.001 | grad_rms=0.947389 | activation_var(mean/min/max)=0.496434/0.0184118/0.787847
+Epoch 111/834 | samples=1542 | steps=6 | train_objective=0.00894065 | training_physical_mse=0.00403362 | validation_physical_mse=0.0035114 | lr=0.001 | configured_lr=0.001 | grad_rms=0.837762 | activation_var(mean/min/max)=0.493133/0.0183285/0.782544
+Epoch 112/834 | samples=1542 | steps=6 | train_objective=0.0084892 | training_physical_mse=0.00364957 | validation_physical_mse=0.00305853 | lr=0.001 | configured_lr=0.001 | grad_rms=0.646229 | activation_var(mean/min/max)=0.485909/0.0182439/0.771032
+Epoch 113/834 | samples=1542 | steps=6 | train_objective=0.0083649 | training_physical_mse=0.0036886 | validation_physical_mse=0.00314094 | lr=0.001 | configured_lr=0.001 | grad_rms=0.562962 | activation_var(mean/min/max)=0.485796/0.0182405/0.771111
+Epoch 114/834 | samples=1542 | steps=6 | train_objective=0.00820213 | training_physical_mse=0.00383145 | validation_physical_mse=0.0033491 | lr=0.001 | configured_lr=0.001 | grad_rms=0.441897 | activation_var(mean/min/max)=0.486617/0.0182317/0.772148
+Epoch 115/834 | samples=1542 | steps=6 | train_objective=0.00844478 | training_physical_mse=0.00350408 | validation_physical_mse=0.00295575 | lr=0.001 | configured_lr=0.001 | grad_rms=0.659318 | activation_var(mean/min/max)=0.483714/0.0182158/0.767191
+Epoch 116/834 | samples=1542 | steps=6 | train_objective=0.00846996 | training_physical_mse=0.00425322 | validation_physical_mse=0.00374393 | lr=0.001 | configured_lr=0.001 | grad_rms=0.481112 | activation_var(mean/min/max)=0.479788/0.0182212/0.760908
+Epoch 117/834 | samples=1542 | steps=6 | train_objective=0.00831333 | training_physical_mse=0.00381821 | validation_physical_mse=0.00334218 | lr=0.001 | configured_lr=0.001 | grad_rms=0.578072 | activation_var(mean/min/max)=0.484893/0.0182233/0.768592
+Epoch 118/834 | samples=1542 | steps=6 | train_objective=0.00819296 | training_physical_mse=0.00340336 | validation_physical_mse=0.00284253 | lr=0.001 | configured_lr=0.001 | grad_rms=0.654356 | activation_var(mean/min/max)=0.486846/0.0181907/0.771844
+Epoch 119/834 | samples=1542 | steps=6 | train_objective=0.00810633 | training_physical_mse=0.00349902 | validation_physical_mse=0.00310349 | lr=0.001 | configured_lr=0.001 | grad_rms=0.533932 | activation_var(mean/min/max)=0.478853/0.0181077/0.758622
+Epoch 120/834 | samples=1542 | steps=6 | train_objective=0.00876202 | training_physical_mse=0.00431447 | validation_physical_mse=0.00390343 | lr=0.001 | configured_lr=0.001 | grad_rms=0.868878 | activation_var(mean/min/max)=0.48348/0.0181558/0.766056
+Epoch 121/834 | samples=1542 | steps=6 | train_objective=0.00913508 | training_physical_mse=0.00437912 | validation_physical_mse=0.00367644 | lr=0.001 | configured_lr=0.001 | grad_rms=1.07393 | activation_var(mean/min/max)=0.481435/0.0181149/0.763203
+Epoch 122/834 | samples=1542 | steps=6 | train_objective=0.00854244 | training_physical_mse=0.00380973 | validation_physical_mse=0.00344265 | lr=0.001 | configured_lr=0.001 | grad_rms=0.850634 | activation_var(mean/min/max)=0.469529/0.0179648/0.744631
+Epoch 123/834 | samples=1542 | steps=6 | train_objective=0.00824587 | training_physical_mse=0.00427133 | validation_physical_mse=0.00396598 | lr=0.001 | configured_lr=0.001 | grad_rms=0.690531 | activation_var(mean/min/max)=0.473395/0.0178941/0.750403
+Epoch 124/834 | samples=1542 | steps=6 | train_objective=0.00888049 | training_physical_mse=0.00355323 | validation_physical_mse=0.00306272 | lr=0.001 | configured_lr=0.001 | grad_rms=0.98255 | activation_var(mean/min/max)=0.477396/0.0178645/0.75814
+Epoch 125/834 | samples=1542 | steps=6 | train_objective=0.00909934 | training_physical_mse=0.00453636 | validation_physical_mse=0.00398877 | lr=0.001 | configured_lr=0.001 | grad_rms=1.06034 | activation_var(mean/min/max)=0.465513/0.0177526/0.739245
+Epoch 126/834 | samples=1542 | steps=6 | train_objective=0.00984959 | training_physical_mse=0.00484746 | validation_physical_mse=0.0045029 | lr=0.001 | configured_lr=0.001 | grad_rms=1.28934 | activation_var(mean/min/max)=0.469294/0.0177466/0.744993
+Epoch 127/834 | samples=1542 | steps=6 | train_objective=0.0107989 | training_physical_mse=0.00447192 | validation_physical_mse=0.00374954 | lr=0.001 | configured_lr=0.001 | grad_rms=1.62373 | activation_var(mean/min/max)=0.468244/0.0176463/0.743173
+Epoch 128/834 | samples=1542 | steps=6 | train_objective=0.00950792 | training_physical_mse=0.00543169 | validation_physical_mse=0.00506944 | lr=0.001 | configured_lr=0.001 | grad_rms=1.19918 | activation_var(mean/min/max)=0.452496/0.0174244/0.718314
+Epoch 129/834 | samples=1542 | steps=6 | train_objective=0.00971618 | training_physical_mse=0.00439882 | validation_physical_mse=0.00380908 | lr=0.001 | configured_lr=0.001 | grad_rms=1.27013 | activation_var(mean/min/max)=0.451924/0.0173087/0.717564
+Epoch 130/834 | samples=1542 | steps=6 | train_objective=0.00871296 | training_physical_mse=0.00394684 | validation_physical_mse=0.00368515 | lr=0.001 | configured_lr=0.001 | grad_rms=0.907169 | activation_var(mean/min/max)=0.435185/0.0171217/0.691808
+Epoch 131/834 | samples=1542 | steps=6 | train_objective=0.00863301 | training_physical_mse=0.00376096 | validation_physical_mse=0.00328134 | lr=0.001 | configured_lr=0.001 | grad_rms=0.864428 | activation_var(mean/min/max)=0.43713/0.0170668/0.696464
+Epoch 132/834 | samples=1542 | steps=6 | train_objective=0.00817386 | training_physical_mse=0.0034575 | validation_physical_mse=0.00306351 | lr=0.001 | configured_lr=0.001 | grad_rms=0.522524 | activation_var(mean/min/max)=0.45058/0.0170935/0.717955
+Epoch 133/834 | samples=1542 | steps=6 | train_objective=0.00793032 | training_physical_mse=0.00365771 | validation_physical_mse=0.00333691 | lr=0.001 | configured_lr=0.001 | grad_rms=0.530284 | activation_var(mean/min/max)=0.443612/0.0170203/0.70665
+Epoch 134/834 | samples=1542 | steps=6 | train_objective=0.00789696 | training_physical_mse=0.00311824 | validation_physical_mse=0.00268406 | lr=0.001 | configured_lr=0.001 | grad_rms=0.51593 | activation_var(mean/min/max)=0.437206/0.0169539/0.696791
+Epoch 135/834 | samples=1542 | steps=6 | train_objective=0.0072353 | training_physical_mse=0.0031631 | validation_physical_mse=0.00273107 | lr=0.001 | configured_lr=0.001 | grad_rms=0.171912 | activation_var(mean/min/max)=0.443804/0.0169965/0.706551
+Epoch 136/834 | samples=1542 | steps=6 | train_objective=0.0073305 | training_physical_mse=0.00316296 | validation_physical_mse=0.00277278 | lr=0.001 | configured_lr=0.001 | grad_rms=0.28029 | activation_var(mean/min/max)=0.438856/0.0169919/0.697473
+Epoch 137/834 | samples=1542 | steps=6 | train_objective=0.00726574 | training_physical_mse=0.00323485 | validation_physical_mse=0.00273818 | lr=0.001 | configured_lr=0.001 | grad_rms=0.373926 | activation_var(mean/min/max)=0.436572/0.017011/0.694189
+Epoch 138/834 | samples=1542 | steps=6 | train_objective=0.00768073 | training_physical_mse=0.00377583 | validation_physical_mse=0.00335097 | lr=0.001 | configured_lr=0.001 | grad_rms=0.576517 | activation_var(mean/min/max)=0.436711/0.0170398/0.694015
+Epoch 139/834 | samples=1542 | steps=6 | train_objective=0.0077457 | training_physical_mse=0.00305051 | validation_physical_mse=0.00270796 | lr=0.001 | configured_lr=0.001 | grad_rms=0.592248 | activation_var(mean/min/max)=0.440007/0.0171395/0.698353
+Epoch 140/834 | samples=1542 | steps=6 | train_objective=0.00727963 | training_physical_mse=0.00327901 | validation_physical_mse=0.00286415 | lr=0.001 | configured_lr=0.001 | grad_rms=0.46136 | activation_var(mean/min/max)=0.435006/0.0171089/0.690125
+Epoch 141/834 | samples=1542 | steps=6 | train_objective=0.00804991 | training_physical_mse=0.00399517 | validation_physical_mse=0.00392219 | lr=0.001 | configured_lr=0.001 | grad_rms=0.93676 | activation_var(mean/min/max)=0.436717/0.0171728/0.693219
+Epoch 142/834 | samples=1542 | steps=6 | train_objective=0.00836567 | training_physical_mse=0.00392201 | validation_physical_mse=0.00340032 | lr=0.001 | configured_lr=0.001 | grad_rms=0.901709 | activation_var(mean/min/max)=0.426065/0.0170531/0.676724
+Epoch 143/834 | samples=1542 | steps=6 | train_objective=0.00798139 | training_physical_mse=0.00360212 | validation_physical_mse=0.003198 | lr=0.001 | configured_lr=0.001 | grad_rms=0.8926 | activation_var(mean/min/max)=0.429559/0.0170382/0.681803
+Epoch 144/834 | samples=1542 | steps=6 | train_objective=0.00788786 | training_physical_mse=0.00403629 | validation_physical_mse=0.00384226 | lr=0.001 | configured_lr=0.001 | grad_rms=0.752261 | activation_var(mean/min/max)=0.423423/0.0169385/0.672266
+Epoch 145/834 | samples=1542 | steps=6 | train_objective=0.00878861 | training_physical_mse=0.00399588 | validation_physical_mse=0.00355945 | lr=0.001 | configured_lr=0.001 | grad_rms=0.926552 | activation_var(mean/min/max)=0.43165/0.0168466/0.68514
+Epoch 146/834 | samples=1542 | steps=6 | train_objective=0.00832817 | training_physical_mse=0.0034177 | validation_physical_mse=0.00323445 | lr=0.001 | configured_lr=0.001 | grad_rms=0.731855 | activation_var(mean/min/max)=0.440848/0.016712/0.698848
+Epoch 147/834 | samples=1542 | steps=6 | train_objective=0.00772449 | training_physical_mse=0.00331976 | validation_physical_mse=0.00280003 | lr=0.001 | configured_lr=0.001 | grad_rms=0.665767 | activation_var(mean/min/max)=0.429742/0.0165286/0.681394
+Epoch 148/834 | samples=1542 | steps=6 | train_objective=0.00806051 | training_physical_mse=0.00435676 | validation_physical_mse=0.0040725 | lr=0.001 | configured_lr=0.001 | grad_rms=0.588867 | activation_var(mean/min/max)=0.424829/0.016465/0.673947
+Epoch 149/834 | samples=1542 | steps=6 | train_objective=0.00888286 | training_physical_mse=0.0038015 | validation_physical_mse=0.0032025 | lr=0.001 | configured_lr=0.001 | grad_rms=1.03045 | activation_var(mean/min/max)=0.42798/0.0164071/0.677952
+Epoch 150/834 | samples=1542 | steps=6 | train_objective=0.00816636 | training_physical_mse=0.00392763 | validation_physical_mse=0.00351446 | lr=0.001 | configured_lr=0.001 | grad_rms=0.927334 | activation_var(mean/min/max)=0.409787/0.0162425/0.649785
+Epoch 151/834 | samples=1542 | steps=6 | train_objective=0.00875869 | training_physical_mse=0.00488227 | validation_physical_mse=0.00448426 | lr=0.001 | configured_lr=0.001 | grad_rms=1.05912 | activation_var(mean/min/max)=0.410184/0.0161721/0.651787
+Epoch 152/834 | samples=1542 | steps=6 | train_objective=0.00936375 | training_physical_mse=0.00353923 | validation_physical_mse=0.00321078 | lr=0.001 | configured_lr=0.001 | grad_rms=1.12496 | activation_var(mean/min/max)=0.422291/0.0161455/0.670429
+Epoch 153/834 | samples=1542 | steps=6 | train_objective=0.00833989 | training_physical_mse=0.00333383 | validation_physical_mse=0.00284143 | lr=0.001 | configured_lr=0.001 | grad_rms=0.836088 | activation_var(mean/min/max)=0.404373/0.0159623/0.64037
+Epoch 154/834 | samples=1542 | steps=6 | train_objective=0.00816264 | training_physical_mse=0.00331435 | validation_physical_mse=0.00293933 | lr=0.001 | configured_lr=0.001 | grad_rms=0.912346 | activation_var(mean/min/max)=0.395232/0.0158037/0.625801
+Epoch 155/834 | samples=1542 | steps=6 | train_objective=0.00817684 | training_physical_mse=0.0036572 | validation_physical_mse=0.00339876 | lr=0.001 | configured_lr=0.001 | grad_rms=0.927604 | activation_var(mean/min/max)=0.403745/0.0157705/0.640412
+Epoch 156/834 | samples=1542 | steps=6 | train_objective=0.0082095 | training_physical_mse=0.00392724 | validation_physical_mse=0.00348782 | lr=0.001 | configured_lr=0.001 | grad_rms=0.952965 | activation_var(mean/min/max)=0.390678/0.0156475/0.619789
+Epoch 157/834 | samples=1542 | steps=6 | train_objective=0.00908519 | training_physical_mse=0.00426777 | validation_physical_mse=0.00421986 | lr=0.001 | configured_lr=0.001 | grad_rms=1.17535 | activation_var(mean/min/max)=0.393125/0.0155978/0.624049
+Epoch 158/834 | samples=1542 | steps=6 | train_objective=0.0097022 | training_physical_mse=0.00342311 | validation_physical_mse=0.00308933 | lr=0.001 | configured_lr=0.001 | grad_rms=1.23078 | activation_var(mean/min/max)=0.399932/0.0155343/0.63423
+Epoch 159/834 | samples=1542 | steps=6 | train_objective=0.00801363 | training_physical_mse=0.00358478 | validation_physical_mse=0.00344798 | lr=0.001 | configured_lr=0.001 | grad_rms=0.834477 | activation_var(mean/min/max)=0.397853/0.0154115/0.631176
+Epoch 160/834 | samples=1542 | steps=6 | train_objective=0.00767938 | training_physical_mse=0.0030559 | validation_physical_mse=0.00263358 | lr=0.001 | configured_lr=0.001 | grad_rms=0.752417 | activation_var(mean/min/max)=0.381495/0.0153365/0.60501
+Epoch 161/834 | samples=1542 | steps=6 | train_objective=0.00763864 | training_physical_mse=0.00348111 | validation_physical_mse=0.00301214 | lr=0.001 | configured_lr=0.001 | grad_rms=0.7252 | activation_var(mean/min/max)=0.383813/0.0154047/0.608955
+Epoch 162/834 | samples=1542 | steps=6 | train_objective=0.00780579 | training_physical_mse=0.00326651 | validation_physical_mse=0.00299603 | lr=0.001 | configured_lr=0.001 | grad_rms=0.647835 | activation_var(mean/min/max)=0.383206/0.0152907/0.607842
+Epoch 163/834 | samples=1542 | steps=6 | train_objective=0.0074513 | training_physical_mse=0.00310686 | validation_physical_mse=0.0027104 | lr=0.001 | configured_lr=0.001 | grad_rms=0.680554 | activation_var(mean/min/max)=0.386748/0.0152085/0.61414
+Epoch 164/834 | samples=1542 | steps=6 | train_objective=0.00753824 | training_physical_mse=0.00313051 | validation_physical_mse=0.00265248 | lr=0.001 | configured_lr=0.001 | grad_rms=0.769067 | activation_var(mean/min/max)=0.381112/0.015194/0.604704
+Epoch 165/834 | samples=1542 | steps=6 | train_objective=0.00733177 | training_physical_mse=0.00293886 | validation_physical_mse=0.00272336 | lr=0.001 | configured_lr=0.001 | grad_rms=0.598844 | activation_var(mean/min/max)=0.372418/0.0151723/0.590632
+Epoch 166/834 | samples=1542 | steps=6 | train_objective=0.00700211 | training_physical_mse=0.0028893 | validation_physical_mse=0.00253174 | lr=0.001 | configured_lr=0.001 | grad_rms=0.477422 | activation_var(mean/min/max)=0.374073/0.0151517/0.593927
+Epoch 167/834 | samples=1542 | steps=6 | train_objective=0.0070456 | training_physical_mse=0.00361497 | validation_physical_mse=0.00335371 | lr=0.001 | configured_lr=0.001 | grad_rms=0.629794 | activation_var(mean/min/max)=0.375571/0.015192/0.596308
+Epoch 168/834 | samples=1542 | steps=6 | train_objective=0.00760978 | training_physical_mse=0.00300062 | validation_physical_mse=0.00267195 | lr=0.001 | configured_lr=0.001 | grad_rms=0.73708 | activation_var(mean/min/max)=0.369324/0.0151847/0.586373
+Epoch 169/834 | samples=1542 | steps=6 | train_objective=0.0072128 | training_physical_mse=0.00285561 | validation_physical_mse=0.00245158 | lr=0.001 | configured_lr=0.001 | grad_rms=0.626464 | activation_var(mean/min/max)=0.372803/0.0151844/0.591186
+Epoch 170/834 | samples=1542 | steps=6 | train_objective=0.00668524 | training_physical_mse=0.00299409 | validation_physical_mse=0.0027342 | lr=0.001 | configured_lr=0.001 | grad_rms=0.507595 | activation_var(mean/min/max)=0.361268/0.0150777/0.572239
+Epoch 171/834 | samples=1542 | steps=6 | train_objective=0.00657092 | training_physical_mse=0.00283118 | validation_physical_mse=0.00252918 | lr=0.001 | configured_lr=0.001 | grad_rms=0.420963 | activation_var(mean/min/max)=0.360024/0.0151369/0.57143
+Epoch 172/834 | samples=1542 | steps=6 | train_objective=0.00672761 | training_physical_mse=0.00291205 | validation_physical_mse=0.00268545 | lr=0.001 | configured_lr=0.001 | grad_rms=0.513448 | activation_var(mean/min/max)=0.363063/0.015161/0.576992
+Epoch 173/834 | samples=1542 | steps=6 | train_objective=0.00848034 | training_physical_mse=0.00348976 | validation_physical_mse=0.00340364 | lr=0.001 | configured_lr=0.001 | grad_rms=1.12968 | activation_var(mean/min/max)=0.364679/0.0152407/0.578839
+Epoch 174/834 | samples=1542 | steps=6 | train_objective=0.00873145 | training_physical_mse=0.0045191 | validation_physical_mse=0.00430377 | lr=0.001 | configured_lr=0.001 | grad_rms=1.12257 | activation_var(mean/min/max)=0.361047/0.0150895/0.572751
+Epoch 175/834 | samples=1542 | steps=6 | train_objective=0.00891422 | training_physical_mse=0.00347998 | validation_physical_mse=0.00319757 | lr=0.001 | configured_lr=0.001 | grad_rms=1.15313 | activation_var(mean/min/max)=0.36096/0.0149266/0.571363
+Epoch 176/834 | samples=1542 | steps=6 | train_objective=0.00748228 | training_physical_mse=0.00361625 | validation_physical_mse=0.00307167 | lr=0.001 | configured_lr=0.001 | grad_rms=0.658769 | activation_var(mean/min/max)=0.362998/0.0147882/0.574654
+Epoch 177/834 | samples=1542 | steps=6 | train_objective=0.00806215 | training_physical_mse=0.00358925 | validation_physical_mse=0.00345448 | lr=0.001 | configured_lr=0.001 | grad_rms=0.50121 | activation_var(mean/min/max)=0.365396/0.0147057/0.580248
+Epoch 178/834 | samples=1542 | steps=6 | train_objective=0.00795605 | training_physical_mse=0.00319651 | validation_physical_mse=0.0027197 | lr=0.001 | configured_lr=0.001 | grad_rms=0.852054 | activation_var(mean/min/max)=0.36108/0.0146189/0.57269
+Epoch 179/834 | samples=1542 | steps=6 | train_objective=0.00768004 | training_physical_mse=0.00402429 | validation_physical_mse=0.00362417 | lr=0.001 | configured_lr=0.001 | grad_rms=0.750469 | activation_var(mean/min/max)=0.359161/0.0145622/0.569788
+Epoch 180/834 | samples=1542 | steps=6 | train_objective=0.00736242 | training_physical_mse=0.00311336 | validation_physical_mse=0.00292022 | lr=0.001 | configured_lr=0.001 | grad_rms=0.816843 | activation_var(mean/min/max)=0.353519/0.0144278/0.561038
+Epoch 181/834 | samples=1542 | steps=6 | train_objective=0.00685527 | training_physical_mse=0.0028983 | validation_physical_mse=0.00248348 | lr=0.001 | configured_lr=0.001 | grad_rms=0.559535 | activation_var(mean/min/max)=0.341634/0.0143725/0.542351
+Epoch 182/834 | samples=1542 | steps=6 | train_objective=0.00694535 | training_physical_mse=0.00258783 | validation_physical_mse=0.00241248 | lr=0.001 | configured_lr=0.001 | grad_rms=0.449889 | activation_var(mean/min/max)=0.356722/0.0143906/0.567495
+Epoch 183/834 | samples=1542 | steps=6 | train_objective=0.00652744 | training_physical_mse=0.00263039 | validation_physical_mse=0.00234579 | lr=0.001 | configured_lr=0.001 | grad_rms=0.576166 | activation_var(mean/min/max)=0.353952/0.0144223/0.562348
+Epoch 184/834 | samples=1542 | steps=6 | train_objective=0.00687204 | training_physical_mse=0.00290945 | validation_physical_mse=0.00251705 | lr=0.001 | configured_lr=0.001 | grad_rms=0.679908 | activation_var(mean/min/max)=0.338722/0.0143764/0.536386
+Epoch 185/834 | samples=1542 | steps=6 | train_objective=0.0069449 | training_physical_mse=0.00275875 | validation_physical_mse=0.00259715 | lr=0.001 | configured_lr=0.001 | grad_rms=0.743421 | activation_var(mean/min/max)=0.342071/0.0143837/0.542571
+Epoch 186/834 | samples=1542 | steps=6 | train_objective=0.00652665 | training_physical_mse=0.00270644 | validation_physical_mse=0.00247767 | lr=0.001 | configured_lr=0.001 | grad_rms=0.425026 | activation_var(mean/min/max)=0.346243/0.0143936/0.549867
+Epoch 187/834 | samples=1542 | steps=6 | train_objective=0.00706624 | training_physical_mse=0.00378927 | validation_physical_mse=0.0032974 | lr=0.001 | configured_lr=0.001 | grad_rms=0.678638 | activation_var(mean/min/max)=0.345958/0.0143973/0.549887
+Epoch 188/834 | samples=1542 | steps=6 | train_objective=0.00757252 | training_physical_mse=0.00315563 | validation_physical_mse=0.00296601 | lr=0.001 | configured_lr=0.001 | grad_rms=0.411716 | activation_var(mean/min/max)=0.333312/0.0142595/0.52849
+Epoch 189/834 | samples=1542 | steps=6 | train_objective=0.0077692 | training_physical_mse=0.00307628 | validation_physical_mse=0.00273879 | lr=0.001 | configured_lr=0.001 | grad_rms=0.592681 | activation_var(mean/min/max)=0.346309/0.0141736/0.550313
+Epoch 190/834 | samples=1542 | steps=6 | train_objective=0.00724214 | training_physical_mse=0.00320837 | validation_physical_mse=0.00266324 | lr=0.001 | configured_lr=0.001 | grad_rms=0.384532 | activation_var(mean/min/max)=0.360607/0.0140716/0.573494
+Epoch 191/834 | samples=1542 | steps=6 | train_objective=0.00665723 | training_physical_mse=0.00281073 | validation_physical_mse=0.00271654 | lr=0.001 | configured_lr=0.001 | grad_rms=0.433011 | activation_var(mean/min/max)=0.337913/0.0139325/0.535956
+Epoch 192/834 | samples=1542 | steps=6 | train_objective=0.0065739 | training_physical_mse=0.0034549 | validation_physical_mse=0.00305114 | lr=0.001 | configured_lr=0.001 | grad_rms=0.409285 | activation_var(mean/min/max)=0.3266/0.0139087/0.517996
+Epoch 193/834 | samples=1542 | steps=6 | train_objective=0.00766579 | training_physical_mse=0.00349017 | validation_physical_mse=0.0032738 | lr=0.001 | configured_lr=0.001 | grad_rms=0.709404 | activation_var(mean/min/max)=0.344705/0.0139265/0.547639
+Epoch 194/834 | samples=1542 | steps=6 | train_objective=0.00784393 | training_physical_mse=0.00384303 | validation_physical_mse=0.00369514 | lr=0.001 | configured_lr=0.001 | grad_rms=0.869868 | activation_var(mean/min/max)=0.342671/0.0138237/0.545038
+Epoch 195/834 | samples=1542 | steps=6 | train_objective=0.00873198 | training_physical_mse=0.00391925 | validation_physical_mse=0.0035656 | lr=0.001 | configured_lr=0.001 | grad_rms=0.918928 | activation_var(mean/min/max)=0.335085/0.0138388/0.532527
+Epoch 196/834 | samples=1542 | steps=6 | train_objective=0.00875502 | training_physical_mse=0.00457886 | validation_physical_mse=0.00407202 | lr=0.001 | configured_lr=0.001 | grad_rms=0.946082 | activation_var(mean/min/max)=0.350671/0.0138485/0.556389
+Epoch 197/834 | samples=1542 | steps=6 | train_objective=0.00871435 | training_physical_mse=0.00297949 | validation_physical_mse=0.00257844 | lr=0.001 | configured_lr=0.001 | grad_rms=0.724251 | activation_var(mean/min/max)=0.332494/0.0135715/0.526801
+Epoch 198/834 | samples=1542 | steps=6 | train_objective=0.00746836 | training_physical_mse=0.00297667 | validation_physical_mse=0.00286913 | lr=0.001 | configured_lr=0.001 | grad_rms=0.405339 | activation_var(mean/min/max)=0.355672/0.01359/0.566235
+Epoch 199/834 | samples=1542 | steps=6 | train_objective=0.00727302 | training_physical_mse=0.00314004 | validation_physical_mse=0.00303965 | lr=0.001 | configured_lr=0.001 | grad_rms=0.649209 | activation_var(mean/min/max)=0.347625/0.0134486/0.553347
+Epoch 200/834 | samples=1542 | steps=6 | train_objective=0.00725223 | training_physical_mse=0.00289841 | validation_physical_mse=0.00252412 | lr=0.001 | configured_lr=0.001 | grad_rms=0.777271 | activation_var(mean/min/max)=0.32235/0.013214/0.51315
+Epoch 201/834 | samples=1542 | steps=6 | train_objective=0.00652742 | training_physical_mse=0.00294265 | validation_physical_mse=0.00297662 | lr=0.001 | configured_lr=0.001 | grad_rms=0.586636 | activation_var(mean/min/max)=0.331728/0.013208/0.528232
+Epoch 202/834 | samples=1542 | steps=6 | train_objective=0.00682149 | training_physical_mse=0.00263229 | validation_physical_mse=0.00229981 | lr=0.001 | configured_lr=0.001 | grad_rms=0.775813 | activation_var(mean/min/max)=0.329661/0.0131916/0.524764
+Epoch 203/834 | samples=1542 | steps=6 | train_objective=0.00615284 | training_physical_mse=0.00232398 | validation_physical_mse=0.00209938 | lr=0.001 | configured_lr=0.001 | grad_rms=0.494087 | activation_var(mean/min/max)=0.315204/0.0130983/0.501426
+Epoch 204/834 | samples=1542 | steps=6 | train_objective=0.00620776 | training_physical_mse=0.00265848 | validation_physical_mse=0.00269051 | lr=0.001 | configured_lr=0.001 | grad_rms=0.522023 | activation_var(mean/min/max)=0.322953/0.0131229/0.514207
+Epoch 205/834 | samples=1542 | steps=6 | train_objective=0.00707525 | training_physical_mse=0.00275532 | validation_physical_mse=0.00250694 | lr=0.001 | configured_lr=0.001 | grad_rms=0.883359 | activation_var(mean/min/max)=0.322416/0.0131429/0.513545
+Epoch 206/834 | samples=1542 | steps=6 | train_objective=0.00708717 | training_physical_mse=0.00372642 | validation_physical_mse=0.00364707 | lr=0.001 | configured_lr=0.001 | grad_rms=0.692224 | activation_var(mean/min/max)=0.312357/0.0130647/0.496873
+Epoch 207/834 | samples=1542 | steps=6 | train_objective=0.00741142 | training_physical_mse=0.00315343 | validation_physical_mse=0.00290215 | lr=0.001 | configured_lr=0.001 | grad_rms=0.815099 | activation_var(mean/min/max)=0.316629/0.0130677/0.503367
+Epoch 208/834 | samples=1542 | steps=6 | train_objective=0.0065649 | training_physical_mse=0.00248204 | validation_physical_mse=0.00226832 | lr=0.001 | configured_lr=0.001 | grad_rms=0.595781 | activation_var(mean/min/max)=0.306899/0.0129007/0.487824
+Epoch 209/834 | samples=1542 | steps=6 | train_objective=0.00637529 | training_physical_mse=0.00246978 | validation_physical_mse=0.00220569 | lr=0.001 | configured_lr=0.001 | grad_rms=0.465445 | activation_var(mean/min/max)=0.311777/0.012894/0.496163
+Epoch 210/834 | samples=1542 | steps=6 | train_objective=0.00623053 | training_physical_mse=0.00276578 | validation_physical_mse=0.00267756 | lr=0.001 | configured_lr=0.001 | grad_rms=0.47857 | activation_var(mean/min/max)=0.30943/0.0128374/0.492488
+Epoch 211/834 | samples=1542 | steps=6 | train_objective=0.00607023 | training_physical_mse=0.00276858 | validation_physical_mse=0.00268406 | lr=0.001 | configured_lr=0.001 | grad_rms=0.551116 | activation_var(mean/min/max)=0.311806/0.0128352/0.496647
+Epoch 212/834 | samples=1542 | steps=6 | train_objective=0.00647109 | training_physical_mse=0.00316544 | validation_physical_mse=0.00294317 | lr=0.001 | configured_lr=0.001 | grad_rms=0.731568 | activation_var(mean/min/max)=0.300601/0.0127023/0.478421
+Epoch 213/834 | samples=1542 | steps=6 | train_objective=0.00681548 | training_physical_mse=0.00299924 | validation_physical_mse=0.00290897 | lr=0.001 | configured_lr=0.001 | grad_rms=0.88534 | activation_var(mean/min/max)=0.301834/0.0126324/0.479507
+Epoch 214/834 | samples=1542 | steps=6 | train_objective=0.00775456 | training_physical_mse=0.0031664 | validation_physical_mse=0.00287257 | lr=0.001 | configured_lr=0.001 | grad_rms=1.15579 | activation_var(mean/min/max)=0.311577/0.0127062/0.495459
+Epoch 215/834 | samples=1542 | steps=6 | train_objective=0.00715606 | training_physical_mse=0.00314558 | validation_physical_mse=0.00283894 | lr=0.001 | configured_lr=0.001 | grad_rms=0.914277 | activation_var(mean/min/max)=0.30242/0.0126306/0.48111
+Epoch 216/834 | samples=1542 | steps=6 | train_objective=0.00759018 | training_physical_mse=0.00265784 | validation_physical_mse=0.00237402 | lr=0.001 | configured_lr=0.001 | grad_rms=0.818934 | activation_var(mean/min/max)=0.305781/0.0125716/0.487142
+Epoch 217/834 | samples=1542 | steps=6 | train_objective=0.00756757 | training_physical_mse=0.00387301 | validation_physical_mse=0.00375247 | lr=0.001 | configured_lr=0.001 | grad_rms=1.00318 | activation_var(mean/min/max)=0.300891/0.0125964/0.479163
+Epoch 218/834 | samples=1542 | steps=6 | train_objective=0.00726532 | training_physical_mse=0.00372889 | validation_physical_mse=0.00351721 | lr=0.001 | configured_lr=0.001 | grad_rms=0.905515 | activation_var(mean/min/max)=0.307276/0.0125967/0.489256
+Epoch 219/834 | samples=1542 | steps=6 | train_objective=0.00780216 | training_physical_mse=0.00249343 | validation_physical_mse=0.00227087 | lr=0.001 | configured_lr=0.001 | grad_rms=0.994096 | activation_var(mean/min/max)=0.293562/0.0123729/0.468225
+Epoch 220/834 | samples=1542 | steps=6 | train_objective=0.00622808 | training_physical_mse=0.00262632 | validation_physical_mse=0.00273835 | lr=0.001 | configured_lr=0.001 | grad_rms=0.65747 | activation_var(mean/min/max)=0.299732/0.0123572/0.478328
+Epoch 221/834 | samples=1542 | steps=6 | train_objective=0.00624156 | training_physical_mse=0.0022589 | validation_physical_mse=0.00206201 | lr=0.001 | configured_lr=0.001 | grad_rms=0.670856 | activation_var(mean/min/max)=0.296827/0.0123392/0.473298
+Epoch 222/834 | samples=1542 | steps=6 | train_objective=0.00615907 | training_physical_mse=0.00401095 | validation_physical_mse=0.00375946 | lr=0.001 | configured_lr=0.001 | grad_rms=0.72507 | activation_var(mean/min/max)=0.299904/0.0123663/0.478676
+Epoch 223/834 | samples=1542 | steps=6 | train_objective=0.008755 | training_physical_mse=0.00240428 | validation_physical_mse=0.00226821 | lr=0.001 | configured_lr=0.001 | grad_rms=1.24743 | activation_var(mean/min/max)=0.29511/0.0122233/0.469857
+Epoch 224/834 | samples=1542 | steps=6 | train_objective=0.00713276 | training_physical_mse=0.00383126 | validation_physical_mse=0.00389905 | lr=0.001 | configured_lr=0.001 | grad_rms=0.966845 | activation_var(mean/min/max)=0.289344/0.0122254/0.459954
+Epoch 225/834 | samples=1542 | steps=6 | train_objective=0.00687715 | training_physical_mse=0.00288617 | validation_physical_mse=0.00299519 | lr=0.001 | configured_lr=0.001 | grad_rms=0.811763 | activation_var(mean/min/max)=0.311932/0.0122841/0.49771
+Epoch 226/834 | samples=1542 | steps=6 | train_objective=0.0064094 | training_physical_mse=0.00230188 | validation_physical_mse=0.00222099 | lr=0.001 | configured_lr=0.001 | grad_rms=0.627023 | activation_var(mean/min/max)=0.292707/0.0121452/0.466329
+Epoch 227/834 | samples=1542 | steps=6 | train_objective=0.0063838 | training_physical_mse=0.00271184 | validation_physical_mse=0.00239617 | lr=0.001 | configured_lr=0.001 | grad_rms=0.639589 | activation_var(mean/min/max)=0.291024/0.0122027/0.46521
+Epoch 228/834 | samples=1542 | steps=6 | train_objective=0.00638348 | training_physical_mse=0.00263755 | validation_physical_mse=0.00237657 | lr=0.001 | configured_lr=0.001 | grad_rms=0.59196 | activation_var(mean/min/max)=0.299649/0.01216/0.478866
+Epoch 229/834 | samples=1542 | steps=6 | train_objective=0.00610437 | training_physical_mse=0.00263521 | validation_physical_mse=0.00248666 | lr=0.001 | configured_lr=0.001 | grad_rms=0.536936 | activation_var(mean/min/max)=0.284227/0.012052/0.453207
+Epoch 230/834 | samples=1542 | steps=6 | train_objective=0.00642456 | training_physical_mse=0.00295165 | validation_physical_mse=0.00265489 | lr=0.001 | configured_lr=0.001 | grad_rms=0.679039 | activation_var(mean/min/max)=0.283935/0.0120364/0.453146
+Epoch 231/834 | samples=1542 | steps=6 | train_objective=0.00697638 | training_physical_mse=0.00244591 | validation_physical_mse=0.00239466 | lr=0.001 | configured_lr=0.001 | grad_rms=0.916036 | activation_var(mean/min/max)=0.299837/0.0120785/0.478952
+Epoch 232/834 | samples=1542 | steps=6 | train_objective=0.00683973 | training_physical_mse=0.00210909 | validation_physical_mse=0.00186515 | lr=0.001 | configured_lr=0.001 | grad_rms=0.875652 | activation_var(mean/min/max)=0.275817/0.0119793/0.439732
+Epoch 233/834 | samples=1542 | steps=6 | train_objective=0.0065961 | training_physical_mse=0.0030804 | validation_physical_mse=0.00268204 | lr=0.001 | configured_lr=0.001 | grad_rms=0.724753 | activation_var(mean/min/max)=0.280799/0.011992/0.448651
+Epoch 234/834 | samples=1542 | steps=6 | train_objective=0.0070017 | training_physical_mse=0.00247652 | validation_physical_mse=0.00228625 | lr=0.001 | configured_lr=0.001 | grad_rms=0.914962 | activation_var(mean/min/max)=0.274786/0.0117587/0.438608
+Epoch 235/834 | samples=1542 | steps=6 | train_objective=0.00618453 | training_physical_mse=0.00230667 | validation_physical_mse=0.00231637 | lr=0.001 | configured_lr=0.001 | grad_rms=0.661219 | activation_var(mean/min/max)=0.278547/0.0117285/0.444469
+Epoch 236/834 | samples=1542 | steps=6 | train_objective=0.00579925 | training_physical_mse=0.0029348 | validation_physical_mse=0.00284487 | lr=0.001 | configured_lr=0.001 | grad_rms=0.532094 | activation_var(mean/min/max)=0.279709/0.011778/0.446511
+Epoch 237/834 | samples=1542 | steps=6 | train_objective=0.005625 | training_physical_mse=0.00205182 | validation_physical_mse=0.00204722 | lr=0.001 | configured_lr=0.001 | grad_rms=0.484893 | activation_var(mean/min/max)=0.270771/0.0116674/0.432433
+Epoch 238/834 | samples=1542 | steps=6 | train_objective=0.00585939 | training_physical_mse=0.00304181 | validation_physical_mse=0.00273296 | lr=0.001 | configured_lr=0.001 | grad_rms=0.372267 | activation_var(mean/min/max)=0.284839/0.0116546/0.456088
+Epoch 239/834 | samples=1542 | steps=6 | train_objective=0.00701874 | training_physical_mse=0.00338994 | validation_physical_mse=0.00330358 | lr=0.001 | configured_lr=0.001 | grad_rms=0.776276 | activation_var(mean/min/max)=0.281648/0.0116584/0.449549
+Epoch 240/834 | samples=1542 | steps=6 | train_objective=0.00797699 | training_physical_mse=0.00351831 | validation_physical_mse=0.00345168 | lr=0.001 | configured_lr=0.001 | grad_rms=1.21768 | activation_var(mean/min/max)=0.274304/0.0116163/0.437576
+Epoch 241/834 | samples=1542 | steps=6 | train_objective=0.00757136 | training_physical_mse=0.0023709 | validation_physical_mse=0.00204378 | lr=0.001 | configured_lr=0.001 | grad_rms=1.11441 | activation_var(mean/min/max)=0.268495/0.0114256/0.429199
+Epoch 242/834 | samples=1542 | steps=6 | train_objective=0.00705722 | training_physical_mse=0.00212333 | validation_physical_mse=0.00199783 | lr=0.001 | configured_lr=0.001 | grad_rms=0.808391 | activation_var(mean/min/max)=0.258376/0.0113364/0.411957
+Epoch 243/834 | samples=1542 | steps=6 | train_objective=0.00578628 | training_physical_mse=0.00230249 | validation_physical_mse=0.00229791 | lr=0.001 | configured_lr=0.001 | grad_rms=0.583546 | activation_var(mean/min/max)=0.269322/0.0112998/0.43148
+Epoch 244/834 | samples=1542 | steps=6 | train_objective=0.00605539 | training_physical_mse=0.00234317 | validation_physical_mse=0.0020443 | lr=0.001 | configured_lr=0.001 | grad_rms=0.637285 | activation_var(mean/min/max)=0.255027/0.0112671/0.408009
+Epoch 245/834 | samples=1542 | steps=6 | train_objective=0.00644718 | training_physical_mse=0.0022062 | validation_physical_mse=0.00217712 | lr=0.001 | configured_lr=0.001 | grad_rms=0.84074 | activation_var(mean/min/max)=0.254405/0.0112068/0.406196
+Epoch 246/834 | samples=1542 | steps=6 | train_objective=0.00627928 | training_physical_mse=0.00237593 | validation_physical_mse=0.00247651 | lr=0.001 | configured_lr=0.001 | grad_rms=0.706088 | activation_var(mean/min/max)=0.259302/0.0112092/0.414703
+Epoch 247/834 | samples=1542 | steps=6 | train_objective=0.00600331 | training_physical_mse=0.00238486 | validation_physical_mse=0.0023007 | lr=0.001 | configured_lr=0.001 | grad_rms=0.622798 | activation_var(mean/min/max)=0.257187/0.011131/0.410866
+Epoch 248/834 | samples=1542 | steps=6 | train_objective=0.00540756 | training_physical_mse=0.00187371 | validation_physical_mse=0.00187932 | lr=0.001 | configured_lr=0.001 | grad_rms=0.395369 | activation_var(mean/min/max)=0.25202/0.0111178/0.403448
+Epoch 249/834 | samples=1542 | steps=6 | train_objective=0.00569439 | training_physical_mse=0.00210582 | validation_physical_mse=0.0019972 | lr=0.001 | configured_lr=0.001 | grad_rms=0.709091 | activation_var(mean/min/max)=0.255451/0.0111519/0.409994
+Epoch 250/834 | samples=1542 | steps=6 | train_objective=0.00560918 | training_physical_mse=0.00195819 | validation_physical_mse=0.00179143 | lr=0.001 | configured_lr=0.001 | grad_rms=0.685252 | activation_var(mean/min/max)=0.260443/0.0111033/0.41811
+Epoch 251/834 | samples=1542 | steps=6 | train_objective=0.00643821 | training_physical_mse=0.00286457 | validation_physical_mse=0.00280033 | lr=0.001 | configured_lr=0.001 | grad_rms=0.985408 | activation_var(mean/min/max)=0.259896/0.0111556/0.416511
+Epoch 252/834 | samples=1542 | steps=6 | train_objective=0.00615291 | training_physical_mse=0.00242813 | validation_physical_mse=0.00243126 | lr=0.001 | configured_lr=0.001 | grad_rms=0.897322 | activation_var(mean/min/max)=0.262037/0.0111486/0.419244
+Epoch 253/834 | samples=1542 | steps=6 | train_objective=0.00627276 | training_physical_mse=0.00198616 | validation_physical_mse=0.00180875 | lr=0.001 | configured_lr=0.001 | grad_rms=0.917632 | activation_var(mean/min/max)=0.262171/0.0110298/0.419979
+Epoch 254/834 | samples=1542 | steps=6 | train_objective=0.00569305 | training_physical_mse=0.00219121 | validation_physical_mse=0.00214546 | lr=0.001 | configured_lr=0.001 | grad_rms=0.679731 | activation_var(mean/min/max)=0.271813/0.0111336/0.434943
+Epoch 255/834 | samples=1542 | steps=6 | train_objective=0.0055628 | training_physical_mse=0.00203985 | validation_physical_mse=0.00201613 | lr=0.001 | configured_lr=0.001 | grad_rms=0.556019 | activation_var(mean/min/max)=0.254071/0.01124/0.405272
+Epoch 256/834 | samples=1542 | steps=6 | train_objective=0.00575349 | training_physical_mse=0.00218836 | validation_physical_mse=0.0021714 | lr=0.001 | configured_lr=0.001 | grad_rms=0.705672 | activation_var(mean/min/max)=0.26816/0.0112975/0.42908
+Epoch 257/834 | samples=1542 | steps=6 | train_objective=0.00565028 | training_physical_mse=0.00312696 | validation_physical_mse=0.00307488 | lr=0.001 | configured_lr=0.001 | grad_rms=0.748927 | activation_var(mean/min/max)=0.258373/0.0112304/0.413001
+Epoch 258/834 | samples=1542 | steps=6 | train_objective=0.00694111 | training_physical_mse=0.00222022 | validation_physical_mse=0.0020993 | lr=0.001 | configured_lr=0.001 | grad_rms=1.16219 | activation_var(mean/min/max)=0.264017/0.0112543/0.422825
+Epoch 259/834 | samples=1542 | steps=6 | train_objective=0.00577698 | training_physical_mse=0.0026361 | validation_physical_mse=0.00245495 | lr=0.001 | configured_lr=0.001 | grad_rms=0.725719 | activation_var(mean/min/max)=0.260146/0.0112378/0.416692
+Epoch 260/834 | samples=1542 | steps=6 | train_objective=0.00616521 | training_physical_mse=0.00224226 | validation_physical_mse=0.00254994 | lr=0.001 | configured_lr=0.001 | grad_rms=0.945587 | activation_var(mean/min/max)=0.256508/0.0111884/0.410479
+Epoch 261/834 | samples=1542 | steps=6 | train_objective=0.00555983 | training_physical_mse=0.00198097 | validation_physical_mse=0.00175561 | lr=0.001 | configured_lr=0.001 | grad_rms=0.527849 | activation_var(mean/min/max)=0.262579/0.0112356/0.420846
+Epoch 262/834 | samples=1542 | steps=6 | train_objective=0.0050468 | training_physical_mse=0.00197441 | validation_physical_mse=0.00198236 | lr=0.001 | configured_lr=0.001 | grad_rms=0.411609 | activation_var(mean/min/max)=0.262684/0.0111993/0.420248
+Epoch 263/834 | samples=1542 | steps=6 | train_objective=0.00552597 | training_physical_mse=0.0021913 | validation_physical_mse=0.00213507 | lr=0.001 | configured_lr=0.001 | grad_rms=0.646959 | activation_var(mean/min/max)=0.262209/0.0111836/0.42013
+Epoch 264/834 | samples=1542 | steps=6 | train_objective=0.00516336 | training_physical_mse=0.00204133 | validation_physical_mse=0.00207177 | lr=0.001 | configured_lr=0.001 | grad_rms=0.542932 | activation_var(mean/min/max)=0.250827/0.0111214/0.400866
+Epoch 265/834 | samples=1542 | steps=6 | train_objective=0.00517903 | training_physical_mse=0.00193939 | validation_physical_mse=0.00184368 | lr=0.001 | configured_lr=0.001 | grad_rms=0.624497 | activation_var(mean/min/max)=0.26397/0.0111688/0.422564
+Epoch 266/834 | samples=1542 | steps=6 | train_objective=0.0056441 | training_physical_mse=0.00197823 | validation_physical_mse=0.00193828 | lr=0.001 | configured_lr=0.001 | grad_rms=0.686564 | activation_var(mean/min/max)=0.256015/0.0111059/0.409292
+Epoch 267/834 | samples=1542 | steps=6 | train_objective=0.00532506 | training_physical_mse=0.00259167 | validation_physical_mse=0.0028593 | lr=0.001 | configured_lr=0.001 | grad_rms=0.714712 | activation_var(mean/min/max)=0.254269/0.0110642/0.406327
+Epoch 268/834 | samples=1542 | steps=6 | train_objective=0.00626451 | training_physical_mse=0.00251193 | validation_physical_mse=0.00233322 | lr=0.001 | configured_lr=0.001 | grad_rms=0.88851 | activation_var(mean/min/max)=0.265825/0.0111719/0.425528
+Epoch 269/834 | samples=1542 | steps=6 | train_objective=0.00595736 | training_physical_mse=0.00253878 | validation_physical_mse=0.00253768 | lr=0.001 | configured_lr=0.001 | grad_rms=0.659194 | activation_var(mean/min/max)=0.256128/0.0110053/0.410231
+Epoch 270/834 | samples=1542 | steps=6 | train_objective=0.00610568 | training_physical_mse=0.00206243 | validation_physical_mse=0.00208785 | lr=0.001 | configured_lr=0.001 | grad_rms=0.618842 | activation_var(mean/min/max)=0.250506/0.0108417/0.401203
+Epoch 271/834 | samples=1542 | steps=6 | train_objective=0.00522677 | training_physical_mse=0.00193985 | validation_physical_mse=0.00194998 | lr=0.001 | configured_lr=0.001 | grad_rms=0.590189 | activation_var(mean/min/max)=0.247232/0.0107972/0.394907
+Epoch 272/834 | samples=1542 | steps=6 | train_objective=0.00556242 | training_physical_mse=0.00320374 | validation_physical_mse=0.00297764 | lr=0.001 | configured_lr=0.001 | grad_rms=0.438084 | activation_var(mean/min/max)=0.252741/0.0107403/0.404971
+Epoch 273/834 | samples=1542 | steps=6 | train_objective=0.00748906 | training_physical_mse=0.00287634 | validation_physical_mse=0.0027042 | lr=0.001 | configured_lr=0.001 | grad_rms=0.787594 | activation_var(mean/min/max)=0.252398/0.0106204/0.403579
+Epoch 274/834 | samples=1542 | steps=6 | train_objective=0.00651815 | training_physical_mse=0.00305203 | validation_physical_mse=0.00283644 | lr=0.001 | configured_lr=0.001 | grad_rms=0.61652 | activation_var(mean/min/max)=0.248965/0.0105376/0.398527
+Epoch 275/834 | samples=1542 | steps=6 | train_objective=0.00619482 | training_physical_mse=0.0025206 | validation_physical_mse=0.00248109 | lr=0.001 | configured_lr=0.001 | grad_rms=0.591949 | activation_var(mean/min/max)=0.250187/0.0105055/0.400487
+Epoch 276/834 | samples=1542 | steps=6 | train_objective=0.00717789 | training_physical_mse=0.00325689 | validation_physical_mse=0.00306753 | lr=0.001 | configured_lr=0.001 | grad_rms=1.04577 | activation_var(mean/min/max)=0.24811/0.0103891/0.397358
+Epoch 277/834 | samples=1542 | steps=6 | train_objective=0.00721121 | training_physical_mse=0.0026545 | validation_physical_mse=0.00289611 | lr=0.001 | configured_lr=0.001 | grad_rms=1.13953 | activation_var(mean/min/max)=0.23962/0.0104444/0.383021
+Epoch 278/834 | samples=1542 | steps=6 | train_objective=0.00639167 | training_physical_mse=0.00456649 | validation_physical_mse=0.00406403 | lr=0.001 | configured_lr=0.001 | grad_rms=0.782039 | activation_var(mean/min/max)=0.23186/0.0102832/0.370252
+Epoch 279/834 | samples=1542 | steps=6 | train_objective=0.00808975 | training_physical_mse=0.00258209 | validation_physical_mse=0.00260835 | lr=0.001 | configured_lr=0.001 | grad_rms=1.07969 | activation_var(mean/min/max)=0.21652/0.00992408/0.34495
+Epoch 280/834 | samples=1542 | steps=6 | train_objective=0.00799718 | training_physical_mse=0.00389482 | validation_physical_mse=0.00402286 | lr=0.001 | configured_lr=0.001 | grad_rms=1.23287 | activation_var(mean/min/max)=0.255822/0.0100082/0.411026
+Epoch 281/834 | samples=1542 | steps=6 | train_objective=0.00735911 | training_physical_mse=0.00285372 | validation_physical_mse=0.00269616 | lr=0.001 | configured_lr=0.001 | grad_rms=1.17478 | activation_var(mean/min/max)=0.233049/0.00990306/0.372384
+Epoch 282/834 | samples=1542 | steps=6 | train_objective=0.00646798 | training_physical_mse=0.00285031 | validation_physical_mse=0.00280808 | lr=0.001 | configured_lr=0.001 | grad_rms=0.693614 | activation_var(mean/min/max)=0.222234/0.00977315/0.356219
+Epoch 283/834 | samples=1542 | steps=6 | train_objective=0.00599884 | training_physical_mse=0.00186635 | validation_physical_mse=0.00184436 | lr=0.001 | configured_lr=0.001 | grad_rms=0.75108 | activation_var(mean/min/max)=0.246262/0.0098596/0.395713
+Epoch 284/834 | samples=1542 | steps=6 | train_objective=0.00545344 | training_physical_mse=0.00192628 | validation_physical_mse=0.0018247 | lr=0.001 | configured_lr=0.001 | grad_rms=0.470264 | activation_var(mean/min/max)=0.225509/0.00988173/0.36061
+Epoch 285/834 | samples=1542 | steps=6 | train_objective=0.00739192 | training_physical_mse=0.00346096 | validation_physical_mse=0.00322803 | lr=0.001 | configured_lr=0.001 | grad_rms=1.10903 | activation_var(mean/min/max)=0.224358/0.00987771/0.358167
+Epoch 286/834 | samples=1542 | steps=6 | train_objective=0.00727608 | training_physical_mse=0.00206323 | validation_physical_mse=0.00209955 | lr=0.001 | configured_lr=0.001 | grad_rms=0.665143 | activation_var(mean/min/max)=0.238211/0.0097012/0.381427
+Epoch 287/834 | samples=1542 | steps=6 | train_objective=0.00606137 | training_physical_mse=0.00209784 | validation_physical_mse=0.00208419 | lr=0.001 | configured_lr=0.001 | grad_rms=0.514447 | activation_var(mean/min/max)=0.241713/0.00962996/0.386743
+Epoch 288/834 | samples=1542 | steps=6 | train_objective=0.00600195 | training_physical_mse=0.00251686 | validation_physical_mse=0.00222087 | lr=0.001 | configured_lr=0.001 | grad_rms=0.591601 | activation_var(mean/min/max)=0.213772/0.00939237/0.34114
+Epoch 289/834 | samples=1542 | steps=6 | train_objective=0.00588135 | training_physical_mse=0.0024812 | validation_physical_mse=0.00281977 | lr=0.001 | configured_lr=0.001 | grad_rms=0.507816 | activation_var(mean/min/max)=0.236161/0.00941742/0.378916
+Epoch 290/834 | samples=1542 | steps=6 | train_objective=0.00550647 | training_physical_mse=0.00173892 | validation_physical_mse=0.00160797 | lr=0.001 | configured_lr=0.001 | grad_rms=0.37716 | activation_var(mean/min/max)=0.228456/0.00927627/0.366781
+Epoch 291/834 | samples=1542 | steps=6 | train_objective=0.00463602 | training_physical_mse=0.00171659 | validation_physical_mse=0.00159493 | lr=0.001 | configured_lr=0.001 | grad_rms=0.313818 | activation_var(mean/min/max)=0.206945/0.00922891/0.331591
+Epoch 292/834 | samples=1542 | steps=6 | train_objective=0.00464749 | training_physical_mse=0.00168346 | validation_physical_mse=0.00168519 | lr=0.001 | configured_lr=0.001 | grad_rms=0.440008 | activation_var(mean/min/max)=0.223555/0.00923877/0.358655
+Epoch 293/834 | samples=1542 | steps=6 | train_objective=0.00462973 | training_physical_mse=0.00175125 | validation_physical_mse=0.0015947 | lr=0.001 | configured_lr=0.001 | grad_rms=0.43384 | activation_var(mean/min/max)=0.215808/0.00920932/0.345407
+Epoch 294/834 | samples=1542 | steps=6 | train_objective=0.00509042 | training_physical_mse=0.00175125 | validation_physical_mse=0.00185331 | lr=0.001 | configured_lr=0.001 | grad_rms=0.437142 | activation_var(mean/min/max)=0.225443/0.00935603/0.361381
+Epoch 295/834 | samples=1542 | steps=6 | train_objective=0.00463561 | training_physical_mse=0.00183591 | validation_physical_mse=0.00169811 | lr=0.001 | configured_lr=0.001 | grad_rms=0.31537 | activation_var(mean/min/max)=0.218658/0.00932064/0.349734
+Epoch 296/834 | samples=1542 | steps=6 | train_objective=0.00517406 | training_physical_mse=0.0021379 | validation_physical_mse=0.00209903 | lr=0.001 | configured_lr=0.001 | grad_rms=0.646447 | activation_var(mean/min/max)=0.222667/0.00932645/0.356532
+Epoch 297/834 | samples=1542 | steps=6 | train_objective=0.00586723 | training_physical_mse=0.00286373 | validation_physical_mse=0.00263703 | lr=0.001 | configured_lr=0.001 | grad_rms=0.917197 | activation_var(mean/min/max)=0.221559/0.00940651/0.3541
+Epoch 298/834 | samples=1542 | steps=6 | train_objective=0.00635324 | training_physical_mse=0.00179744 | validation_physical_mse=0.00179335 | lr=0.001 | configured_lr=0.001 | grad_rms=0.710864 | activation_var(mean/min/max)=0.211952/0.00919905/0.339035
+Epoch 299/834 | samples=1542 | steps=6 | train_objective=0.00535237 | training_physical_mse=0.0020629 | validation_physical_mse=0.00211093 | lr=0.001 | configured_lr=0.001 | grad_rms=0.409984 | activation_var(mean/min/max)=0.234307/0.00918591/0.375157
+Epoch 300/834 | samples=1542 | steps=6 | train_objective=0.00488542 | training_physical_mse=0.0017182 | validation_physical_mse=0.00158852 | lr=0.001 | configured_lr=0.001 | grad_rms=0.374838 | activation_var(mean/min/max)=0.217138/0.00911902/0.346039
+Epoch 301/834 | samples=1542 | steps=6 | train_objective=0.00493495 | training_physical_mse=0.00164432 | validation_physical_mse=0.00170142 | lr=0.001 | configured_lr=0.001 | grad_rms=0.348034 | activation_var(mean/min/max)=0.21637/0.00913607/0.345799
+Epoch 302/834 | samples=1542 | steps=6 | train_objective=0.00498554 | training_physical_mse=0.00198178 | validation_physical_mse=0.00213625 | lr=0.001 | configured_lr=0.001 | grad_rms=0.552257 | activation_var(mean/min/max)=0.222663/0.00909469/0.35517
+Epoch 303/834 | samples=1542 | steps=6 | train_objective=0.00517512 | training_physical_mse=0.00203839 | validation_physical_mse=0.00180874 | lr=0.001 | configured_lr=0.001 | grad_rms=0.425652 | activation_var(mean/min/max)=0.216902/0.00915941/0.347542
+Epoch 304/834 | samples=1542 | steps=6 | train_objective=0.00475527 | training_physical_mse=0.00194088 | validation_physical_mse=0.00194576 | lr=0.001 | configured_lr=0.001 | grad_rms=0.324452 | activation_var(mean/min/max)=0.222128/0.00913535/0.354249
+Epoch 305/834 | samples=1542 | steps=6 | train_objective=0.0045466 | training_physical_mse=0.00161008 | validation_physical_mse=0.00162281 | lr=0.001 | configured_lr=0.001 | grad_rms=0.358466 | activation_var(mean/min/max)=0.222382/0.00920365/0.355277
+Epoch 306/834 | samples=1542 | steps=6 | train_objective=0.00457255 | training_physical_mse=0.00235217 | validation_physical_mse=0.00230037 | lr=0.001 | configured_lr=0.001 | grad_rms=0.493712 | activation_var(mean/min/max)=0.205678/0.00910146/0.327132
+Epoch 307/834 | samples=1542 | steps=6 | train_objective=0.00581533 | training_physical_mse=0.00250317 | validation_physical_mse=0.00254892 | lr=0.001 | configured_lr=0.001 | grad_rms=0.998668 | activation_var(mean/min/max)=0.227695/0.00920656/0.364002
+Epoch 308/834 | samples=1542 | steps=6 | train_objective=0.00596001 | training_physical_mse=0.00271082 | validation_physical_mse=0.00296017 | lr=0.001 | configured_lr=0.001 | grad_rms=0.877065 | activation_var(mean/min/max)=0.21146/0.00905942/0.336629
+Epoch 309/834 | samples=1542 | steps=6 | train_objective=0.00714298 | training_physical_mse=0.00261801 | validation_physical_mse=0.00234375 | lr=0.001 | configured_lr=0.001 | grad_rms=1.09727 | activation_var(mean/min/max)=0.216883/0.00915154/0.34616
+Epoch 310/834 | samples=1542 | steps=6 | train_objective=0.00675824 | training_physical_mse=0.00331374 | validation_physical_mse=0.00360338 | lr=0.001 | configured_lr=0.001 | grad_rms=1.01818 | activation_var(mean/min/max)=0.22289/0.00894007/0.356124
+Epoch 311/834 | samples=1542 | steps=6 | train_objective=0.00617462 | training_physical_mse=0.00210152 | validation_physical_mse=0.00228839 | lr=0.001 | configured_lr=0.001 | grad_rms=1.0818 | activation_var(mean/min/max)=0.215175/0.00891149/0.343157
+Epoch 312/834 | samples=1542 | steps=6 | train_objective=0.00616946 | training_physical_mse=0.00265128 | validation_physical_mse=0.00205119 | lr=0.001 | configured_lr=0.001 | grad_rms=0.598679 | activation_var(mean/min/max)=0.225646/0.00878791/0.36126
+Epoch 313/834 | samples=1542 | steps=6 | train_objective=0.00557179 | training_physical_mse=0.00233172 | validation_physical_mse=0.00265962 | lr=0.001 | configured_lr=0.001 | grad_rms=0.641501 | activation_var(mean/min/max)=0.200573/0.00853001/0.319291
+Epoch 314/834 | samples=1542 | steps=6 | train_objective=0.00478649 | training_physical_mse=0.00184796 | validation_physical_mse=0.00173229 | lr=0.001 | configured_lr=0.001 | grad_rms=0.521646 | activation_var(mean/min/max)=0.21924/0.00857999/0.350841
+Epoch 315/834 | samples=1542 | steps=6 | train_objective=0.00463637 | training_physical_mse=0.00159982 | validation_physical_mse=0.00169303 | lr=0.001 | configured_lr=0.001 | grad_rms=0.360585 | activation_var(mean/min/max)=0.210257/0.00844805/0.335609
+Epoch 316/834 | samples=1542 | steps=6 | train_objective=0.00442758 | training_physical_mse=0.00159697 | validation_physical_mse=0.00169523 | lr=0.001 | configured_lr=0.001 | grad_rms=0.467152 | activation_var(mean/min/max)=0.20486/0.00845672/0.326866
+Epoch 317/834 | samples=1542 | steps=6 | train_objective=0.00440963 | training_physical_mse=0.00156927 | validation_physical_mse=0.00167011 | lr=0.001 | configured_lr=0.001 | grad_rms=0.471211 | activation_var(mean/min/max)=0.211746/0.00852092/0.337149
+Epoch 318/834 | samples=1542 | steps=6 | train_objective=0.00456165 | training_physical_mse=0.00151809 | validation_physical_mse=0.00142482 | lr=0.001 | configured_lr=0.001 | grad_rms=0.671362 | activation_var(mean/min/max)=0.200002/0.00851338/0.318302
+Epoch 319/834 | samples=1542 | steps=6 | train_objective=0.00478231 | training_physical_mse=0.00146686 | validation_physical_mse=0.00176502 | lr=0.001 | configured_lr=0.001 | grad_rms=0.701074 | activation_var(mean/min/max)=0.217136/0.00861797/0.346033
+Early stopping at epoch 319: validation MSE exceeded training MSE by more than 15% above training MSE.
+Completed epoch: 319
+Selected epoch: 318
+Training physical MSE: 0.00151809
+Validation physical MSE: 0.00142482
+Test physical MSE: 0.00151239
+Results: "results/re-tuning/trial-4_slurm-56688192"
+
+real	10m3.261s
+user	0m0.234s
+sys	0m0.083s

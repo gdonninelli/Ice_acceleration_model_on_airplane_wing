@@ -1,0 +1,150 @@
+Job ID: 56688199
+Stage: trial-4-seed-1
+Repository: /leonardo/home/userexternal/gdonnine/Ice_acceleration_model_on_airplane_wing
+Nodes: 1
+MPI tasks: 64
+Loading python/3.11.7
+  Loading requirement: bzip2/1.0.8-ib3znej libmd/1.0.4-2km2lxx
+    libbsd/0.12.1-oocs6an expat/2.6.2-p2t4wry ncurses/6.5-svfl57u
+    readline/8.2-zeda6mx gdbm/1.23-wiol7vk libiconv/1.17-nhc3mhm
+    xz/5.4.6-xxxg42c zlib-ng/2.1.6-jkgunjc libxml2/2.10.3-zbbe7lm
+    pigz/2.8-5bwzpml zstd/1.5.6-uq5yyux tar/1.34-jgektnv gettext/0.22.5-hsxgafg
+    libffi/3.4.6-4vs4jpp libxcrypt/4.4.35-7om46b5 sqlite/3.43.2-4kl5mnp
+    util-linux-uuid/2.38.1-5achpds
+Loading gcc/11.3.0
+  Loading requirement: gmp/6.2.1 mpfr/4.1.0 mpc/1.2.1
+-- The CXX compiler identification is GNU 11.3.0
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /leonardo/prod/spack/03/install/0.19/linux-rhel8-icelake/gcc-8.5.0/gcc-11.3.0-tm6phj7wkcw7cuy6gjixemkvh5x2mhza/bin/g++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Found MPI_CXX: /leonardo/prod/spack/06/install/0.22/linux-rhel8-icelake/gcc-8.5.0/intel-oneapi-mpi-2021.12.1-s5hpfy2ffuow455bu7uzjbfizbfq3znr/mpi/2021.12/lib/libmpicxx.so (found version "3.1") 
+-- Found MPI: TRUE (found version "3.1") found components: CXX 
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /leonardo/home/userexternal/gdonnine/Ice_acceleration_model_on_airplane_wing/build/CNN-re-tuning-56688199
+[  3%] Building CXX object CMakeFiles/cnn_core.dir/src/core/Loss.cpp.o
+[  7%] Building CXX object CMakeFiles/cnn_core.dir/src/core/Tensor.cpp.o
+[ 17%] Building CXX object CMakeFiles/cnn_core.dir/src/layers/ActivationLayer.cpp.o
+[ 28%] Building CXX object CMakeFiles/cnn_core.dir/src/layers/Conv2DLayer.cpp.o
+[ 28%] Building CXX object CMakeFiles/cnn_core.dir/src/layers/ConcatenateLayer.cpp.o
+[ 32%] Building CXX object CMakeFiles/cnn_core.dir/src/layers/DenseLayer.cpp.o
+[ 32%] Building CXX object CMakeFiles/cnn_core.dir/src/layers/DropoutLayer.cpp.o
+[ 50%] Building CXX object CMakeFiles/cnn_core.dir/src/layers/FlattenLayer.cpp.o
+[ 50%] Building CXX object CMakeFiles/cnn_core.dir/src/data/Dataset.cpp.o
+[ 50%] Building CXX object CMakeFiles/cnn_core.dir/src/layers/LeakyReLULayer.cpp.o
+[ 50%] Building CXX object CMakeFiles/cnn_core.dir/src/layers/ActivationFactory.cpp.o
+[ 50%] Building CXX object CMakeFiles/cnn_core.dir/src/layers/SigmoidLayer.cpp.o
+[ 53%] Building CXX object CMakeFiles/cnn_core.dir/src/layers/ReLULayer.cpp.o
+[ 57%] Building CXX object CMakeFiles/cnn_core.dir/src/model/CNNModel.cpp.o
+[ 57%] Building CXX object CMakeFiles/cnn_core.dir/src/layers/TanhLayer.cpp.o
+[ 75%] Building CXX object CMakeFiles/cnn_core.dir/src/optimizers/AdagradOptimizer.cpp.o
+[ 78%] Building CXX object CMakeFiles/cnn_core.dir/src/optimizers/SGDOptimizer.cpp.o
+[ 89%] Building CXX object CMakeFiles/cnn_core.dir/src/training/TrainingDiagnostics.cpp.o
+[ 89%] Building CXX object CMakeFiles/cnn_core.dir/src/optimizers/LRScheduler.cpp.o
+[ 89%] Building CXX object CMakeFiles/cnn_core.dir/src/optimizers/RMSpropOptimizer.cpp.o
+[ 89%] Building CXX object CMakeFiles/cnn_core.dir/src/tuning/CrossValidator.cpp.o
+[ 89%] Building CXX object CMakeFiles/cnn_core.dir/src/optimizers/AdamOptimizer.cpp.o
+[ 89%] Building CXX object CMakeFiles/cnn_core.dir/src/model/ModelFactory.cpp.o
+[ 89%] Building CXX object CMakeFiles/cnn_core.dir/src/training/Trainer.cpp.o
+[ 89%] Building CXX object CMakeFiles/cnn_core.dir/src/tuning/TrialConfig.cpp.o
+[ 92%] Linking CXX static library libcnn_core.a
+[ 92%] Built target cnn_core
+[ 96%] Building CXX object CMakeFiles/re_tuning.dir/experiments/re_tuning/main.cpp.o
+[100%] Linking CXX executable experiments/re_tuning
+[100%] Built target re_tuning
+Output: results/re-tuning/trial-4-seed-1_slurm-56688199
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+MPI startup(): Warning: I_MPI_PMI_LIBRARY will be ignored since the hydra process manager was found
+Re-training stage: trial-4-seed-1
+Run name: trial-4-seed-1_slurm-56688199
+Topology: conv5x5, channels 8, dense 1024-512-256-128-1
+Adam learning rate: 1e-3
+Physics weight: 0.10
+Dropout/L1/L2: 0/0/0
+Epoch cap: 834
+Global batch size: 257
+Batch construction: balanced
+Early stopping: enabled
+Early stopping policy: first_ratio_exceeded
+Seed: 1
+Epoch 1/834 | samples=1542 | steps=6 | train_objective=3.50096 | training_physical_mse=0.325719 | validation_physical_mse=0.318634 | lr=0.001 | configured_lr=0.001 | grad_rms=102.022 | activation_var(mean/min/max)=0.76185/0.170783/1.14669
+Epoch 2/834 | samples=1542 | steps=6 | train_objective=0.298058 | training_physical_mse=0.0298238 | validation_physical_mse=0.0312181 | lr=0.001 | configured_lr=0.001 | grad_rms=30.8581 | activation_var(mean/min/max)=1.64797/0.142078/2.79584
+Epoch 3/834 | samples=1542 | steps=6 | train_objective=0.0922017 | training_physical_mse=0.0361056 | validation_physical_mse=0.0378002 | lr=0.001 | configured_lr=0.001 | grad_rms=14.302 | activation_var(mean/min/max)=1.75606/0.12384/3.01014
+Epoch 4/834 | samples=1542 | steps=6 | train_objective=0.057576 | training_physical_mse=0.017625 | validation_physical_mse=0.0189999 | lr=0.001 | configured_lr=0.001 | grad_rms=9.4523 | activation_var(mean/min/max)=1.56297/0.112823/2.68364
+Epoch 5/834 | samples=1542 | steps=6 | train_objective=0.0389156 | training_physical_mse=0.0124263 | validation_physical_mse=0.0136545 | lr=0.001 | configured_lr=0.001 | grad_rms=6.18003 | activation_var(mean/min/max)=1.38606/0.106536/2.39317
+Epoch 6/834 | samples=1542 | steps=6 | train_objective=0.0321935 | training_physical_mse=0.0121617 | validation_physical_mse=0.0144193 | lr=0.001 | configured_lr=0.001 | grad_rms=4.24056 | activation_var(mean/min/max)=1.23749/0.102335/2.14135
+Early stopping at epoch 6: validation MSE exceeded training MSE by more than 15% above training MSE.
+Completed epoch: 6
+Selected epoch: 5
+Training physical MSE: 0.0124263
+Validation physical MSE: 0.0136545
+Test physical MSE: 0.0105255
+Results: "results/re-tuning/trial-4-seed-1_slurm-56688199"
+
+real	0m29.020s
+user	0m0.221s
+sys	0m0.058s
