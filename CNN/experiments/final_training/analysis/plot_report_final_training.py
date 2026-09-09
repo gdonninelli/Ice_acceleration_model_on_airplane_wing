@@ -151,7 +151,7 @@ def main() -> None:
     parser.add_argument(
         "--run-dir",
         type=Path,
-        default=Path("results/ordinary-training/production_slurm-56688223"),
+        default=Path("results/ordinary-training/trial-5_slurm-56688207"),
         help="Directory containing final_metrics.csv, test_metrics.csv, and epoch_metrics.csv.",
     )
     parser.add_argument(

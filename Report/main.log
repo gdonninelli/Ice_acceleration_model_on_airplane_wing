@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.4.18)  8 SEP 2026 14:14
+This is pdfTeX, Version 3.141592653-2.6-1.40.26 (TeX Live 2024) (preloaded format=pdflatex 2024.4.18)  9 SEP 2026 16:09
 entering extended mode
  restricted \write18 enabled.
  file:line:error style messages enabled.
@@ -2097,26 +2097,26 @@ Package pdftex.def Info: Images/Chapter04/activation/activation_ranking.png  use
 File: Images/Chapter04/activation/activation_history.png Graphic file (type png)
 <use Images/Chapter04/activation/activation_history.png>
 Package pdftex.def Info: Images/Chapter04/activation/activation_history.png  used on input line 643.
-(pdftex.def)             Requested size: 445.00023pt x 245.13673pt.
+(pdftex.def)             Requested size: 459.51054pt x 253.12808pt.
 
 Underfull \hbox (badness 10000) in paragraph at lines 648--649
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 652--653
+Underfull \hbox (badness 10000) in paragraph at lines 651--652
 
  []
 
 <Images/Chapter04/activation/activation_diagnostics.png, id=974, 743.1765pt x 505.4885pt>
 File: Images/Chapter04/activation/activation_diagnostics.png Graphic file (type png)
 <use Images/Chapter04/activation/activation_diagnostics.png>
-Package pdftex.def Info: Images/Chapter04/activation/activation_diagnostics.png  used on input line 658.
-(pdftex.def)             Requested size: 464.35223pt x 315.84468pt.
+Package pdftex.def Info: Images/Chapter04/activation/activation_diagnostics.png  used on input line 657.
+(pdftex.def)             Requested size: 474.02086pt x 322.42398pt.
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
-
+[49 <./Images/Chapter04/activation/activation_history.png>]
 Underfull \hbox (badness 10000) in paragraph at lines 663--664
 
  []
@@ -2126,12 +2126,12 @@ Underfull \hbox (badness 10000) in paragraph at lines 675--677
 
  []
 
-[49 <./Images/Chapter04/activation/activation_history.png>]
+
 Underfull \hbox (badness 10000) in paragraph at lines 678--679
 
  []
 
-
+[50 <./Images/Chapter04/activation/activation_diagnostics.png>]
 Underfull \hbox (badness 10000) in paragraph at lines 689--691
 
  []
@@ -2141,7 +2141,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 692--693
 
  []
 
-[50 <./Images/Chapter04/activation/activation_diagnostics.png>]
+
 Underfull \hbox (badness 10000) in paragraph at lines 696--697
 
  []
@@ -2151,185 +2151,184 @@ Underfull \hbox (badness 10000) in paragraph at lines 698--699
 
  []
 
-<Images/Chapter04/activation/activation_input_distributions.png, id=992, 800.591pt x 520.7455pt>
+<Images/Chapter04/activation/activation_input_distributions.png, id=990, 800.591pt x 520.7455pt>
 File: Images/Chapter04/activation/activation_input_distributions.png Graphic file (type png)
 <use Images/Chapter04/activation/activation_input_distributions.png>
 Package pdftex.def Info: Images/Chapter04/activation/activation_input_distributions.png  used on input line 702.
 (pdftex.def)             Requested size: 474.02086pt x 308.33371pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 706--707
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[51]
+Underfull \hbox (badness 10000) in paragraph at lines 708--709
 
  []
 
-[51 <./Images/Chapter04/activation/activation_input_distributions.png>]
-Underfull \hbox (badness 10000) in paragraph at lines 711--712
+
+Underfull \hbox (badness 10000) in paragraph at lines 713--714
 
  []
 
 
-LaTeX Warning: Reference `eq:04_adam_update' on page 52 undefined on input line 718.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 718--719
-
- []
+LaTeX Warning: Reference `eq:04_adam_update' on page 52 undefined on input line 720.
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 720--721
 
  []
 
-
+[52 <./Images/Chapter04/activation/activation_input_distributions.png>]
 Underfull \hbox (badness 10000) in paragraph at lines 722--723
 
  []
 
-[52]
-Underfull \hbox (badness 3701) in paragraph at lines 774--774
+
+Underfull \hbox (badness 10000) in paragraph at lines 724--725
+
+ []
+
+
+Underfull \hbox (badness 3701) in paragraph at lines 776--776
 \OT1/cmr/m/n/10.95 10[]$\T1/cmr/m/n/10.95 , $\OML/cmm/m/it/10.95 ^^Q[] \OT1/cmr/m/n/10.95 =
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 774--774
+Underfull \hbox (badness 10000) in paragraph at lines 776--776
 []|\T1/cmr/m/n/10.95 Warm-up
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 774--774
+Underfull \hbox (badness 10000) in paragraph at lines 776--776
 \T1/cmr/m/n/10.95 and co-sine,
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 780--781
-
- []
+LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 782--783
 
  []
 
-[53]
+
 Underfull \hbox (badness 10000) in paragraph at lines 784--785
+
+ []
+
+[53]
+Underfull \hbox (badness 10000) in paragraph at lines 786--787
 
  []
 
 <Images/Chapter04/learning_rate/learning_rate_ranking.png, id=1020, 628.749pt x 379.016pt>
 File: Images/Chapter04/learning_rate/learning_rate_ranking.png Graphic file (type png)
 <use Images/Chapter04/learning_rate/learning_rate_ranking.png>
-Package pdftex.def Info: Images/Chapter04/learning_rate/learning_rate_ranking.png  used on input line 788.
+Package pdftex.def Info: Images/Chapter04/learning_rate/learning_rate_ranking.png  used on input line 790.
 (pdftex.def)             Requested size: 474.02086pt x 285.75339pt.
 
-Underfull \hbox (badness 10000) in paragraph at lines 800--801
+LaTeX Warning: `!h' float specifier changed to `!ht'.
+
+[54]
+Underfull \hbox (badness 10000) in paragraph at lines 802--803
 
  []
 
-<Images/Chapter04/learning_rate/learning_rate_history.png, id=1022, 627.5445pt x 498.2615pt>
+<Images/Chapter04/learning_rate/learning_rate_history.png, id=1027, 627.5445pt x 498.2615pt>
 File: Images/Chapter04/learning_rate/learning_rate_history.png Graphic file (type png)
 <use Images/Chapter04/learning_rate/learning_rate_history.png>
-Package pdftex.def Info: Images/Chapter04/learning_rate/learning_rate_history.png  used on input line 804.
+Package pdftex.def Info: Images/Chapter04/learning_rate/learning_rate_history.png  used on input line 806.
 (pdftex.def)             Requested size: 445.00023pt x 353.32716pt.
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 809--810
+Underfull \hbox (badness 10000) in paragraph at lines 811--812
 
  []
 
-<Images/Chapter04/learning_rate/learning_rate_schedules.png, id=1025, 627.5445pt x 352.1155pt>
+<Images/Chapter04/learning_rate/learning_rate_schedules.png, id=1030, 627.5445pt x 352.1155pt>
 File: Images/Chapter04/learning_rate/learning_rate_schedules.png Graphic file (type png)
 <use Images/Chapter04/learning_rate/learning_rate_schedules.png>
-Package pdftex.def Info: Images/Chapter04/learning_rate/learning_rate_schedules.png  used on input line 813.
+Package pdftex.def Info: Images/Chapter04/learning_rate/learning_rate_schedules.png  used on input line 815.
 (pdftex.def)             Requested size: 445.00023pt x 249.69211pt.
 
 LaTeX Warning: `!h' float specifier changed to `!ht'.
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 818--819
+Underfull \hbox (badness 10000) in paragraph at lines 820--821
 
  []
 
-[54 <./Images/Chapter04/learning_rate/learning_rate_ranking.png>]
-Underfull \hbox (badness 10000) in paragraph at lines 825--826
+
+Underfull \hbox (badness 10000) in paragraph at lines 827--828
 
  []
 
-<Images/Chapter04/learning_rate/learning_rate_diagnostics.png, id=1035, 750.4035pt x 512.314pt>
+[55 <./Images/Chapter04/learning_rate/learning_rate_ranking.png>]
+<Images/Chapter04/learning_rate/learning_rate_diagnostics.png, id=1042, 750.4035pt x 512.314pt>
 File: Images/Chapter04/learning_rate/learning_rate_diagnostics.png Graphic file (type png)
 <use Images/Chapter04/learning_rate/learning_rate_diagnostics.png>
-Package pdftex.def Info: Images/Chapter04/learning_rate/learning_rate_diagnostics.png  used on input line 829.
+Package pdftex.def Info: Images/Chapter04/learning_rate/learning_rate_diagnostics.png  used on input line 831.
 (pdftex.def)             Requested size: 474.02086pt x 323.62724pt.
 
+
 LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-
-Underfull \hbox (badness 10000) in paragraph at lines 834--835
-
- []
 
 
 Underfull \hbox (badness 10000) in paragraph at lines 836--837
 
  []
 
-[55 <./Images/Chapter04/learning_rate/learning_rate_history.png>]
-Underfull \hbox (badness 10000) in paragraph at lines 838--840
+
+Underfull \hbox (badness 10000) in paragraph at lines 838--839
 
  []
 
 
-Underfull \hbox (badness 10000) in paragraph at lines 841--842
+Underfull \hbox (badness 10000) in paragraph at lines 840--842
 
  []
 
-[56 <./Images/Chapter04/learning_rate/learning_rate_schedules.png>] [57 <./Images/Chapter04/learning_rate/learning_rate_diagnostics.png>]
-Underfull \hbox (badness 10000) in paragraph at lines 885--885
-[][]\T1/cmr/m/n/10.95 Table 13[][]: []|Or-di-nary train-ing re-sults from the eleven run di-rec-to-ries un-der
+[56 <./Images/Chapter04/learning_rate/learning_rate_history.png>]
+Underfull \hbox (badness 10000) in paragraph at lines 843--844
+
  []
 
-<Images/Chapter04/final_training/final_trial1_trial2_mse_comparison.png, id=1062, 750.951pt x 512.1315pt>
+[57 <./Images/Chapter04/learning_rate/learning_rate_schedules.png>] [58 <./Images/Chapter04/learning_rate/learning_rate_diagnostics.png>]
+<Images/Chapter04/final_training/final_trial1_trial2_mse_comparison.png, id=1066, 750.951pt x 512.1315pt>
 File: Images/Chapter04/final_training/final_trial1_trial2_mse_comparison.png Graphic file (type png)
 <use Images/Chapter04/final_training/final_trial1_trial2_mse_comparison.png>
-Package pdftex.def Info: Images/Chapter04/final_training/final_trial1_trial2_mse_comparison.png  used on input line 895.
-(pdftex.def)             Requested size: 459.51054pt x 313.37656pt.
-
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-<Images/Chapter04/final_training/final_trial1_trial2_gradient_update.png, id=1065, 887.2785pt x 370.548pt>
+Package pdftex.def Info: Images/Chapter04/final_training/final_trial1_trial2_mse_comparison.png  used on input line 896.
+(pdftex.def)             Requested size: 333.75201pt x 227.61256pt.
+ [59 <./Images/Chapter04/final_training/final_trial1_trial2_mse_comparison.png>]
+<Images/Chapter04/final_training/final_trial1_trial2_gradient_update.png, id=1077, 887.2785pt x 370.548pt>
 File: Images/Chapter04/final_training/final_trial1_trial2_gradient_update.png Graphic file (type png)
 <use Images/Chapter04/final_training/final_trial1_trial2_gradient_update.png>
 Package pdftex.def Info: Images/Chapter04/final_training/final_trial1_trial2_gradient_update.png  used on input line 904.
 (pdftex.def)             Requested size: 474.02086pt x 197.967pt.
-
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-[58] [59 <./Images/Chapter04/final_training/final_trial1_trial2_mse_comparison.png> <./Images/Chapter04/final_training/final_trial1_trial2_gradient_update.png>]
-<Images/Chapter04/final_training/final_training_history.png, id=1082, 917.172pt x 384.6735pt>
+ [60 <./Images/Chapter04/final_training/final_trial1_trial2_gradient_update.png>]
+<Images/Chapter04/final_training/final_training_history.png, id=1087, 917.172pt x 384.6735pt>
 File: Images/Chapter04/final_training/final_training_history.png Graphic file (type png)
 <use Images/Chapter04/final_training/final_training_history.png>
 Package pdftex.def Info: Images/Chapter04/final_training/final_training_history.png  used on input line 932.
 (pdftex.def)             Requested size: 459.51054pt x 192.72365pt.
 
+Underfull \hbox (badness 10000) in paragraph at lines 933--933
+[][]\T1/cmr/m/n/10.95 Figure 34[][]: []|Phys-i-cal train-ing and val-i-da-tion MSE for the fi-nal pro-duc-tion run,
+ []
 
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-[60]
-<Images/Chapter04/final_training/test_mse_by_angle.png, id=1092, 526.914pt x 351.495pt>
+[61 <./Images/Chapter04/final_training/final_training_history.png>]
+<Images/Chapter04/final_training/test_mse_by_angle.png, id=1097, 526.914pt x 351.495pt>
 File: Images/Chapter04/final_training/test_mse_by_angle.png Graphic file (type png)
 <use Images/Chapter04/final_training/test_mse_by_angle.png>
 Package pdftex.def Info: Images/Chapter04/final_training/test_mse_by_angle.png  used on input line 962.
 (pdftex.def)             Requested size: 377.28296pt x 251.68172pt.
-
-
-LaTeX Warning: `!h' float specifier changed to `!ht'.
-
-[61 <./Images/Chapter04/final_training/final_training_history.png>]) (./Chapters/05_Conclusions.tex
+ [62 <./Images/Chapter04/final_training/test_mse_by_angle.png>] [63]) (./Chapters/05_Conclusions.tex
 Underfull \hbox (badness 10000) in paragraph at lines 4--5
 
  []
 
-[62 <./Images/Chapter04/final_training/test_mse_by_angle.png>]
+
 Underfull \hbox (badness 10000) in paragraph at lines 6--7
 
  []
@@ -2344,7 +2343,7 @@ Underfull \hbox (badness 10000) in paragraph at lines 10--11
 
  []
 
-
+[64]
 Underfull \hbox (badness 10000) in paragraph at lines 12--13
 
  []
@@ -2354,12 +2353,12 @@ Underfull \hbox (badness 10000) in paragraph at lines 14--15
 
  []
 
-) [63] (./main.bbl [64])
+) (./main.bbl [65])
 
 Package caption Warning: Unused \captionsetup[algorithm] on input line 16.
 See the caption package documentation for explanation.
 
-[65] (./main.aux)
+[66] (./main.aux)
  ***********
 LaTeX2e <2023-11-01> patch level 1
 L3 programming layer <2024-02-20>
@@ -2379,18 +2378,18 @@ Package rerunfilecheck Info: File `main.out' has not changed.
 (rerunfilecheck)             Checksum: D9998D3B721FE7FD50F6714B0F1EF635;8555.
  ) 
 Here is how much of TeX's memory you used:
- 34834 strings out of 474116
- 667662 string characters out of 5743682
+ 34835 strings out of 474116
+ 667669 string characters out of 5743682
  2046187 words of memory out of 5000000
  56104 multiletter control sequences out of 15000+600000
  587532 words of font info for 113 fonts, out of 8000000 for 9000
  1141 hyphenation exceptions out of 8191
- 84i,24n,93p,1874b,2223s stack positions out of 10000i,1000n,20000p,200000b,200000s
+ 84i,24n,93p,1755b,2223s stack positions out of 10000i,1000n,20000p,200000b,200000s
 </usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx5.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmbx7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmex10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi5.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi6.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi8.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmi9.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmmib10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr5.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr6.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr8.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmr9.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy6.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy7.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy8.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/cm/cmsy9.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/symbols/msam10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/amsfonts/symbols/msbm10.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfbx0800.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfbx0900.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfbx1000.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfbx1095.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfbx1200.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfbx1440.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfrm0500.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfrm0600.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfrm0700.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfrm0800.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfrm0900.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfrm1000.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfrm1095.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfti1000.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sftt0800.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sftt0900.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sftt1000.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sftt1095.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sftt1200.pfb></usr/local/texlive/2024/texmf-dist/fonts/type1/public/cm-super/sfxc1095.pfb>
-Output written on main.pdf (65 pages, 6927793 bytes).
+Output written on main.pdf (66 pages, 6928020 bytes).
 PDF statistics:
- 1429 PDF objects out of 1440 (max. 8388607)
- 1186 compressed objects within 12 object streams
- 476 named destinations out of 1000 (max. 500000)
+ 1432 PDF objects out of 1440 (max. 8388607)
+ 1188 compressed objects within 12 object streams
+ 477 named destinations out of 1000 (max. 500000)
  547 words of extra memory for PDF output out of 10000 (max. 10000000)
 

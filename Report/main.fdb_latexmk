@@ -1,13 +1,13 @@
 # Fdb version 4
-["bibtex main"] 1788869660.23754 "main.aux" "main.bbl" "main" 1788869665.55712 0
+["bibtex main"] 1788962966.34215 "main.aux" "main.bbl" "main" 1788962971.312 0
   "./bibliography.bib" 1788608588.46172 4833 a27305e3106aac87c0140f434a1f0bb6 ""
   "/usr/local/texlive/2024/texmf-dist/bibtex/bst/natbib/plainnat.bst" 1233624470 26816 ffe5423d2019860bad9f54bc402fac15 ""
-  "main.aux" 1788869665.26681 66059 e050d51edf7eaac70c9dc3ea7fdb01c1 "pdflatex"
+  "main.aux" 1788962971.05307 66109 a73e6d5b7185842d02a7c6b9c7ef7fc6 "pdflatex"
   (generated)
   "main.bbl"
   "main.blg"
   (rewritten before read)
-["pdflatex"] 1788869660.3046 "/Users/giuliodonninelli/Dev/Ice_acceleration_model_on_airplane_wing/Report/main.tex" "main.pdf" "main" 1788869665.55729 0
+["pdflatex"] 1788962966.40618 "/Users/giuliodonninelli/Dev/Ice_acceleration_model_on_airplane_wing/Report/main.tex" "main.pdf" "main" 1788962971.31217 0
   "/Users/giuliodonninelli/Dev/Ice_acceleration_model_on_airplane_wing/Report/main.tex" 1788599676.95771 9062 cb3cdf061b200e462fe5006fcd930337 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/enc/dvips/cm-super/cm-super-t1.enc" 1136849721 2971 def0b6c1f0b107b3b936def894055589 ""
   "/usr/local/texlive/2024/texmf-dist/fonts/map/fontname/texfonts.map" 1577235249 3524 cb3e574dea2d1052e39280babc910dc8 ""
@@ -304,7 +304,7 @@
   "Chapters/01_Introduction.tex" 1788534840.70362 2611 da6fe15ea5082d352d9725a6ab12f403 ""
   "Chapters/02_Navier-Stokes_Simulation.tex" 1788534840.70394 35657 7a73b0a6f4f8489a96e54d5d77315c66 ""
   "Chapters/03_Convolutional_Neural_Network.tex" 1788534840.70427 72212 7971003ccdf8e684b0b9305e2a25c98c ""
-  "Chapters/04_Tuning.tex" 1788869654.88237 128318 b423758c78310e9dbe2b60ecdc28d57f ""
+  "Chapters/04_Tuning.tex" 1788962961.21886 126413 a6ec2896e4c153dc3be37f283b688efd ""
   "Chapters/05_Conclusions.tex" 1788852167.09511 6501 d420e820312d170812499c7994691fef ""
   "Configuration_files/config.tex" 1788534840.70507 3107 f4a077b14493775c0ccebf4646e47739 ""
   "Configuration_files/title_page.tex" 1788534840.7053 1329 1ea7a4eee6c4f40d22b875836b01c649 ""
@@ -328,10 +328,10 @@
   "Images/Chapter04/dropout/dropout_paired_differences.png" 1788543125.97112 108990 7dd6b49a4187d94bb5f448fb4b8d6b60 ""
   "Images/Chapter04/dropout/dropout_ranking.png" 1788543125.92152 44173 8d262fbd57b1bda835c283cb20622f53 ""
   "Images/Chapter04/dropout/dropout_stability.png" 1788543126.41182 155681 6fee078cf1c87b7a62a7216a94299a8b ""
-  "Images/Chapter04/final_training/final_training_history.png" 1788869324.05464 241860 170ebb606c47045a6f1a0ab4e87ba66b ""
+  "Images/Chapter04/final_training/final_training_history.png" 1788956752.07219 241860 170ebb606c47045a6f1a0ab4e87ba66b ""
   "Images/Chapter04/final_training/final_trial1_trial2_gradient_update.png" 1788869324.21164 285741 9fa06eb62780f600d03a9460d8d8dcc8 ""
   "Images/Chapter04/final_training/final_trial1_trial2_mse_comparison.png" 1788869324.00331 316440 9aa4accb8daeba0e63752544a19b4795 ""
-  "Images/Chapter04/final_training/test_mse_by_angle.png" 1788869324.10807 65318 61560c3a70e2aa0da8810095ccbe45d7 ""
+  "Images/Chapter04/final_training/test_mse_by_angle.png" 1788956752.1216 65318 61560c3a70e2aa0da8810095ccbe45d7 ""
   "Images/Chapter04/learning_rate/learning_rate_diagnostics.png" 1788608869.91564 171328 7df197812c2aa19f411c061d84ad6574 ""
   "Images/Chapter04/learning_rate/learning_rate_history.png" 1788608869.09754 195400 e4f1fe436663b145d51d6bc1b349add2 ""
   "Images/Chapter04/learning_rate/learning_rate_ranking.png" 1788608868.93775 66484 c92ff4f64d7cf8d1eb76c820b58fcc2c ""
@@ -346,9 +346,9 @@
   "Images/Chapter04/topology/topology_ranking.png" 1788540677.09 149828 f2351097efb15b81a39b6b7423fca233 ""
   "Images/logo_polimi_ing_indinf.eps" 1788534840.71248 1016894 87cec33dc4ce62619be8e2b6e306843d ""
   "Images/raggiera_polimi.eps" 1788534840.71482 1813066 dca994a8e6dbfff46979ea0a845ddce3 ""
-  "main.aux" 1788869665.26681 66059 e050d51edf7eaac70c9dc3ea7fdb01c1 "pdflatex"
-  "main.bbl" 1788869660.30158 4765 366a018b96478c2c41c07be64e512b1f "bibtex main"
-  "main.out" 1788869665.27025 8555 d9998d3b721fe7fd50f6714b0f1ef635 "pdflatex"
+  "main.aux" 1788962971.05307 66109 a73e6d5b7185842d02a7c6b9c7ef7fc6 "pdflatex"
+  "main.bbl" 1788962966.40329 4765 366a018b96478c2c41c07be64e512b1f "bibtex main"
+  "main.out" 1788962971.05811 8555 d9998d3b721fe7fd50f6714b0f1ef635 "pdflatex"
   "main.tex" 1788599676.95771 9062 cb3cdf061b200e462fe5006fcd930337 ""
   (generated)
   "main.aux"
